@@ -1,0 +1,71 @@
+body, html{
+	font-family: Dos;
+	color: #BFBFBF;
+	background-color: #151515;
+	display:flex;
+	flex-direction:row;
+	justify-content:center;
+	width:100%;
+	font-smooth: never;
+	-webkit-font-smoothing : antialiased !important;
+	-moz-osx-font-smoothing: unset;
+}
+
+/*
+div { border: 1px solid red !important; }
+*/
+
+@font-face {
+	font-family: "Dos";
+	src: url("res/fonts/Px437_IBM_PS2thin4.ttf");
+}
+
+h1, h2, h3{
+	font-size:inherit;
+	font-weight:inherit;
+}
+
+h1, .emphasis{
+	color:orange;
+}
+
+h2{
+	color:grey;
+}
+
+.terminal
+{
+    border: 1px groove grey;
+    padding:20px;
+}
+
+#main-container{
+	display:flex;
+	flex-direction:column;
+	justify-content:flex-start;
+	width:80%;
+	padding:20px;
+}
+
+#address-column{
+    border-right: 2px groove grey;
+}
+
+#code-editor
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.column
+{
+    display:flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+#input
+{
+    flex:1;
+}

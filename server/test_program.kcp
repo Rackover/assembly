@@ -1,0 +1,27 @@
+
+# mobile dwarf artillery
+skip if the value at +8 equals 16
+go to +2
+go to +7
+add 3 with the value at +4
+add 1 with the value at +4
+write 1 at the address given at +2
+go to -6
+data 34
+data 0
+write 0 at -1
+ skip if the value at +8 equals +9
+ go to +2
+ go to +102
+ copy the address specified at +5 to the address specified at +4
+ add 1 with the value at +3
+ add 1 with the value at +3
+ go to -6
+ data 100
+ data -14
+write 100 at address +121
+write -14 at address +121
+ go to +102
+
+# imp
+# move the value at 0 to address +1
