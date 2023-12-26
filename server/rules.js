@@ -1,7 +1,7 @@
 module.exports = class Rules
 {
     killOnDataExecution = true;
-    maxWritePerSector = 32;
+    maxWritePerSector = 0;
     maxReadPerSector = 0;
     
     columnSize = 32;
@@ -10,5 +10,7 @@ module.exports = class Rules
     randomColumn = true;
     randomPositionInColumn = true;
 
-    fillWithBystanders = true;
+    fillWithBystanders = false;
+
+    runForever = false;
 }

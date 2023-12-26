@@ -13,68 +13,23 @@ module.exports = class Core {
     #writeBuffer;
     #readBuffer;
 
-    #pointers = [];
+    #pointerGroups = [];
     #programs = [];
     #turnOfProgram = 0;
 
-    constructor(programs, rules = new Rules()) {
+    constructor(rules = new Rules()) {
         this.#columnSize = rules.columnSize;
         this.#columnCount = rules.columnCount;
         this.#rules = rules;
-
-        if (programs.length == 0) {
-            throw Exception("invalid program count");
-        }
-
-        if (programs.length > this.#columnCount) {
-            throw Exception("too many programs");
-        }
-
-        for (i in programs) {
-            this.#programs.push(programs[i]);
-        }
-
-        // while (this.#programs.length < 2) {
-        //     this.#programs.push(programs[0]);
-        // }
 
         this.#memoryBuffer = Buffer.alloc(this.maxAddress * 4);
         this.#writeBuffer = Buffer.alloc(this.maxAddress);
         this.#readBuffer = Buffer.alloc(this.maxAddress);
     }
 
-    initialize() {
-        const placedPrograms = [];
-
-        for (i in this.#programs) {
-            let program = this.#programs[i];
-
-            while (true) {
-                let randomByteOffset = Math.floor(Math.random() * (this.maxAddress - program.instructions.length/4)) * 4;
-                let areaIsFree = true;
-                for (let j in placedPrograms) {
-                    if (randomByteOffset > placedPrograms[j].start && randomByteOffset <= placedPrograms[j].end) {
-                        // Not good
-                        areaIsFree = false;
-                        break;
-                    }
-                }
-
-                if (areaIsFree) {
-                    // Place program
-                    program.instructions.copy(this.#memoryBuffer, randomByteOffset);
-                    placedPrograms.push({ start: randomByteOffset, end: randomByteOffset + program.instructions.length })
-                    break;
-                }
-            }
-        }
-
-        // Programs are placed, let's initialize pointers
-        this.#pointers = [];
-
-        for (i in this.#programs) {
-            this.#pointers.push(new ProgramPointer(placedPrograms[i].start / 4));
-        }
+    isEmpty()
+    {
+        return this.#programs.length() == 0;
     }
 
     peek(address) {
@@ -97,40 +52,49 @@ module.exports = class Core {
     }
 
     getProgramPointers(programIndex) {
-        const programPointer = this.#pointers[programIndex];
+        const programPointer = this.#pointerGroups[programIndex];
         return programPointer.pointers;
     }
 
     advance() {
-        const programPointer = this.#pointers[this.#turnOfProgram];
+        const programPointer = this.#pointerGroups[this.#turnOfProgram];
 
-        this.#executePointer(programPointer);
+        this.#executePointerGroup(programPointer);
 
         if (programPointer.isDead) {
-            let winnerIndex = -1;
-            let atLeastOneProgramAlive = false
-            for (const programIndex in this.#pointers) {
-                if (this.#pointers[programIndex].isDead) {
-                    continue;
-                }
-
-                atLeastOneProgramAlive = true;
-                if (winnerIndex == -1) {
-                    winnerIndex = programIndex;
-                }
-                else {
-                    // More than 1 program remaining, do nothing
-                    break;
-                }
-            }
-
-            if (winnerIndex != -1) {
-                return { winner: this.#programs[winnerIndex], winnerIndex: winnerIndex };
-            }
-
-            if (!atLeastOneProgramAlive)
+            
+            if (this.#rules.runForever)
             {
-                return {winner: false};
+                this.#programs.splice(this.#turnOfProgram, 1);
+                this.#pointerGroups.splice(this.#turnOfProgram, 1);
+            }
+            else
+            {
+                let winnerIndex = -1;
+                let atLeastOneProgramAlive = false
+                for (const programIndex in this.#pointerGroups) {
+                    if (this.#pointerGroups[programIndex].isDead) {
+                        continue;
+                    }
+
+                    atLeastOneProgramAlive = true;
+                    if (winnerIndex == -1) {
+                        winnerIndex = programIndex;
+                    }
+                    else {
+                        // More than 1 program remaining, do nothing
+                        break;
+                    }
+                }
+
+                if (winnerIndex != -1) {
+                    return { winner: this.#programs[winnerIndex], winnerIndex: winnerIndex };
+                }
+
+                if (!atLeastOneProgramAlive)
+                {
+                    return {winner: false};
+                }
             }
         }
         else {
@@ -140,6 +104,39 @@ module.exports = class Core {
         this.#turnOfProgram = (this.#turnOfProgram + 1) % this.#programs.length;
 
         return false;
+    }
+
+    installPrograms(programsToPlace) {
+        const placedPrograms = [];
+
+        for (i in programsToPlace) {
+            let program = programsToPlace[i];
+
+            while (true) {
+                let randomByteOffset = Math.floor(Math.random() * (this.maxAddress - program.instructions.length/4)) * 4;
+                let areaIsFree = true;
+                for (let j in placedPrograms) {
+                    if (randomByteOffset > placedPrograms[j].start && randomByteOffset <= placedPrograms[j].end) {
+                        // Not good
+                        areaIsFree = false;
+                        break;
+                    }
+                }
+
+                if (areaIsFree) {
+                    // Place program
+                    program.instructions.copy(this.#memoryBuffer, randomByteOffset);
+                    placedPrograms.push({ start: randomByteOffset, end: randomByteOffset + program.instructions.length })
+                    break;
+                }
+            }
+        }
+
+        // Programs are placed, let's initialize pointers
+        for (i in programsToPlace) {
+            this.#pointerGroups.push(new ProgramPointer(placedPrograms[i].start / 4));
+            this.#programs.push(programsToPlace[i]);
+        }
     }
 
     #setValueAtAddress(value, address) {
@@ -196,7 +193,7 @@ module.exports = class Core {
         programPointer.pointers.splice(programPointer.nextPointerToExecute, 1);
     }
 
-    #executePointer(programPointer) {
+    #executePointerGroup(programPointer) {
         let memoryPosition = programPointer.pointers[programPointer.nextPointerToExecute];
         let moved = false;
 

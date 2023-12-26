@@ -15,25 +15,21 @@ const OPERAND_B_SHIFT = OPERAND_B_FLAGS_SHIFT - OPERAND_BITS;
 
 const MAX_ADDRESSING = 2 ^ OPERAND_BITS;
 
-module.exports = {
+module.exports.OPERAND_MASK= OPERAND_MASK;
+module.exports.OPERATION_MASK= OPERATION_MASK;
+module.exports.OPERAND_FLAGS_MASK= OPERAND_FLAGS_MASK;
 
+module.exports.OPERATION_SHIFT= OPERATION_SHIFT;
+module.exports.OPERAND_A_FLAGS_SHIFT= OPERAND_A_FLAGS_SHIFT;
+module.exports.OPERAND_A_SHIFT= OPERAND_A_SHIFT;
+module.exports.OPERAND_B_FLAGS_SHIFT= OPERAND_B_FLAGS_SHIFT;
+module.exports.OPERAND_B_SHIFT= OPERAND_B_SHIFT;
 
-    OPERAND_MASK: OPERAND_MASK,
-    OPERATION_MASK: OPERATION_MASK,
-    OPERAND_FLAGS_MASK: OPERAND_FLAGS_MASK,
+module.exports.MAX_ADDRESSING= MAX_ADDRESSING;
 
-    OPERATION_SHIFT: OPERATION_SHIFT,
-    OPERAND_A_FLAGS_SHIFT: OPERAND_A_FLAGS_SHIFT,
-    OPERAND_A_SHIFT: OPERAND_A_SHIFT,
-    OPERAND_B_FLAGS_SHIFT: OPERAND_B_FLAGS_SHIFT,
-    OPERAND_B_SHIFT: OPERAND_B_SHIFT,
+module.exports.compile= compile;
+module.exports.getSigned12BitsValue= getSigned12BitsValue;
 
-    MAX_ADDRESSING: MAX_ADDRESSING,
-
-    compile: compile,
-    getSigned12BitsValue: getSigned12BitsValue
-
-}
 
 // Returns a (bool, buffer)
 function compile(tokenList) {

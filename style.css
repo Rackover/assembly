@@ -6,8 +6,9 @@ body, html{
 	flex-direction:row;
 	justify-content:center;
 	width:100%;
-	font-smooth: never;
-	-webkit-font-smoothing : antialiased !important;
+	
+	font-smooth: inherit;
+	-webkit-font-smoothing: none !important;
 	-moz-osx-font-smoothing: unset;
 }
 
@@ -39,6 +40,13 @@ h2{
     padding:20px;
 }
 
+.terminal h1{
+	color: black;
+	background-color: grey;
+	padding-left: 10px;
+	font-weight:bold;
+}
+
 #main-container{
 	display:flex;
 	flex-direction:column;
@@ -47,15 +55,96 @@ h2{
 	padding:20px;
 }
 
+#explanations-window{
+	min-width:300px;
+	width:30%;
+	display:flex;
+	flex-direction:column;
+	justify-content:flex-start;
+}
+
+#explanations
+{
+	flex:1;
+}
+
+#editor-column #editor-column
+{
+	flex:1;
+}
+
+#editor-column .row{
+	display:flex;
+	justify-content:flex-start;
+	flex-direction:row;
+	width:100%;
+}
+
+#editor-container
+{
+	width:50%;
+	padding:20px;
+	padding-top:0px;
+	padding-bottom:0px;
+	
+	display:flex;
+	flex-direction:column;
+	justify-content:flex-start;
+}
+
+#editor-container .button-container
+{
+	margin-top:16px;
+	text-align:right;
+	width:100%;
+}
+
+button
+{
+	background: white;
+	font:inherit;
+	color:black;
+	font-weight:bold;
+	border:0;
+	padding:5px;
+	width:100%;
+}
+
+button:hover
+{
+	background: white;
+	cursor:pointer;
+}
+
+button:active
+{
+	background: orange;
+}
+
+
+#editor-container button
+{
+	background:lightgreen;
+	text-align:right;
+	padding-right:20px;
+	padding-left:20px;
+	width:fit-content;
+	font-size:inherit;
+}
+
 #address-column{
     border-right: 2px groove grey;
+}
+
+#address-column div{
+	border-bottom: 1px dotted grey;
 }
 
 #code-editor
 {
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: flex-start;
 }
 
 .column
@@ -65,7 +154,150 @@ h2{
     justify-content: flex-start;
 }
 
-#input
+.editor-line
 {
-    flex:1;
+	border-bottom: 1px dotted #333333;
+	position:relative;
+	flex: 1;
+}
+
+.editor-line input, .editor-line .display
+{
+	padding: 0;
+	border: 0;
+	
+	padding-left:14px;
+	margin-left:10px;
+	
+	font-family: Dos;
+	color: #BFBFBF;
+	background-color: #151515;
+	font-size:16px;
+	
+	position: absolute;
+	left:0;
+	right:0;
+	top:0;
+	bottom:0;
+}
+
+.editor-line input
+{
+	caret-color: yellow;
+	color: rgba(0,0,0,0);
+	width:calc(100% - 24px);
+}
+
+.editor-line input:focus
+{
+    outline: none;
+	outline-width: 0;
+}
+
+.editor-line .display
+{
+	pointer-events: none;
+	position:absolute;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	background: 0;
+	z-index: 2;
+}
+
+#core-container{
+}
+
+.core{
+	font-weight:normal;
+	display:flex;
+	justify-content: space-between;
+	flex-direction: row;
+}
+
+.core .row {
+	display:flex;
+	justify-content: flex-start;
+	flex-direction: column;
+	flex: 1;
+	padding-right:20px;
+	padding-left:20px;
+	border-right: 1px solid grey;
+}
+
+.core .cell
+{
+	white-space:nowrap;
+}
+
+.core .cell.idle
+{
+	color: #666666;
+}
+
+.editor-line .display.comment-field{
+	color: #9467c7;
+}
+
+.address-field.empty-field, .address-field.comment-field
+{
+	color: #666666;
+}
+
+.editor-line .display .operator
+{
+	color: lightgreen;
+}
+
+.editor-line .display .argument-0
+{
+	color: orange;
+}
+
+.editor-line .display .argument-1
+{
+	color: cyan;
+}
+
+.editor-line .display .link
+{
+	color: grey;
+}
+
+.address-field.current-field
+{
+	color: yellow;
+}
+
+.editor-line .display.current-field
+{
+	border: 1px dashed rgba(255, 255, 0, 0.4);
+}
+
+.error
+{
+	color: red;
+}
+
+input.target-0:before
+{
+	color: orange;
+	content: "1: ";
+}
+
+input.target-1:before
+{
+	color: cyan;
+	content: "2: ";
+}
+
+input.target-0{
+  display: block;
+    box-shadow:inset 0px 0px 0px 1px orange;
+}
+
+input.target-1{
+  display: block;
+    box-shadow:inset 0px 0px 0px 1px cyan;
 }

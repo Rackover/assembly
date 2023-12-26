@@ -5,6 +5,7 @@ const fs = require('fs');
 const reader = require("readline-sync");
 const corePrinter = require('./core_printer');
 const commandLineArgs = require('command-line-args')
+const Rules = require("./rules");
 
 
 const options = commandLineArgs([
@@ -51,8 +52,11 @@ async function run() {
         }
 
         if (!anyError) {
-            const core = new Core(programsToRun);
-            core.initialize();
+            const rules = new Rules();
+            rules.runForever = true;
+            const core = new Core(rules);
+
+            core.installPrograms(programsToRun);
 
             console.log("ready");
             while (true) {

@@ -2,11 +2,15 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <LINK href="style.css?version=42" rel="stylesheet" type="text/css">
+        <LINK href="style.css?version=100" rel="stylesheet" type="text/css">
         <link rel="icon" href="res/img/favicon.png" />
         <title>KILLCORE</title>
                     
-        <script type="text/javascript" src="res/scripts/interactive.js"></script>
+		<script text="text/javascript">const module = { exports: {} };</script>
+        <script type="text/javascript" src="server/parser.js?v=100"></script>
+        <script type="text/javascript" src="server/compiler.js?v=100"></script>
+        <script type="text/javascript" src="res/scripts/language-tree.js?version=100"></script>
+        <script type="text/javascript" src="res/scripts/interactive.js?version=100"></script>
           
         <!-- <meta property="og:title" content="ADVNTURE [2]">
         <meta property="og:description" content="Take part in the greatest of adventures: <br>Yours.">
@@ -25,19 +29,27 @@
         <div id="main-container">
             <div id="title">
                 <h1>
-                    <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;" href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>KILLCORE</b> <span style='color:grey;'>V2.0.3<span style="float:right;" id="dimensionInfo"></span>
+                    <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;" href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>KILLCORE</b>
                 </h1>
             </div>
             <div class="terminal" id="code-editor">
-                <div id="address-column" class="column">
-
+				<div id="explanations-window">
+                    <h1>HELP</h1>
+					<div id="explanations"></div>
+                    <button>ACCESS CORE</button>
+				</div>
+				<div id="editor-container" class="column">
+                    <h1>CODE</h1>
+					<div id="editor-column"></div>
+                    <div class="button-container">
+                        <button id="run-training-program">TEST PROGRAM &gt;&gt;</button>
+                    </div>
+				</div>
+                <div id="core-container">
+                    <h1>CORE</h1>
+                    <div id="core-training" class="core">
+                    </div>
                 </div>
-                <div id="input" class="column">
-                    Please wait...
-                </div>
-            </div>
-            <div class="terminal">
-                <h2></h2>
             </div>
         </div>
     </body>
