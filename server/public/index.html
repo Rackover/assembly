@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <LINK href="style.css?version=100" rel="stylesheet" type="text/css">
+    <link rel="icon" href="res/img/favicon.png" />
+    <title>KILLCORE</title>
+
+    <script src="res/scripts/plugins/socket.io.js"></script>
+
+    <script text="text/javascript">const module = { exports: {} };</script>
+    <script type="text/javascript" src="server/parser.js?v=100"></script>
+    <script type="text/javascript" src="server/compiler.js?v=100"></script>
+    <script type="text/javascript" src="res/scripts/language-tree.js?version=100"></script>
+    <script type="text/javascript" src="res/scripts/interactive.js?version=100"></script>
+
+    <!-- <meta property="og:title" content="ADVNTURE [2]">
+        <meta property="og:description" content="Take part in the greatest of adventures: <br>Yours.">
+        <meta name="Description" content="Take part in the greatest of adventures: <br>Yours.<br>ADVNTURE is a game of free exploration and creation.<br>It has no restriction and is only made of what you, and other players, decide to pour into it.">
+        <meta property="og:image" content="/res/img/metapreview.jpg">
+        <meta name="google-site-verification" content="gT6MZWxw3_4XOJVslimPR2nWE8U3hLy-WDvtpW8sPTI" />
+      
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:site" content="@Rackover" />
+        <meta name="twitter:title" content="ADVNTURE [2]" />
+        <meta name="twitter:description" content="Take part in the greatest of adventures: <br>Yours." />
+        <meta name="twitter:image" content="https://advnture.louve.systems/res/img/metapreview.jpg" />
+        <meta name="twitter:image:alt" content="Wilderness. Adventure." /> -->
+</head>
+
+<body>
+    <div id="main-container">
+        <div id="title">
+            <h1>
+                <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;"
+                        href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>KILLCORE</b>
+            </h1>
+        </div>
+        <div class="terminal" id="code-editor">
+            <div id="explanations-window">
+                <h1>HELP</h1>
+                <div id="explanations"></div>
+                <button>ACCESS CORE</button>
+            </div>
+            <div id="editor-container" class="column">
+                <h1>CODE</h1>
+
+                <input id="program-name" class="editor-line"/>
+                <div id="editor-column">
+                    <!-- leave empty-->
+                </div>
+                <div class="button-container">
+                    <button id="run-training-program">TEST PROGRAM &gt;&gt;</button>
+                </div>
+            </div>
+            <div id="core-container">
+                <h1>LOCAL TEST CORE</h1>
+                <div id="core-training" class="core">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

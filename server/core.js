@@ -12,6 +12,7 @@ module.exports = class Core {
     #memoryBuffer;
     #writeBuffer;
     #readBuffer;
+    #ownershipBuffer;
 
     #pointerGroups = [];
     #programs = [];
@@ -25,6 +26,7 @@ module.exports = class Core {
         this.#memoryBuffer = Buffer.alloc(this.maxAddress * 4);
         this.#writeBuffer = Buffer.alloc(this.maxAddress);
         this.#readBuffer = Buffer.alloc(this.maxAddress);
+        this.#ownershipBuffer = Buffer.alloc(this.maxAddress);
     }
 
     isEmpty()
@@ -34,6 +36,21 @@ module.exports = class Core {
 
     peek(address) {
         return this.#getValueAtAddress(address, true);
+    }
+
+    getLastWriterOfAdddress(address)
+    {
+        const ownerId = this.#ownershipBuffer[this.#getSafeAddress(address)];
+        
+        for(let k in this.#pointerGroups)
+        {
+            if (this.#pointerGroups[k].programId == ownerId)
+            {
+                return ownerId;
+            }
+        }
+
+        return 0; // Owner is dead or does not exist no more
     }
 
     get programCount() {
@@ -56,6 +73,7 @@ module.exports = class Core {
         return programPointer.pointers;
     }
 
+    // return false if it needs to run again, otherwise returns an object
     advance() {
         const programPointer = this.#pointerGroups[this.#turnOfProgram];
 
@@ -106,6 +124,16 @@ module.exports = class Core {
         return false;
     }
 
+    installProgram(program, position){
+        // Place program
+        program.instructions.copy(this.#memoryBuffer, position);
+        const placedProgram = { start: position, end: position + program.instructions.length };
+
+        // Programs are placed, let's initialize pointers
+        this.#pointerGroups.push(new ProgramPointer(program.programId, placedProgram.start / 4));
+        this.#programs.push(placedProgram);
+    }
+
     installPrograms(programsToPlace) {
         const placedPrograms = [];
 
@@ -134,7 +162,7 @@ module.exports = class Core {
 
         // Programs are placed, let's initialize pointers
         for (i in programsToPlace) {
-            this.#pointerGroups.push(new ProgramPointer(placedPrograms[i].start / 4));
+            this.#pointerGroups.push(new ProgramPointer(placedPrograms[i].programId, placedPrograms[i].start / 4));
             this.#programs.push(programsToPlace[i]);
         }
     }
@@ -191,6 +219,17 @@ module.exports = class Core {
 
     #killPointer(programPointer) {
         programPointer.pointers.splice(programPointer.nextPointerToExecute, 1);
+
+        if (programPointer.isDead == 0 && this.#rules.clearOwnershipOnDeath)
+        {
+            for(let i = 0; i < this.maxAddress; i++)
+            {
+                if (this.#ownershipBuffer[i] == programPointer.programId)
+                {
+                    this.#ownershipBuffer[i] = 0;
+                }
+            }
+        }
     }
 
     #executePointerGroup(programPointer) {
@@ -235,7 +274,7 @@ module.exports = class Core {
                         );
 
                         this.#markSectorRead(whereTo);
-                        this.#markSectorWritten(whereTo);
+                        this.#markSectorWritten(whereTo, programPointer.programId);
 
                         break;
                     }
@@ -277,7 +316,7 @@ module.exports = class Core {
                             whereTo
                         );
 
-                        this.#markSectorWritten(whereTo);
+                        this.#markSectorWritten(whereTo, programPointer.programId);
 
                         break;
                     }
@@ -304,11 +343,11 @@ module.exports = class Core {
                         );
 
                         this.#markSectorRead(origin);
-                        this.#markSectorWritten(destination);
+                        this.#markSectorWritten(destination, programPointer.programId);
 
                         if (op == parser.OPERATIONS.MOVE) {
                             this.#setValueAtAddress(0, origin);
-                            this.#markSectorWritten(origin);
+                            this.#markSectorWritten(origin, programPointer.programId);
                         }
 
                         break;
@@ -339,8 +378,13 @@ module.exports = class Core {
         }
     }
 
-    #markSectorWritten(address) {
-        this.#writeBuffer[this.#getSafeAddress(address)]++;
+    #markSectorWritten(address, byProgram) {
+        const addr = this.#getSafeAddress(address);
+        this.#writeBuffer[addr]++;
+        if (byProgram !== false)
+        {
+            this.#ownershipBuffer[addr] = byProgram;
+        }
     }
 
     #markSectorRead(address) {

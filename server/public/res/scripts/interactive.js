@@ -1,6 +1,7 @@
-
 const LINE_COUNT = 32;
 
+let socket = null;
+let programNameInput;
 const inputs = [];
 const inputDisplays = [];
 let ready = false;
@@ -18,19 +19,23 @@ const trainingCoreCells = [];
 
 window.onload = function () {
     createEditor();
-    createTrainingCoreDisplay(32);
+    bindButtons();
+    createTrainingCoreDisplay(3, 32);
 
     explanationsWindow = document.getElementById("explanations");
 
     ready = true;
 
     fetch("server/test_program.kcp")
-    .then((res) => res.text())
-    .then((text) => {
-        // do something with "text"
-        loadProgram(text);
-    })
-    .catch((e) => console.error(e));
+        .then((res) => res.text())
+        .then((text) => {
+            // do something with "text"
+            programNameInput.value = "test_program";
+            loadProgram(text);
+        })
+        .catch((e) => console.error(e));
+
+    initializeSocket();
 }
 
 function loadProgram(str) {
@@ -48,64 +53,112 @@ function loadProgram(str) {
     inputs[0].focus();
 }
 
-function createTrainingCoreDisplay(size)
-{
-    const parent = document.getElementById("core-training");
-    parent.innerHTML = "";
+function createTrainingCoreDisplay(columns, size) {
+    if (trainingCoreCells.length != columns * size) {
+        trainingCoreCells.length = 0;
+        const parent = document.getElementById("core-training");
+        parent.innerHTML = "";
 
-    const width = 3;
-    const height = size;
-    trainingCoreCells.length = 0;
+        const height = size;
+        trainingCoreCells.length = 0;
 
-    for (let x = 0; x < width; x++) {
+        for (let x = 0; x < columns; x++) {
 
-        const row = document.createElement("div");
-        row.className = "row";
-        for (let y = 0; y < height; y++) {
+            const row = document.createElement("div");
+            row.className = "row";
+            for (let y = 0; y < height; y++) {
 
-            const memoryAddress =
-                x * height
-                + y;
+                const memoryAddress =
+                    x * height
+                    + y;
 
-            const cell = document.createElement("div");
-            cell.className = "cell";
+                const cell = document.createElement("div");
+                cell.className = "cell";
 
-            if (x == Math.floor(width/2))
-            {
-                if (y == Math.floor(height/2))
-                {
-                    cell.textContent = "[ CORE ]"
+                if (x == Math.floor(columns / 2)) {
+                    if (y == Math.floor(height / 2)) {
+                        cell.textContent = "[ CORE ]"
+                    }
+                    else if (y == Math.floor(height / 2) + 1) {
+                        cell.textContent = "[ IDLE ]"
+                    }
                 }
-                else if (y == Math.floor(height/2) +1 )
-                {
-                    cell.textContent = "[ IDLE ]"
+
+
+                if (cell.textContent.length == 0) {
+                    cell.className += " idle";
+                    cell.textContent = "--------";
                 }
-            }
-            
-            
-            if (cell.textContent.length == 0)
-            {
-                cell.className += " idle";
-                cell.textContent = "--------";
+
+                trainingCoreCells[memoryAddress] = cell;
+
+                row.appendChild(cell);
             }
 
-            trainingCoreCells[memoryAddress] = cell;
-
-            row.appendChild(cell);
+            parent.appendChild(row);
         }
-
-        parent.appendChild(row);
     }
 }
 
+function updateTrainingCoreDisplay(buff)
+{
+    if (buff.length != trainingCoreCells.length)
+    {
+        console.log("Unexpected buffer length, got %d instea of %d", buff.length, trainingCoreCells.length);
+    }
+
+    for (let i = 0; i < buff.length; i++)
+    {
+        let txt = "--------";
+        const op = buff[i] & 15;
+        if (op >= 0 && buff[i] && op <= MAX_OP)
+        {
+            txt = Object.keys(OPERATIONS)[op];
+            trainingCoreCells[i].style.color = "white";
+        }
+        else
+        {
+            trainingCoreCells[i].style.color = "gray";
+        }
+
+        const owner = (buff[i] >> 4) & 15;
+
+        trainingCoreCells[i].textContent = txt;
+        trainingCoreCells[i].style.backgroundColor = owner == 0 ? "" : "red";
+    }
+}
+
+function bindButtons() {
+
+    const trainingButton = document.getElementById("run-training-program");
+    trainingButton.onclick = function () {
+        if (socket) {
+            socket.emit("testProgram", programNameInput.value, getProgramString(), 1);
+        }
+    };
+}
+
+function getProgramString() {
+    let program = "";
+    for (let i = 0; i < LINE_COUNT; i++) {
+        const input = document.getElementById(`input-${i}`);
+        program += input.value.substring(0, 64) + "\n"; // Limit to 64 characters
+    }
+
+    return program;
+}
+
 function createEditor() {
+
+    programNameInput = document.getElementById("program-name");
+
     const parentColumn = document.getElementById("editor-column");
     parentColumn.innerHTML = "";
 
     for (let i = 0; i < LINE_COUNT; i++) {
         const row = document.createElement("div");
         row.className = "row";
-      
+
         const addr = document.createElement("div");
         addr.id = `address-${i}`;
         addr.textContent = i.toString().padStart(8, '0');
@@ -131,7 +184,7 @@ function createEditor() {
 
         row.appendChild(addr);
         row.appendChild(inputWrapper);
-        
+
         parentColumn.appendChild(row);
     }
 }
@@ -142,17 +195,17 @@ function onKeyPress(e) {
     }
 
     switch (e.key) {
-    case "ArrowDown":
-        focusNext(1);
-        break;
+        case "ArrowDown":
+            focusNext(1);
+            break;
 
-    case "ArrowUp":
-        focusNext(-1);
-        break;
+        case "ArrowUp":
+            focusNext(-1);
+            break;
 
-    default:
-        refreshSelectedLine();
-        break;
+        default:
+            refreshSelectedLine();
+            break;
     }
 }
 
@@ -181,7 +234,7 @@ function focusNext(offset) {
     }
 
     const input = inputs[nextinputIndex];
-    input.setSelectionRange(0,0);
+    input.setSelectionRange(0, 0);
     input.focus();
 }
 
@@ -190,7 +243,7 @@ function refreshSelectedLine() {
     const currInputIndex = inputs.indexOf(currInput);
 
     if (currInputIndex >= 0) {
-      
+
         refreshCodeLines();
         refreshSyntaxDetectionOnLine(currInputIndex);
         refreshInputForSelection(currInputIndex);
@@ -223,18 +276,16 @@ function refreshTargetedLines() {
             }
 
             for (let i = 0; i < targetedLines.length; i++) {
-              if (targetedLines[i] === null)
-              {
-                continue;
-              }
-              
+                if (targetedLines[i] === null) {
+                    continue;
+                }
+
                 const targetedLine = currentCodeLine + targetedLines[i];
                 const inputIndex = reverseCodeLinesMap[targetedLine];
-                
-                if (inputIndex != undefined)
-                {
-                  const input = document.getElementById(`input-${inputIndex}`);
-                  input.className += ` target-${i}`;
+
+                if (inputIndex != undefined) {
+                    const input = document.getElementById(`input-${inputIndex}`);
+                    input.className += ` target-${i}`;
                 }
             }
         }
@@ -331,15 +382,14 @@ function showParserResult(parseResult, index) {
                     explanationsWindow.innerHTML = "<p>This line is a comment and will not be executed.<br>It serves as documentation for you and whoever might read this program.</p>";
                     display.innerHTML = `<span class='comment'>${val.value}</span>`;
                 } else {
-                  
+
                     for (let argIndex in token.arguments) {
                         const a = token.arguments[argIndex];
                         if (a.isReference || a.depth > 0) {
                             targetedLines.push(a.value);
                         }
-                        else
-                        {
-                          targetedLines.push(null);
+                        else {
+                            targetedLines.push(null);
                         }
                     }
 
@@ -354,35 +404,40 @@ function showParserResult(parseResult, index) {
     }
 }
 
-function getHTMLForToken(token)
-{
-  const elems = [];
-  elems.push(`<span class="operator">${token.operatorText}</span>`);
-  
-  if (token.arguments && token.arguments.length > 0)
-  {
-    if (token.arguments[0].text)
-    {
-      elems.push(`<span class="argument-0">${token.arguments[0].text}</span>`);
+function getHTMLForToken(token) {
+    const elems = [];
+    elems.push(`<span class="operator">${token.operatorText}</span>`);
+
+    if (token.arguments && token.arguments.length > 0) {
+        if (token.arguments[0].text) {
+            elems.push(`<span class="argument-0">${token.arguments[0].text}</span>`);
+        }
+
+        if (token.arguments.length > 1) {
+            if (token.linkText) {
+                elems.push(`<span class="link">${token.linkText}</span>`);
+            }
+
+            elems.push(`<span class="argument-1">${token.arguments[1].text}</span>`);
+        }
     }
-    
-    if (token.arguments.length > 1)
-    {
-      if (token.linkText)
-      {
-        elems.push(`<span class="link">${token.linkText}</span>`);
-      }
-      
-      elems.push(`<span class="argument-1">${token.arguments[1].text}</span>`);
-    }
-  }
-  
-  return elems.join(' ');
+
+    return elems.join(' ');
 }
 
-function fixSpacesInStatement(str)
-{
-  str = str.replace(/ +/g, ' ').trimStart();
+function fixSpacesInStatement(str) {
+    str = str.replace(/ +/g, ' ').trimStart();
 
-  return str;  
+    return str;
+}
+
+function initializeSocket() {
+    socket = io("ws://localhost:1234", {
+        reconnectionDelayMax: 10000
+    });
+
+    socket.on("testCore", function (columnCount, columnSize, data) {
+        createTrainingCoreDisplay(columnCount, columnSize);
+        updateTrainingCoreDisplay(new Uint8Array(data));
+    });
 }

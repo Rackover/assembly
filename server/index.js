@@ -101,7 +101,8 @@ async function run() {
         }
     }
     else {
-        console.log("nothing to do");
+        console.log("starting express");
+        require('./server');
     }
 }
 

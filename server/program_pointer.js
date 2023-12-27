@@ -2,9 +2,11 @@ module.exports = class ProgramPointer
 {
     nextPointerToExecute = 0;
     pointers = [];
+    programId = 0;
 
-    constructor (startAddress)
+    constructor (programId, startAddress)
     {
+        this.programId = programId;
         this.pointers.push(startAddress);
     }
 

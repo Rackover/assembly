@@ -16,6 +16,8 @@ const OPERATIONS =
     SKIP_IF_EQUAL: 0x7,
 }
 
+const MAX_OP = Object.keys(OPERATIONS).length;
+
 const STATEMENT_PARSERS = {
     write: parseWrite,
     add: parseAdd,
@@ -64,6 +66,7 @@ const REFERENCE_INDICATORS = [
     "*"
 ];
 
+module.exports.MAX_OP = MAX_OP;
 module.exports.OPERATIONS = OPERATIONS;
 module.exports.tokenize = tokenize;
 

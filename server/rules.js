@@ -12,5 +12,7 @@ module.exports = class Rules
 
     fillWithBystanders = false;
 
+    clearOwnershipOnDeath = true;
+
     runForever = false;
 }
