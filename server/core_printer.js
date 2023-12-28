@@ -15,7 +15,7 @@ function printCoreExtended(core) {
 
     const pointers = [];
     for (let i = 0; i < core.programCount; i++) {
-        const ptrs = core.getProgramPointers(i);
+        const ptrs = core.getProgramPointers(i).pointers;
         for (let j = 0; j < ptrs.length; j++) {
             pointers.push(ptrs[j]);
             break; // for now
@@ -87,7 +87,7 @@ function printCoreMinimal(core) {
 
     const pointers = [];
     for (let i = 0; i < core.programCount; i++) {
-        const ptrs = core.getProgramPointers(i);
+        const ptrs = core.getProgramPointers(i).pointers;
         for (let j = 0; j < ptrs.length; j++) {
             pointers.push(ptrs[j]);
             break; // for now

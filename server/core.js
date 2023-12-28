@@ -29,8 +29,7 @@ module.exports = class Core {
         this.#ownershipBuffer = Buffer.alloc(this.maxAddress);
     }
 
-    isEmpty()
-    {
+    isEmpty() {
         return this.#programs.length() == 0;
     }
 
@@ -38,15 +37,14 @@ module.exports = class Core {
         return this.#getValueAtAddress(address, true);
     }
 
-    getLastWriterOfAdddress(address)
-    {
+    getLastWriterOfAdddress(address) {
         const ownerId = this.#ownershipBuffer[this.#getSafeAddress(address)];
-        
-        for(let k in this.#pointerGroups)
-        {
-            if (this.#pointerGroups[k].programId == ownerId)
-            {
-                return ownerId;
+
+        if (ownerId != 0) {
+            for (let k in this.#pointerGroups) {
+                if (this.#pointerGroups[k].programId == ownerId) {
+                    return ownerId;
+                }
             }
         }
 
@@ -70,7 +68,7 @@ module.exports = class Core {
 
     getProgramPointers(programIndex) {
         const programPointer = this.#pointerGroups[programIndex];
-        return programPointer.pointers;
+        return programPointer;
     }
 
     // return false if it needs to run again, otherwise returns an object
@@ -80,14 +78,12 @@ module.exports = class Core {
         this.#executePointerGroup(programPointer);
 
         if (programPointer.isDead) {
-            
-            if (this.#rules.runForever)
-            {
+
+            if (this.#rules.runForever) {
                 this.#programs.splice(this.#turnOfProgram, 1);
                 this.#pointerGroups.splice(this.#turnOfProgram, 1);
             }
-            else
-            {
+            else {
                 let winnerIndex = -1;
                 let atLeastOneProgramAlive = false
                 for (const programIndex in this.#pointerGroups) {
@@ -109,9 +105,8 @@ module.exports = class Core {
                     return { winner: this.#programs[winnerIndex], winnerIndex: winnerIndex };
                 }
 
-                if (!atLeastOneProgramAlive)
-                {
-                    return {winner: false};
+                if (!atLeastOneProgramAlive) {
+                    return { winner: false };
                 }
             }
         }
@@ -124,13 +119,13 @@ module.exports = class Core {
         return false;
     }
 
-    installProgram(program, position){
+    installProgram(program, position) {
         // Place program
         program.instructions.copy(this.#memoryBuffer, position);
         const placedProgram = { start: position, end: position + program.instructions.length };
 
         // Programs are placed, let's initialize pointers
-        this.#pointerGroups.push(new ProgramPointer(program.programId, placedProgram.start / 4));
+        this.#pointerGroups.push(new ProgramPointer(program.id, placedProgram.start / 4));
         this.#programs.push(placedProgram);
     }
 
@@ -141,7 +136,7 @@ module.exports = class Core {
             let program = programsToPlace[i];
 
             while (true) {
-                let randomByteOffset = Math.floor(Math.random() * (this.maxAddress - program.instructions.length/4)) * 4;
+                let randomByteOffset = Math.floor(Math.random() * (this.maxAddress - program.instructions.length / 4)) * 4;
                 let areaIsFree = true;
                 for (let j in placedPrograms) {
                     if (randomByteOffset > placedPrograms[j].start && randomByteOffset <= placedPrograms[j].end) {
@@ -220,12 +215,9 @@ module.exports = class Core {
     #killPointer(programPointer) {
         programPointer.pointers.splice(programPointer.nextPointerToExecute, 1);
 
-        if (programPointer.isDead == 0 && this.#rules.clearOwnershipOnDeath)
-        {
-            for(let i = 0; i < this.maxAddress; i++)
-            {
-                if (this.#ownershipBuffer[i] == programPointer.programId)
-                {
+        if (programPointer.isDead == 0 && this.#rules.clearOwnershipOnDeath) {
+            for (let i = 0; i < this.maxAddress; i++) {
+                if (this.#ownershipBuffer[i] == programPointer.programId) {
                     this.#ownershipBuffer[i] = 0;
                 }
             }
@@ -374,15 +366,14 @@ module.exports = class Core {
                 memoryPosition++;
             }
 
-            programPointer.pointers[programPointer.nextPointerToExecute] = memoryPosition;
+            programPointer.pointers[programPointer.nextPointerToExecute] = this.#getSafeAddress(memoryPosition);
         }
     }
 
     #markSectorWritten(address, byProgram) {
         const addr = this.#getSafeAddress(address);
         this.#writeBuffer[addr]++;
-        if (byProgram !== false)
-        {
+        if (byProgram !== false) {
             this.#ownershipBuffer[addr] = byProgram;
         }
     }

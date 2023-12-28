@@ -18,6 +18,7 @@ module.exports = class{
 
     #lastFrameTime = false;
     #buff = false;
+    #flagsBuff = false;
     
     constructor(socket)
     {
@@ -27,6 +28,7 @@ module.exports = class{
 
         socket.on("setSpeed", (function(speedInt){
             this.#testCoreSpeed = speedInt;
+            console.log("Core speed is now %d", this.#testCoreSpeed);
         }).bind(this));
 
         socket.on("testProgram", (function(programName, programString, speed)
@@ -40,7 +42,7 @@ module.exports = class{
             {
                 this.#testCore = core;
                 this.#sendTestCore();
-                this.#interval = setInterval(this.#frame.bind(this), SPEEDS_MS[0]); // Tick as fast as we may
+                this.#interval = setInterval(this.#frame.bind(this), SPEEDS_MS[SPEEDS_MS.length-1]); // Tick as fast as we may
                 this.#testCoreSpeed = speed;
             }
         }).bind(this));
@@ -87,13 +89,29 @@ module.exports = class{
     {
         if (!this.#buff)
         {
-            this.#buff = this.#testCore.dump();
+            this.#buff = this.#testCore.dumpCore();
         }
         else
         {
-            this.#testCore.dumpToBuffer(this.#buff);
+            this.#testCore.dumpCoreToBuffer(this.#buff);
         }
 
-        this.#socket.emit("testCore", this.#testCore.columnCount, this.#testCore.columnSize, this.#buff);
+        if (!this.#flagsBuff)
+        {
+            this.#flagsBuff = this.#testCore.dumpFlags();
+        }
+        else
+        {
+            this.#testCore.dumpFlagsToBuffer(this.#flagsBuff);
+        }
+
+
+        this.#socket.emit("testCore", {
+            columnCount: this.#testCore.columnCount, 
+            columnSize: this.#testCore.columnSize, 
+            data: this.#buff,
+            flags: this.#flagsBuff,
+            nextAddress: this.#testCore.nextAddressToExecute
+        });
     }
 }

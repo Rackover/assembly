@@ -7,6 +7,8 @@ const inputDisplays = [];
 let ready = false;
 let explanationsWindow;
 
+let requestedSpeed = 2;
+
 // parse results
 const targetedLines = [];
 
@@ -31,7 +33,7 @@ window.onload = function () {
         .then((text) => {
             // do something with "text"
             programNameInput.value = "test_program";
-            loadProgram(text);
+            // loadProgram(text);
         })
         .catch((e) => console.error(e));
 
@@ -100,31 +102,53 @@ function createTrainingCoreDisplay(columns, size) {
     }
 }
 
-function updateTrainingCoreDisplay(buff)
-{
-    if (buff.length != trainingCoreCells.length)
-    {
+function updateTrainingCoreDisplay(obj) {
+    const buff = obj.data; //Int32Array
+    const flags = obj.flags;
+    const nextAddress = obj.nextAddress;
+
+    const lineLength = 8;
+
+    if (buff.length != trainingCoreCells.length) {
         console.log("Unexpected buffer length, got %d instea of %d", buff.length, trainingCoreCells.length);
     }
 
-    for (let i = 0; i < buff.length; i++)
-    {
+    for (let i = 0; i < buff.length; i++) {
         let txt = "--------";
-        const op = buff[i] & 15;
-        if (op >= 0 && buff[i] && op <= MAX_OP)
-        {
-            txt = Object.keys(OPERATIONS)[op];
-            trainingCoreCells[i].style.color = "white";
+        const value = buff[i];
+        const op = (value >> module.exports.OPERATION_SHIFT) & module.exports.OPERATION_MASK;
+             
+        if (op > 0) {
+            const operation = Object.keys(module.exports.OPERATIONS)[op];
+            if (operation) {
+                txt = operation.toUpperCase().substring(0, lineLength).padEnd(lineLength);
+            }
+            else{
+                txt = `? unk ${op}`.padEnd(lineLength).substring(0, lineLength);
+            }
         }
-        else
-        {
-            trainingCoreCells[i].style.color = "gray";
+        else {
+
+            txt = value.toString().padStart(lineLength, '0');
+
+            if (value == 0) {
+                trainingCoreCells[i].style.color = "gray";
+            }
+            else {
+                trainingCoreCells[i].style.color = "white";
+            }
         }
 
-        const owner = (buff[i] >> 4) & 15;
+        const owner = flags[i];
+        if (owner != 0)
+        {
+            console.log(owner);
+        }
 
         trainingCoreCells[i].textContent = txt;
-        trainingCoreCells[i].style.backgroundColor = owner == 0 ? "" : "red";
+
+        trainingCoreCells[i].style.backgroundColor = owner == 0 ? "" : "darkred";
+        trainingCoreCells[i].style.backgroundColor = nextAddress == i ? "orange" : trainingCoreCells[i].style.backgroundColor ;
     }
 }
 
@@ -136,6 +160,31 @@ function bindButtons() {
             socket.emit("testProgram", programNameInput.value, getProgramString(), 1);
         }
     };
+
+    const killTestCoreButton = document.getElementById("kill-test-core");
+    killTestCoreButton.onclick = function(){
+        if (socket) {
+            socket.emit("stopTestingProgram");
+        }
+    };
+    
+    const speedUpButton = document.getElementById("speed-up");
+    speedUpButton.onclick = function(){
+        if (socket) {
+            requestedSpeed = Math.max(0, Math.min(++requestedSpeed, 5));
+            socket.emit("setSpeed", requestedSpeed);
+        }
+    };
+
+    const speedDownButton = document.getElementById("speed-down");
+    speedDownButton.onclick = function(){
+        if (socket) {
+            requestedSpeed = Math.max(0, Math.min(--requestedSpeed, 5));
+            socket.emit("setSpeed", requestedSpeed);
+        }
+    };
+
+
 }
 
 function getProgramString() {
@@ -436,8 +485,14 @@ function initializeSocket() {
         reconnectionDelayMax: 10000
     });
 
-    socket.on("testCore", function (columnCount, columnSize, data) {
-        createTrainingCoreDisplay(columnCount, columnSize);
-        updateTrainingCoreDisplay(new Uint8Array(data));
+    socket.on("testCore", function (obj) {
+        createTrainingCoreDisplay(obj.columnCount, obj.columnSize);
+        updateTrainingCoreDisplay(
+            {
+                data: new Int32Array(obj.data, 0, obj.columnCount * obj.columnSize),
+                flags: new Uint8Array(obj.flags),
+                nextAddress: obj.nextAddress
+            }
+        );
     });
 }

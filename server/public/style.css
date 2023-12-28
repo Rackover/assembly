@@ -132,6 +132,17 @@ button:active
 	font-size:inherit;
 }
 
+#core-container .button-container.horizontal button
+{
+	width: auto;
+}
+
+#core-container .button-container.horizontal
+{
+	display:flex;
+	flex-direction:row;
+}
+
 #address-column{
     border-right: 2px groove grey;
 }

@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/index.js",
-            "args": ["test_program.kcp", "--interactive", "--display"],
+            "args": [],
             "console": "integratedTerminal"
         }
     ]
