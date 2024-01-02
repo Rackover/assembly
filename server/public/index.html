@@ -7,20 +7,32 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <LINK href="style.css?version=100" rel="stylesheet" type="text/css">
-    <link rel="icon" href="res/img/favicon.png" />
-    <title>KILLCORE</title>
+    <LINK href="style.css?version=1010" rel="stylesheet" type="text/css">
+    <link rel="icon" href="res/favicon/97.ico" />
+    <title>BOOTCLUB</title>
 
     <script src="res/scripts/plugins/socket.io.js"></script>
 
-    <script text="text/javascript">const module = { exports: {} };</script>
-    <script type="text/javascript" src="server/parser.js?v=100"></script>
-    <script type="text/javascript" src="server/compiler.js?v=100"></script>
-    <script type="text/javascript" src="res/scripts/language-tree.js?version=100"></script>
-    <script type="text/javascript" src="res/scripts/interactive.js?version=100"></script>
+    <script text="text/javascript">
+        const module = { exports: {} };
+        const interactive = {};
+        const globalCore = {};
 
-    <!-- <meta property="og:title" content="ADVNTURE [2]">
-        <meta property="og:description" content="Take part in the greatest of adventures: <br>Yours.">
+        window.onload = function () {
+            interactive.onWindowLoad();
+            globalCore.onWindowLoad();
+        };
+    </script>
+    <script type="text/javascript" src="server/parser.js?v=1020"></script>
+    <script type="text/javascript" src="server/compiler.js?v=1002"></script>
+    <script type="text/javascript" src="res/scripts/server-communication.js"></script>
+    <script type="text/javascript" src="res/scripts/sound.js"></script>
+    <script type="text/javascript" src="res/scripts/global-core.js?version=13"></script>
+    <script type="text/javascript" src="res/scripts/language-tree.js?version=1010"></script>
+    <script type="text/javascript" src="res/scripts/interactive.js?version=10140"></script>
+
+    <meta property="og:title" content="BOOTCLUB">
+        <!-- <meta property="og:description" content="Take part in the greatest of adventures: <br>Yours.">
         <meta name="Description" content="Take part in the greatest of adventures: <br>Yours.<br>ADVNTURE is a game of free exploration and creation.<br>It has no restriction and is only made of what you, and other players, decide to pour into it.">
         <meta property="og:image" content="/res/img/metapreview.jpg">
         <meta name="google-site-verification" content="gT6MZWxw3_4XOJVslimPR2nWE8U3hLy-WDvtpW8sPTI" />
@@ -38,23 +50,34 @@
         <div id="title">
             <h1>
                 <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;"
-                        href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>KILLCORE</b>
+                        href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>BOOTCLUB</b> V0.9.0
             </h1>
         </div>
-        <div class="terminal" id="code-editor">
+        <div class="terminal" id="code-editor" style="display:none">
             <div id="explanations-window">
                 <h1>HELP</h1>
                 <div id="explanations"></div>
-                <button>ACCESS CORE</button>
+                <div class="button-container">
+                    <button id="access-core">&lt;&lt; ACCESS CORE</button>
+                </div>
             </div>
             <div id="editor-container" class="column">
                 <h1>CODE</h1>
 
-                <input id="program-name" class="editor-line" />
+                <div class="editor-line" style="height:32px;position:inherit">
+                    <div class="row">
+                        <div>PROGRAM:</div>
+                        <input id="program-name" />
+                    </div>
+                </div>
+
                 <div id="editor-column">
                     <!-- leave empty-->
                 </div>
                 <div class="button-container">
+                    <button id="clear-program">CLEAR X</button>
+                    <button id="load-program">LOAD ⏏</button>
+                    <button id="save-program">SAVE V</button>
                     <button id="run-training-program">TEST PROGRAM &gt;&gt;</button>
                 </div>
             </div>
@@ -63,10 +86,41 @@
                 <div id="core-training" class="core">
                 </div>
                 <div class="button-container horizontal">
-                    <button id="kill-test-core">&lt;&lt; KILL TEST CORE</button>
-                    <button id="speed-down">SPEED--</button>
-                    <button id="speed-up">SPEED++</button>
+                    <button id="kill-test-core">&lt;&lt; KILL</button>
+                    <div class="speed-buttons">
+                        <button id="speed-up">SPEED++</button>
+                        <button id="speed-down">SPEED--</button>
+                    </div>
+                    <button id="send-to-core">SEND TO CORE &gt;&gt;</button>
                 </div>
+            </div>
+        </div>
+        <div class="terminal" id="global-core" style="display:none">
+            <h1>GLOBAL CORE</h1>
+            <div id="global-core-container">
+                <div id="global-core-grid-container">
+
+                </div>
+                <div id="scoreboard">
+                    ACTIVE PROGRAMS:
+                    <div id="scoreboard-entries">
+                        <div>1. Tron (32 hits)</div>
+                        <div>2. Word (21 hits)</div>
+                        <div>2. Advanced Core Killer v4 (21 hits)</div>
+                    </div>
+                    <button id="create-program-button">CREATE PROGRAM &gt;&gt;</button>
+                </div>
+            </div>
+        </div>
+        <div style="position:absolute; bottom:0; padding:40px; right:0; left:0; display:flex; flex-direction: row; justify-content: space-between; margin-top:5px;">
+            <div style="text-align:left; min-width:100px;">
+                Join the <a style="color:white;" target="_blank" href="https://discord.gg/WQWZBN3">DISCORD</a>!
+            </div>
+            <div style="text-align:center; min-width:100px;">
+                Inspired by Jones & Dewdney's <a href="https://en.wikipedia.org/wiki/Core_War" target="_blank" style="color:white">Core War</a>
+            </div>
+            <div style="text-align:right; min-width:100px;">
+
             </div>
         </div>
     </div>

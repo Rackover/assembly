@@ -27,11 +27,10 @@ module.exports.OPERAND_B_SHIFT= OPERAND_B_SHIFT;
 
 module.exports.MAX_ADDRESSING= MAX_ADDRESSING;
 
-module.exports.compile= compile;
-module.exports.getSigned12BitsValue= getSigned12BitsValue;
+module.exports.compile = compile;
+module.exports.getSigned12BitsValue = getSigned12BitsValue;
 
 
-// Returns a (bool, buffer)
 function compile(tokenList) {
     const instructions = [];
     for (i in tokenList) {

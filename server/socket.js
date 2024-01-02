@@ -7,9 +7,10 @@ const httpServer = createServer();
 const io = new Server(httpServer, {
   // options
   cors: {
-    origin: "http://localhost:1234",
+    origin: "http://rx.louve.systems:4051",
     methods: ["GET", "POST"]
-  }
+  },
+  // transports: ['websocket', 'polling', 'flashsocket'] 
 });
 
 io.on("connection", (socket) => {
@@ -25,7 +26,7 @@ module.exports =
     },
     start: function()
     {
-        console.log("socket.io bound on port 1234")
-        httpServer.listen(1234);
+        console.log("socket.io bound on port 4050")
+        httpServer.listen(4050);
     }
 }

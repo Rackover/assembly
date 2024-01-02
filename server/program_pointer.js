@@ -1,4 +1,4 @@
-module.exports = class ProgramPointer {
+module.exports.ProgramPointer = class ProgramPointer {
     nextPointerToExecute = 0;
     pointers = [];
     programId = 0;

@@ -1,7 +1,7 @@
 const parser = require('./parser');
 const compiler = require('./compiler');
-const Rules = require('./rules');
-const Core = require('./core');
+const { Rules } = require('./rules');
+const { Core } = require('./core');
 
 module.exports = class {
     get EState() {
@@ -16,6 +16,11 @@ module.exports = class {
 
     #program;
     #core;
+    #haltReason;
+
+    get haltReason() {
+        return this.#haltReason;
+    }
 
     get columnSize() {
         return this.#core.columnSize;
@@ -29,7 +34,7 @@ module.exports = class {
         const tokens = parser.tokenize(programString);
 
         if (tokens.anyError) {
-            state = this.EState.INVALID;
+            this.state = this.EState.INVALID;
         }
         else {
             const compiled = compiler.compile(tokens.tokens);
@@ -46,7 +51,7 @@ module.exports = class {
 
             const core = new Core(rules);
 
-            core.installProgram(this.#program, core.columnSize * (core.columnCount / 2));
+            core.installProgram(this.#program, 0);
             this.#core = core;
 
             this.state = this.EState.RUNNING;
@@ -54,12 +59,11 @@ module.exports = class {
     }
 
     advance() {
-        console.log("Advancing test core");
         const finished = this.#core.advance();
 
         if (finished) {
             this.state = this.EState.HALTED;
-            console.log("Halted test core");
+            this.#haltReason = this.#core.lastKillReason;
         }
     }
 
@@ -69,10 +73,18 @@ module.exports = class {
     }
 
     dumpCoreToBuffer(buff) {
+        let delta = {};
+
         for (let i = 0; i < this.#core.maxAddress; i++) {
             const value = this.#core.peek(i);
-            buff.writeInt32LE(value, i * 4);
+
+            if (buff.readInt32LE(i * 4) != value) {
+                buff.writeInt32LE(value, i * 4);
+                delta[i] = value;
+            }
         }
+
+        return delta;
     }
 
     dumpCore() {
@@ -83,9 +95,17 @@ module.exports = class {
     }
 
     dumpFlagsToBuffer(buff) {
+        let delta = {};
+
         for (let i = 0; i < this.#core.maxAddress; i++) {
-            buff[i] |= (this.#core.getLastWriterOfAdddress(i) != 0); // Owner shift
+            const b = (this.#core.getLastWriterOfAdddress(i) != 0);
+            if (b != buff[i]) {
+                buff[i] |= b; // Owner shift
+                delta[i] = b;
+            }
         }
+
+        return delta;
     }
 
     dumpFlags() {

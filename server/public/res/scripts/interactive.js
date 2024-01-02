@@ -1,6 +1,6 @@
-const LINE_COUNT = 32;
+const LINE_COUNT = 31;
+const TRAINING_CORE_REQUIRED_LIFESPAN = 30;
 
-let socket = null;
 let programNameInput;
 const inputs = [];
 const inputDisplays = [];
@@ -14,48 +14,62 @@ const targetedLines = [];
 
 const codeLineIndices = {};
 const trimmedLines = {};
-//
+
+// buttons
+const editorButtons = {};
 
 // training core
 const trainingCoreCells = [];
+let lastTrainingBuffer;
+let lastTrainingFlagsBuffer;
+let trainingCoreIsRunning = false;
+let trainedForCycles = 0;
 
-window.onload = function () {
-    createEditor();
-    bindButtons();
-    createTrainingCoreDisplay(3, 32);
+let programIsEmpty = true;
+
+interactive.onWindowLoad = function () {
+    interactive.createEditor();
+    interactive.bindButtons();
+    interactive.createTrainingCoreDisplay(3, 32);
 
     explanationsWindow = document.getElementById("explanations");
 
     ready = true;
 
-    fetch("server/test_program.kcp")
-        .then((res) => res.text())
-        .then((text) => {
-            // do something with "text"
-            programNameInput.value = "test_program";
-            // loadProgram(text);
-        })
-        .catch((e) => console.error(e));
+    // Select first
+    inputs[0].focus();
+    programNameInput.value = "my_program";
 
-    initializeSocket();
+    // fetch("server/test_program.kcp")
+    //     .then((res) => res.text())
+    //     .then((text) => {
+    //         // do something with "text"
+    //         // loadProgram(text);
+    //     })
+    //     .catch((e) => console.error(e));
+
+    interactive.initializeSocket();
 }
 
-function loadProgram(str) {
+interactive.loadProgram = function (name, str) {
     if (!ready) {
         return;
     }
+
+    programNameInput.value = name;
 
     const lines = str.split('\n');
     for (let i = 0; i < LINE_COUNT; i++) {
         const input = document.getElementById(`input-${i}`);
         input.value = lines[i] ? lines[i] : "";
-        refreshSyntaxDetectionOnLine(i);
+        interactive.refreshSyntaxDetectionOnLine(i);
     }
 
     inputs[0].focus();
+    interactive.refreshButtons();
 }
 
-function createTrainingCoreDisplay(columns, size) {
+interactive.createTrainingCoreDisplay = function (columns, size) {
     if (trainingCoreCells.length != columns * size) {
         trainingCoreCells.length = 0;
         const parent = document.getElementById("core-training");
@@ -102,34 +116,54 @@ function createTrainingCoreDisplay(columns, size) {
     }
 }
 
-function updateTrainingCoreDisplay(obj) {
-    const buff = obj.data; //Int32Array
-    const flags = obj.flags;
-    const nextAddress = obj.nextAddress;
+interactive.updateTrainingCoreDisplayFromFullBuffer = function (obj) {
+    lastTrainingBuffer = obj.data;//Int32Array
+    lastTrainingFlagsBuffer = obj.flags;
 
-    const lineLength = 8;
-
-    if (buff.length != trainingCoreCells.length) {
+    if (lastTrainingBuffer.length != trainingCoreCells.length) {
         console.log("Unexpected buffer length, got %d instea of %d", buff.length, trainingCoreCells.length);
     }
+
+    interactive.updateTrainingCoreDisplay(obj.nextAddress);
+}
+
+interactive.updateTrainingCoreDisplayFromDelta = function (obj) {
+    for (let k in obj.delta) {
+        lastTrainingBuffer[k] = obj.delta[k];
+    }
+
+    for (let k in obj.deltaFlags) {
+        lastTrainingFlagsBuffer[k] = obj.deltaFlags[k];
+    }
+
+    interactive.updateTrainingCoreDisplay(obj.nextAddress);
+}
+
+interactive.updateTrainingCoreDisplay = function (nextAddress) {
+    const lineLength = 8;
+
+    const buff = lastTrainingBuffer;
+    const flags = lastTrainingFlagsBuffer;
 
     for (let i = 0; i < buff.length; i++) {
         let txt = "--------";
         const value = buff[i];
         const op = (value >> module.exports.OPERATION_SHIFT) & module.exports.OPERATION_MASK;
-             
+
         if (op > 0) {
             const operation = Object.keys(module.exports.OPERATIONS)[op];
-            if (operation) {
+            if (op == module.exports.OPERATIONS.NOOP) {
+                txt = "--------";
+            }
+            else if (operation) {
                 txt = operation.toUpperCase().substring(0, lineLength).padEnd(lineLength);
             }
-            else{
+            else {
                 txt = `? unk ${op}`.padEnd(lineLength).substring(0, lineLength);
             }
         }
         else {
-
-            txt = value.toString().padStart(lineLength, '0');
+            txt = `DAT.${value.toString().padStart(lineLength - 4, '0')}`;
 
             if (value == 0) {
                 trainingCoreCells[i].style.color = "gray";
@@ -140,64 +174,133 @@ function updateTrainingCoreDisplay(obj) {
         }
 
         const owner = flags[i];
-        if (owner != 0)
-        {
-            console.log(owner);
-        }
-
         trainingCoreCells[i].textContent = txt;
 
         trainingCoreCells[i].style.backgroundColor = owner == 0 ? "" : "darkred";
-        trainingCoreCells[i].style.backgroundColor = nextAddress == i ? "orange" : trainingCoreCells[i].style.backgroundColor ;
+        trainingCoreCells[i].style.backgroundColor = nextAddress == i ? "orange" : trainingCoreCells[i].style.backgroundColor;
     }
 }
 
-function bindButtons() {
+interactive.bindButtons = function () {
 
-    const trainingButton = document.getElementById("run-training-program");
-    trainingButton.onclick = function () {
+    editorButtons.trainingButton = document.getElementById("run-training-program");
+    editorButtons.trainingButton.onclick = function () {
         if (socket) {
-            socket.emit("testProgram", programNameInput.value, getProgramString(), 1);
+            socket.emit("testProgram", programNameInput.value, interactive.getProgramString(), 1);
         }
     };
 
-    const killTestCoreButton = document.getElementById("kill-test-core");
-    killTestCoreButton.onclick = function(){
+    editorButtons.killTestCoreButton = document.getElementById("kill-test-core");
+    editorButtons.killTestCoreButton.onclick = function () {
         if (socket) {
             socket.emit("stopTestingProgram");
         }
     };
-    
-    const speedUpButton = document.getElementById("speed-up");
-    speedUpButton.onclick = function(){
+
+    editorButtons.speedUpButton = document.getElementById("speed-up");
+    editorButtons.speedUpButton.onclick = function () {
         if (socket) {
             requestedSpeed = Math.max(0, Math.min(++requestedSpeed, 5));
             socket.emit("setSpeed", requestedSpeed);
         }
     };
 
-    const speedDownButton = document.getElementById("speed-down");
-    speedDownButton.onclick = function(){
+    editorButtons.speedDownButton = document.getElementById("speed-down");
+    editorButtons.speedDownButton.onclick = function () {
         if (socket) {
             requestedSpeed = Math.max(0, Math.min(--requestedSpeed, 5));
             socket.emit("setSpeed", requestedSpeed);
         }
     };
 
+    editorButtons.saveButton = document.getElementById("save-program");
+    editorButtons.saveButton.onclick = function () {
+        if (ready && !programIsEmpty) {
+            interactive.download(
+                interactive.getProgramString(),
+                `${programNameInput.value.trim().toUpperCase()}.KCP`,
+                'text/killcore-program');
+        }
+    };
+
+    editorButtons.loadButton = document.getElementById("load-program");
+    editorButtons.loadButton.onclick = function () {
+        if (ready) {
+            interactive.upload();
+        }
+    };
+
+    editorButtons.sendToGlobalCoreButton = document.getElementById("send-to-core");
+    editorButtons.sendToGlobalCoreButton.onclick = function () {
+        if (ready) {
+            console.log("uploading program...");
+            socket.emit("uploadProgram", programNameInput.value, interactive.getProgramString());
+        }
+    };
+
+    editorButtons.accessCoreButton = document.getElementById("access-core");
+    editorButtons.accessCoreButton.onclick = function () {
+        if (ready) {
+            document.getElementById("code-editor").style.display = "none";
+            document.getElementById("global-core").style = {};
+        }
+    };
+
+    interactive.refreshButtons();
+}
+
+interactive.refreshEditorButtons = function () {
+    editorButtons.saveButton.disabled = programIsEmpty;
+    editorButtons.trainingButton.disabled = programIsEmpty;
+}
+
+interactive.refreshTrainingCoreButtons = function () {
+    editorButtons.killTestCoreButton.disabled = !trainingCoreIsRunning;
+    editorButtons.speedUpButton.disabled = !trainingCoreIsRunning;
+    editorButtons.speedDownButton.disabled = !trainingCoreIsRunning;
+    editorButtons.sendToGlobalCoreButton.disabled = !trainingCoreIsRunning || trainedForCycles < TRAINING_CORE_REQUIRED_LIFESPAN;
+
+    editorButtons.sendToGlobalCoreButton.textContent = "SEND TO CORE >>";
+
+    // Update send to core button
+    if (trainingCoreIsRunning) {
+        if (trainedForCycles < TRAINING_CORE_REQUIRED_LIFESPAN) {
+            const remaining = TRAINING_CORE_REQUIRED_LIFESPAN - trainedForCycles;
+            editorButtons.sendToGlobalCoreButton.textContent = `${remaining} cycles before approval`;
+        }
+    }
+    else {
+    }
 
 }
 
-function getProgramString() {
+interactive.refreshButtons = function () {
+    interactive.refreshProgramIsEmpty();
+    interactive.refreshTrainingCoreButtons();
+    interactive.refreshEditorButtons();
+}
+
+interactive.refreshProgramIsEmpty = function () {
+    programIsEmpty = true;
+    for (let i = 0; i < LINE_COUNT; i++) {
+        if (inputs[i].value.trim().length > 0) {
+            programIsEmpty = false;
+            break;
+        }
+    }
+}
+
+interactive.getProgramString = function () {
     let program = "";
     for (let i = 0; i < LINE_COUNT; i++) {
-        const input = document.getElementById(`input-${i}`);
+        const input = inputs[i];
         program += input.value.substring(0, 64) + "\n"; // Limit to 64 characters
     }
 
     return program;
 }
 
-function createEditor() {
+interactive.createEditor = function () {
 
     programNameInput = document.getElementById("program-name");
 
@@ -218,9 +321,9 @@ function createEditor() {
         const inputSpan = document.createElement("input");
         inputSpan.type = "text";
         inputSpan.id = `input-${i}`;
-        inputSpan.onkeydown = onKeyPress;
-        inputSpan.oninput = onKeyPress;
-        inputSpan.onfocus = refreshSelectedLine;
+        inputSpan.onkeydown = interactive.onKeyPress;
+        inputSpan.oninput = interactive.onKeyPress;
+        inputSpan.onfocus = interactive.refreshSelectedLine;
 
         const inputDisplay = document.createElement("div");
         inputDisplay.className = "display";
@@ -238,41 +341,86 @@ function createEditor() {
     }
 }
 
-function onKeyPress(e) {
+interactive.onKeyPress = function (e) {
     if (!ready) {
         return;
     }
 
     switch (e.key) {
         case "ArrowDown":
-            focusNext(1);
+        case "Enter":
+            interactive.focusNext(1);
             break;
 
         case "ArrowUp":
-            focusNext(-1);
+            interactive.focusNext(-1);
+            break;
+
+        case "Insert":
+            interactive.insertNewLine();
+            interactive.refreshButtons();
+            break;
+        case "Delete":
+            {
+                if (e.shiftKey) {
+                    interactive.removeLine();
+                    interactive.refreshButtons();
+                }
+            }
             break;
 
         default:
-            refreshSelectedLine();
+            interactive.refreshSelectedLine();
+            interactive.refreshButtons();
             break;
     }
 }
 
-function refreshSyntaxDetection() {
+interactive.refreshSyntaxDetection = function () {
     const currInput = document.activeElement;
     const currInputIndex = inputs.indexOf(currInput);
 
     if (currInputIndex >= 0) {
-        refreshSyntaxDetectionOnLine(currInputIndex);
+        interactive.refreshSyntaxDetectionOnLine(currInputIndex);
     }
 }
 
-function refreshSyntaxDetectionOnLine(index) {
+interactive.refreshSyntaxDetectionOnLine = function (index) {
     const parseResult = module.exports.tokenize(inputs[index].value);
-    showParserResult(parseResult, index);
+    interactive.showParserResult(parseResult, index);
 }
 
-function focusNext(offset) {
+interactive.insertNewLine = function () {
+    const currInput = document.activeElement;
+    const currInputIndex = inputs.indexOf(currInput);
+
+    if (currInputIndex >= 0) {
+        for (let i = LINE_COUNT; i >= currInputIndex; i--) {
+            inputs[i - 1].value = i == LINE_COUNT ? inputs[i].value : "";
+            interactive.refreshLine(i - 1);
+        }
+
+        inputs[currInputIndex].value = "";
+        interactive.refreshLine(currInputIndex);
+    }
+}
+
+interactive.removeLine = function () {
+    const currInput = document.activeElement;
+    const currInputIndex = inputs.indexOf(currInput);
+
+    if (currInputIndex >= 0) {
+        for (let i = currInputIndex; i < LINE_COUNT - 1; i++) {
+            inputs[i].value = inputs[i + 1].value;
+            interactive.refreshLine(i);
+        }
+
+        inputs[LINE_COUNT - 1].value = "";
+        interactive.refreshLine(LINE_COUNT - 1);
+    }
+}
+
+interactive.focusNext = function (offset) {
     const currInput = document.activeElement;
     const currInputIndex = inputs.indexOf(currInput);
     let nextinputIndex =
@@ -287,21 +435,27 @@ function focusNext(offset) {
     input.focus();
 }
 
-function refreshSelectedLine() {
+interactive.refreshLine = function (i ) {
+    if (i >= 0) {
+
+        interactive.refreshCodeLines();
+        interactive.refreshSyntaxDetectionOnLine(i);
+        interactive.refreshInputForSelection(i);
+
+        interactive.refreshTargetedLines();
+    }
+}
+
+interactive.refreshSelectedLine = function () {
     const currInput = document.activeElement;
     const currInputIndex = inputs.indexOf(currInput);
 
     if (currInputIndex >= 0) {
-
-        refreshCodeLines();
-        refreshSyntaxDetectionOnLine(currInputIndex);
-        refreshInputForSelection(currInputIndex);
-
-        refreshTargetedLines();
+        interactive.refreshLine(currInputIndex);
     }
 }
 
-function refreshTargetedLines() {
+interactive.refreshTargetedLines = function () {
     const currInput = document.activeElement;
     const currInputIndex = inputs.indexOf(currInput);
 
@@ -341,7 +495,7 @@ function refreshTargetedLines() {
     }
 }
 
-function refreshCodeLines() {
+interactive.refreshCodeLines = function () {
     // Compute code line indices
 
     trimmedLines.length = 0;
@@ -367,7 +521,7 @@ function refreshCodeLines() {
     return codeLineIndices;
 }
 
-function refreshInputForSelection(index) {
+interactive.refreshInputForSelection = function (index) {
     const codeLineIndex = codeLineIndices[index];
     for (let i = 0; i < inputs.length; i++) {
         const addr = document.getElementById(`address-${i}`);
@@ -404,7 +558,7 @@ function refreshInputForSelection(index) {
     }
 }
 
-function showParserResult(parseResult, index) {
+interactive.showParserResult = function (parseResult, index) {
 
     if (index == undefined) {
         const currInput = document.activeElement;
@@ -431,9 +585,10 @@ function showParserResult(parseResult, index) {
                     explanationsWindow.innerHTML = "<p>This line is a comment and will not be executed.<br>It serves as documentation for you and whoever might read this program.</p>";
                     display.innerHTML = `<span class='comment'>${val.value}</span>`;
                 } else {
-
+                    explanationsWindow.textContent = "<TODO>";
                     for (let argIndex in token.arguments) {
                         const a = token.arguments[argIndex];
+
                         if (a.isReference || a.depth > 0) {
                             targetedLines.push(a.value);
                         }
@@ -442,8 +597,8 @@ function showParserResult(parseResult, index) {
                         }
                     }
 
-                    val.value = fixSpacesInStatement(val.value);
-                    display.innerHTML = getHTMLForToken(token);
+                    val.value = interactive.fixSpacesInStatement(val.value);
+                    display.innerHTML = interactive.getHTMLForToken(token);
                 }
             } else {
                 explanationsWindow.textContent = "You can write a statement here!";
@@ -453,13 +608,16 @@ function showParserResult(parseResult, index) {
     }
 }
 
-function getHTMLForToken(token) {
+interactive.getHTMLForToken = function (token) {
     const elems = [];
+    let minLength = token.operatorText.length;
+
     elems.push(`<span class="operator">${token.operatorText}</span>`);
 
     if (token.arguments && token.arguments.length > 0) {
         if (token.arguments[0].text) {
             elems.push(`<span class="argument-0">${token.arguments[0].text}</span>`);
+            minLength += token.arguments[0].text.length + 1;
         }
 
         if (token.arguments.length > 1) {
@@ -468,31 +626,114 @@ function getHTMLForToken(token) {
             }
 
             elems.push(`<span class="argument-1">${token.arguments[1].text}</span>`);
+            minLength += token.arguments[1].text.length + 1;
         }
     }
 
-    return elems.join(' ');
+    let final = elems.join(' ');
+
+    if (token.remainingData.length > 0) {
+        final += " <span class='unknown-statement'>" + token.remainingData + "</span>";
+    }
+
+    return final;
 }
 
-function fixSpacesInStatement(str) {
+interactive.fixSpacesInStatement = function (str) {
     str = str.replace(/ +/g, ' ').trimStart();
 
     return str;
 }
 
-function initializeSocket() {
-    socket = io("ws://localhost:1234", {
-        reconnectionDelayMax: 10000
+interactive.initializeSocket = function () {
+    socket.on("programUploaded", function () {
+        console.log("Program uploaded, back to core");
+        editorButtons.accessCoreButton.click();
     });
 
     socket.on("testCore", function (obj) {
-        createTrainingCoreDisplay(obj.columnCount, obj.columnSize);
-        updateTrainingCoreDisplay(
-            {
-                data: new Int32Array(obj.data, 0, obj.columnCount * obj.columnSize),
-                flags: new Uint8Array(obj.flags),
-                nextAddress: obj.nextAddress
-            }
-        );
+        trainingCoreIsRunning = !obj.error;
+        if (trainingCoreIsRunning) {
+            trainedForCycles++;
+        }
+        else {
+            trainedForCycles = 0;
+        }
+
+        interactive.refreshTrainingCoreButtons();
+
+        interactive.createTrainingCoreDisplay(obj.columnCount, obj.columnSize);
+
+        if (obj.error) {
+            explanationsWindow.innerHTML = `<p class="warn">Training core interrupted:</p><p class="error">${obj.error}</p>`;
+        }
+        else if (obj.delta) {
+            interactive.updateTrainingCoreDisplayFromDelta(
+                {
+                    delta: obj.delta,
+                    deltaFlags: obj.deltaFlags,
+                    nextAddress: obj.nextAddress
+                }
+            );
+        }
+        else if (obj.data) {
+            interactive.updateTrainingCoreDisplayFromFullBuffer(
+                {
+                    data: new Int32Array(obj.data, 0, obj.columnCount * obj.columnSize),
+                    flags: new Uint8Array(obj.flags),
+                    nextAddress: obj.nextAddress
+                }
+            );
+        }
+        else {
+            // ??
+        }
     });
+}
+
+interactive.download = function (data, filename, type) {
+    var file = new Blob([data], { type: type });
+    if (window.navigator.msSaveOrOpenBlob) // IE10+
+        window.navigator.msSaveOrOpenBlob(file, filename);
+    else { // Others
+        var a = document.createElement("a"),
+            url = URL.createObjectURL(file);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+    }
+}
+
+interactive.upload = function () {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = ".KCP";
+
+    input.onchange = e => {
+        if (e.target.files && e.target.files.length > 0) {
+            var file = e.target.files[0];
+
+            // setting up the reader
+            var reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+
+            // here we tell the reader what to do when it's done reading...
+            reader.onload = readerEvent => {
+                var content = readerEvent.target.result; // this is the content!
+                interactive.loadProgram(file.name.replace(".KCP", ""), content);
+            }
+        }
+    }
+
+    input.click();
+    document.body.appendChild(input);
+
+    setTimeout(function () {
+        document.body.removeChild(input);
+    }, 0);
 }

@@ -1,10 +1,4 @@
 
-const socket = io("ws://localhost:1234", {
-  reconnectionDelayMax: 10000
+const socket = io("ws://rx.louve.systems:4050", {
+    reconnectionDelayMax: 10000
 });
-
-
-socket.on("core", function(data){
-  displayCore(data);
-});
-

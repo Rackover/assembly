@@ -1,7 +1,7 @@
 const chalk = require("chalk");
 const parser = require("./parser");
 const compiler = require("./compiler");
-const Core = require("./core");
+const { Core } = require("./core");
 
 
 module.exports = {

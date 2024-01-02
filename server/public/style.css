@@ -1,15 +1,17 @@
-body, html{
+body,
+html {
 	font-family: Dos;
 	color: #BFBFBF;
 	background-color: #151515;
-	display:flex;
-	flex-direction:row;
-	justify-content:center;
-	width:100%;
-	
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	width: 100%;
+
 	font-smooth: inherit;
+	font-smoothing: none !important;
 	-webkit-font-smoothing: none !important;
-	-moz-osx-font-smoothing: unset;
+	-moz-osx-font-smoothing: none !important;
 }
 
 /*
@@ -19,296 +21,494 @@ div { border: 1px solid red !important; }
 @font-face {
 	font-family: "Dos";
 	src: url("res/fonts/Px437_IBM_PS2thin4.ttf");
+	font-weight: normal;
 }
 
-h1, h2, h3{
-	font-size:inherit;
-	font-weight:inherit;
+@font-face {
+	font-family: "Dos";
+	src: url("res/fonts/Px437_IBM_VGA_9x16.ttf");
+	font-weight: bold;
 }
 
-h1, .emphasis{
-	color:orange;
+
+h1,
+h2,
+h3 {
+	font-size: inherit;
+	font-weight: inherit;
 }
 
-h2{
-	color:grey;
+h1,
+.emphasis {
+	color: orange;
 }
 
-.terminal
-{
-    border: 1px groove grey;
-    padding:20px;
+h2 {
+	color: grey;
 }
 
-.terminal h1{
+.terminal {
+	border: 1px groove grey;
+	padding: 20px;
+}
+
+.terminal h1 {
 	color: black;
 	background-color: grey;
 	padding-left: 10px;
-	font-weight:bold;
+	font-weight: bold;
 }
 
-#main-container{
-	display:flex;
-	flex-direction:column;
-	justify-content:flex-start;
-	width:80%;
-	padding:20px;
+#main-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	width: 100%;
+	max-width: 1600px;
+	padding: 20px;
 }
 
-#explanations-window{
-	min-width:300px;
-	width:30%;
-	display:flex;
-	flex-direction:column;
-	justify-content:flex-start;
+#explanations-window {
+	min-width: 300px;
+	width: 20%;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	position: relative;
 }
 
-#explanations
-{
-	flex:1;
-}
-
-#editor-column #editor-column
-{
-	flex:1;
-}
-
-#editor-column .row{
-	display:flex;
-	justify-content:flex-start;
-	flex-direction:row;
-	width:100%;
-}
-
-#editor-container
-{
-	width:50%;
-	padding:20px;
-	padding-top:0px;
-	padding-bottom:0px;
-	
-	display:flex;
-	flex-direction:column;
-	justify-content:flex-start;
-}
-
-#editor-container .button-container
-{
-	margin-top:16px;
-	text-align:right;
-	width:100%;
-}
-
-button
-{
-	background: white;
-	font:inherit;
-	color:black;
-	font-weight:bold;
-	border:0;
-	padding:5px;
-	width:100%;
-}
-
-button:hover
-{
-	background: white;
-	cursor:pointer;
-}
-
-button:active
-{
-	background: orange;
-}
-
-
-#editor-container button
-{
-	background:lightgreen;
-	text-align:right;
-	padding-right:20px;
-	padding-left:20px;
-	width:fit-content;
-	font-size:inherit;
-}
-
-#core-container .button-container.horizontal button
-{
-	width: auto;
-}
-
-#core-container .button-container.horizontal
-{
-	display:flex;
-	flex-direction:row;
-}
-
-#address-column{
-    border-right: 2px groove grey;
-}
-
-#address-column div{
-	border-bottom: 1px dotted grey;
-}
-
-#code-editor
-{
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-}
-
-.column
-{
-    display:flex;
-    flex-direction: column;
-    justify-content: flex-start;
-}
-
-.editor-line
-{
-	border-bottom: 1px dotted #333333;
-	position:relative;
+#explanations {
 	flex: 1;
 }
 
-.editor-line input, .editor-line .display
+#editor-column #editor-column {
+	flex: 1;
+}
+
+#editor-container .row {
+	display: flex;
+	justify-content: flex-start;
+	flex-direction: row;
+	width: 100%;
+}
+
+#editor-container {
+	width: 40%;
+	padding: 20px;
+	padding-top: 0px;
+	padding-bottom: 60px;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+
+	position: relative;
+}
+
+.button-container {
+	POSITION: absolute;
+	bottom: 0;
+}
+
+.button-container button
 {
-	padding: 0;
-	border: 0;
-	
-	padding-left:14px;
-	margin-left:10px;
-	
+	height:32px;
+}
+
+.speed-buttons
+{
+	display:flex;
+	flex-direction:column;
+	margin-left: 15px;
+	margin-right: 15px;
+}
+
+.speed-buttons button
+{
+	font-weight:normal;
+	padding:0px;
+	height:16px;
+	border:0;
+}
+
+button#access-core {
+	flex:1;
+}
+
+#explanations-window .button-container {
+	width:100%;
+}
+
+#editor-container .button-container {
+	margin-top: 16px;
+	right: 20px;
+	left: 20px;
+
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+button {
+	background: transparent;
+	font: inherit;
+	color: gray;
+	border: 1px solid gray;
+	padding: 5px;
+	width: 100%;
+	font-weight: bold;
+}
+
+button:hover:not(:disabled),
+button:active:not(:disabled) {
+	color: black;
+	border: 1px solid black;
+}
+
+button:hover:not(:disabled) {
+	background: white;
+	cursor: pointer;
+}
+
+button:active:not(:disabled) {
+	background: orange!important;
+}
+
+
+#editor-container button {
+	padding-right: 20px;
+	padding-left: 20px;
+	width: fit-content;
+	margin-left: 5px;
+	margin-right: 5px;
+	font-size: inherit;
+}
+
+#editor-container button#run-training-program {
+	flex: 1;
+}
+
+#editor-container button#run-training-program:not(:disabled) {
+	background: lightgreen;
+	color: black;
+}
+
+button:disabled
+{
+	font-weight:normal;
+	border-style:dashed;
+}
+
+button#kill-test-core:not(:disabled)
+{
+	background: red;
+	color: black;
+}
+
+
+@keyframes send-to-core-button-animation {
+	0% {
+		background: orange;
+	}
+
+	25% {
+		background: lightgreen;
+	}
+
+	75% {
+		background: red;
+	}
+
+	100% {
+		background: orange;
+	}
+}
+
+button#send-to-core
+{
+	flex:1;
+}
+
+button#send-to-core:not(:disabled)
+{
+	animation-name: send-to-core-button-animation;
+	animation-duration: 2s;
+	animation-iteration-count: infinite;
+	color:black;
+}
+
+#core-container .button-container.horizontal button {
+	width: auto;
+}
+
+#core-container .button-container.horizontal {
+	display: flex;
+	flex-direction: row;
+	width:100%;
+}
+
+#address-column{
+	border-right: 2px groove grey;
+}
+
+#address-column div {
+	border-bottom: 1px dotted grey;
+}
+
+#code-editor {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+}
+
+.editor-line {
+	border-bottom: 1px dotted #333333;
+	position: relative;
+	flex: 1;
+}
+
+input#program-name
+{
 	font-family: Dos;
 	color: #BFBFBF;
 	background-color: #151515;
-	font-size:16px;
-	
+	font-size: 16px;
+	padding: 0;
+	border: 0;
+
+	padding-left: 14px;
+	margin-left: 10px;
+}
+
+.row .editor-line input,
+.row .editor-line .display {
+	padding: 0;
+	border: 0;
+
+	padding-left: 14px;
+	margin-left: 10px;
+
+	font-family: Dos;
+	color: #BFBFBF;
+	background-color: #151515;
+	font-size: 16px;
+
 	position: absolute;
-	left:0;
-	right:0;
-	top:0;
-	bottom:0;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
 }
 
-.editor-line input
-{
+.row .editor-line input {
 	caret-color: yellow;
-	color: rgba(0,0,0,0);
-	width:calc(100% - 24px);
+	color: rgba(0, 0, 0, 0);
+	background-color: rgba(0,0,0,0);
+	width: calc(100% - 24px);
+	z-index:3;
 }
 
-.editor-line input:focus
-{
-    outline: none;
+.row .editor-line input::selection{
+	color: white;
+}
+
+.row .editor-line input:focus {
+	outline: none;
 	outline-width: 0;
 }
 
-.editor-line .display
-{
+.editor-line .display {
 	pointer-events: none;
-	position:absolute;
-	top:0;
-	left:0;
-	right:0;
-	bottom:0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	background: 0;
 	z-index: 2;
 }
 
-#core-container{
+#core-container {
+	position: relative;
+	flex-grow: 1;
 }
 
-.core{
-	font-weight:normal;
-	display:flex;
+#core-container #core-training
+{
+	text-align:center;
+}
+
+
+#core-container #core-training .row
+{
+	text-align: left;
+}
+
+.core {
+	font-weight: normal;
+	display: flex;
 	justify-content: space-between;
 	flex-direction: row;
 }
 
 .core .row {
-	display:flex;
+	display: flex;
 	justify-content: flex-start;
 	flex-direction: column;
 	flex: 1;
-	padding-right:20px;
-	padding-left:20px;
+	padding-right: 20px;
+	padding-left: 20px;
+}
+
+.core .row:not(:last-child) {
 	border-right: 1px solid grey;
 }
 
-.core .cell
-{
-	white-space:nowrap;
+.core .cell {
+	white-space: nowrap;
+	margin: 0 auto;
 }
 
-.core .cell.idle
-{
+.core .cell.idle {
 	color: #666666;
 }
 
-.editor-line .display.comment-field{
+.editor-line .display.comment-field {
 	color: #9467c7;
 }
 
-.address-field.empty-field, .address-field.comment-field
-{
+.address-field.empty-field,
+.address-field.comment-field {
 	color: #666666;
 }
 
-.editor-line .display .operator
-{
+.editor-line .display .operator {
 	color: lightgreen;
 }
 
-.editor-line .display .argument-0
+.editor-line .display .argument-0 {
+	color: orange;
+}
+
+.editor-line .display .argument-1 {
+	color: cyan;
+}
+
+.editor-line .display .link {
+	color: grey;
+}
+
+.address-field.current-field {
+	color: yellow;
+}
+
+.editor-line .display.current-field {
+	border: 1px dashed rgba(255, 255, 0, 0.4);
+}
+
+.error {
+	color: red;
+}
+
+.warn
 {
 	color: orange;
 }
 
-.editor-line .display .argument-1
+.unknown-statement
 {
-	color: cyan;
+	color: darkred;
 }
 
-.editor-line .display .link
-{
-	color: grey;
-}
-
-.address-field.current-field
-{
-	color: yellow;
-}
-
-.editor-line .display.current-field
-{
-	border: 1px dashed rgba(255, 255, 0, 0.4);
-}
-
-.error
-{
-	color: red;
-}
-
-input.target-0:before
-{
+input.target-0:before {
 	color: orange;
 	content: "1: ";
 }
 
-input.target-1:before
-{
+input.target-1:before {
 	color: cyan;
 	content: "2: ";
 }
 
-input.target-0{
-  display: block;
-    box-shadow:inset 0px 0px 0px 1px orange;
+input.target-0 {
+	display: block;
+	outline: 1px inset orange;
+	box-shadow: inset 0px 0px 0px 1px orange;
 }
 
-input.target-1{
-  display: block;
-    box-shadow:inset 0px 0px 0px 1px cyan;
+input.target-1 {
+	display: block;
+	outline: 1px inset cyan;
+	box-shadow: inset 0px 0px 0px 1px cyan;
+}
+
+#global-core-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+#global-core-grid-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+	flex: 1;
+	max-width: 925px;
+}
+
+.global-core-grid {
+	display: grid;
+	grid-gap: 2px;
+	grid-template-columns: repeat(8, auto);
+}
+
+.global-core-grid .cell {
+	border: 1px solid gray;
+	padding:2px;
+	width: 12px;
+	height: 12px;
+}
+
+#scoreboard {
+	position: relative;
+	min-width: 20%;
+}
+
+@keyframes create-program-button-animation {
+	0% {
+		border: 1px solid white;
+		color:white;
+	}
+
+	50% {
+		border: 1px solid yellow;
+		color:yellow;
+	}
+
+	100% {
+		border: 1px solid white;
+		color:white;
+	}
+}
+
+#create-program-button {
+	border:1px solid yellow;
+	position: absolute;
+	bottom: 0;
+	animation-name: create-program-button-animation;
+	animation-duration: 2s;
+	animation-iteration-count: infinite;
+}
+
+#create-program-button:hover
+{
+	animation-name:none;
+	color:black;
+	border-color:black;
 }

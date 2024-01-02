@@ -1,11 +1,11 @@
 const parser = require('./parser');
 const compiler = require('./compiler');
-const Core = require('./core');
+const { Core } = require('./core');
 const fs = require('fs');
 const reader = require("readline-sync");
 const corePrinter = require('./core_printer');
 const commandLineArgs = require('command-line-args')
-const Rules = require("./rules");
+const { Rules } = require("./rules");
 
 
 const options = commandLineArgs([

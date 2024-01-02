@@ -1,9 +1,36 @@
-const ProgramPointer = require('./program_pointer')
-const Rules = require('./rules');
-const compiler = require('./compiler')
-const parser = require('./parser')
 
-module.exports = class Core {
+let isWeb = typeof window !== 'undefined';
+
+const deps = {};
+
+if (isWeb) {
+    // HTML
+    deps.ProgramPointer = ProgramPointer;
+    deps.Rules = Rules;
+    deps.compiler = compiler;
+    deps.parser = parser;
+
+    deps.Buffer = {
+        alloc: function (size) {
+            return new ArrayBuffer(size);
+        }
+    }
+
+
+} else {
+    // NODE
+    const { ProgramPointer } = require('./program_pointer')
+    const { Rules } = require('./rules');
+
+    deps.ProgramPointer = ProgramPointer;
+    deps.Rules = Rules;
+    deps.compiler = require('./compiler');
+    deps.parser = require('./parser');
+    deps.Buffer = Buffer;
+}
+
+
+module.exports.Core = class {
     #columnSize;
     #columnCount;
 
@@ -17,17 +44,35 @@ module.exports = class Core {
     #pointerGroups = [];
     #programs = [];
     #turnOfProgram = 0;
+    #lastKillReason;
 
-    constructor(rules = new Rules()) {
+    get lastKillReason() { return this.#lastKillReason; }
+
+    constructor(rules = new deps.Rules()) {
         this.#columnSize = rules.columnSize;
         this.#columnCount = rules.columnCount;
         this.#rules = rules;
 
-        this.#memoryBuffer = Buffer.alloc(this.maxAddress * 4);
-        this.#writeBuffer = Buffer.alloc(this.maxAddress);
-        this.#readBuffer = Buffer.alloc(this.maxAddress);
-        this.#ownershipBuffer = Buffer.alloc(this.maxAddress);
+        this.#memoryBuffer = deps.Buffer.alloc(this.maxAddress * 4);
+        this.#writeBuffer = deps.Buffer.alloc(this.maxAddress);
+        this.#readBuffer = deps.Buffer.alloc(this.maxAddress);
+        this.#ownershipBuffer = deps.Buffer.alloc(this.maxAddress);
     }
+
+    // EVENTS
+
+    #killEventListeners = [];
+    onProgramKilled(lambda) {
+        this.#killEventListeners.push(lambda);
+    }
+
+    #broadcastOnProgramKilled(programId, killer, killReason) {
+        for (const k in this.#killEventListeners) {
+            this.#killEventListeners[k](programId, killer, killReason);
+        }
+    }
+
+    // END OF
 
     isEmpty() {
         return this.#programs.length() == 0;
@@ -73,11 +118,27 @@ module.exports = class Core {
 
     // return false if it needs to run again, otherwise returns an object
     advance() {
+        if (this.#pointerGroups.length == 0) {
+            if (this.#rules.runForever) {
+                return;
+            }
+            else {
+                return true; // Done - nothing to run
+            }
+        }
+
         const programPointer = this.#pointerGroups[this.#turnOfProgram];
 
+        const memoryPosition = programPointer.pointers[programPointer.nextPointerToExecute];
         this.#executePointerGroup(programPointer);
 
         if (programPointer.isDead) {
+
+            this.#broadcastOnProgramKilled(
+                programPointer.programId,
+                this.getLastWriterOfAdddress(memoryPosition),
+                this.lastKillReason
+            );
 
             if (this.#rules.runForever) {
                 this.#programs.splice(this.#turnOfProgram, 1);
@@ -114,18 +175,42 @@ module.exports = class Core {
             programPointer.nextPointerToExecute = (programPointer.nextPointerToExecute + 1) % programPointer.pointers.length;
         }
 
-        this.#turnOfProgram = (this.#turnOfProgram + 1) % this.#programs.length;
+        if (this.#programs.length <= 0) {
+            this.#turnOfProgram = 0;
+        }
+        else {
+            this.#turnOfProgram = (this.#turnOfProgram + 1) % this.#programs.length;
+        }
 
         return false;
     }
 
     installProgram(program, position) {
         // Place program
-        program.instructions.copy(this.#memoryBuffer, position);
-        const placedProgram = { start: position, end: position + program.instructions.length };
+        if (position * 4 + program.instructions.length < this.#memoryBuffer.length) {
+            // Fast copy, no fragmentation
+            console.log(`Installing program ${program.name}:${program.id} at ${position} (fast copy)`);
+            program.instructions.copy(this.#memoryBuffer, position * 4);
+        }
+        else {
+            // slow copy, needs rollover
+            console.log(`Installing program ${program.name}:${program.id} at ${position} (slow copy)`);
+            for (let i = 0; i < program.instructions.length / 4; i++) {
+                this.#memoryBuffer.writeInt32LE(
+                    this.#memoryBuffer.readInt32LE(i * 4),
+                    ((position + i) % this.maxAddress) * 4
+                );
+            }
+        }
+
+        // Do we even need this anymore?
+        const placedProgram = {
+            start: position,
+            end: position + program.instructions.length
+        };
 
         // Programs are placed, let's initialize pointers
-        this.#pointerGroups.push(new ProgramPointer(program.id, placedProgram.start / 4));
+        this.#pointerGroups.push(new deps.ProgramPointer(program.id, placedProgram.start));
         this.#programs.push(placedProgram);
     }
 
@@ -157,7 +242,7 @@ module.exports = class Core {
 
         // Programs are placed, let's initialize pointers
         for (i in programsToPlace) {
-            this.#pointerGroups.push(new ProgramPointer(placedPrograms[i].programId, placedPrograms[i].start / 4));
+            this.#pointerGroups.push(new deps.ProgramPointer(placedPrograms[i].programId, placedPrograms[i].start / 4));
             this.#programs.push(programsToPlace[i]);
         }
     }
@@ -184,12 +269,12 @@ module.exports = class Core {
     }
 
     #getArgumentInternal(data, memoryPosition, operandShift, operandFlagsShift) {
-        const rawOperand = (data >> operandShift) & compiler.OPERAND_MASK;
+        const rawOperand = (data >> operandShift) & deps.compiler.OPERAND_MASK;
 
         let value = rawOperand;
-        value = compiler.getSigned12BitsValue(value);
+        value = deps.compiler.getSigned12BitsValue(value);
 
-        let depth = (data >> operandFlagsShift) & compiler.OPERAND_FLAGS_MASK;
+        let depth = (data >> operandFlagsShift) & deps.compiler.OPERAND_FLAGS_MASK;
         while (depth > 0) {
             depth--;
             value = this.#getValueAtAddress(memoryPosition + value);
@@ -205,11 +290,11 @@ module.exports = class Core {
     }
 
     #getArgumentB(data, memoryPosition) {
-        return this.#getArgumentInternal(data, memoryPosition, compiler.OPERAND_B_SHIFT, compiler.OPERAND_B_FLAGS_SHIFT);
+        return this.#getArgumentInternal(data, memoryPosition, deps.compiler.OPERAND_B_SHIFT, deps.compiler.OPERAND_B_FLAGS_SHIFT);
     }
 
     #getArgumentA(data, memoryPosition) {
-        return this.#getArgumentInternal(data, memoryPosition, compiler.OPERAND_A_SHIFT, compiler.OPERAND_A_FLAGS_SHIFT);
+        return this.#getArgumentInternal(data, memoryPosition, deps.compiler.OPERAND_A_SHIFT, deps.compiler.OPERAND_A_FLAGS_SHIFT);
     }
 
     #killPointer(programPointer) {
@@ -233,35 +318,38 @@ module.exports = class Core {
 
         if (data === false) {
             this.#killPointer(programPointer);
-            console.log(`program died (interaction with bad sector)`);
+            this.#lastKillReason = `interaction with bad sector`;
         }
         else {
-            const op = (data >> compiler.OPERATION_SHIFT) & compiler.OPERATION_MASK;
-            console.log(`executing ${op} at ${memoryPosition} [${data}]`);
+            const op = (data >> deps.compiler.OPERATION_SHIFT) & deps.compiler.OPERATION_MASK;
 
             switch (op) {
                 default:
-                case parser.OPERATIONS.DATA:
+                case deps.parser.OPERATIONS.DATA:
                     // dies!
                     this.#killPointer(programPointer);
-                    console.log(`program died (met operation ${op} [${data}])`);
+                    this.#lastKillReason = `tried to execute operation ${op} [${data}]`;
                     return;
 
-                case parser.OPERATIONS.ADD:
-                case parser.OPERATIONS.SUBTRACT:
+                case deps.parser.OPERATIONS.NOOP:
+                    // Do nothing
+                    break;
+
+                case deps.parser.OPERATIONS.ADD:
+                case deps.parser.OPERATIONS.SUBTRACT:
                     {
                         const toAdd = this.#getArgumentA(data, memoryPosition);
                         const b = this.#getArgumentB(data, memoryPosition);
 
                         if (b === false) {
                             this.#killPointer(programPointer);
-                            console.log(`program died (bad sector read)`);
+                            this.#lastKillReason = `bad sector read`;
                             return;
                         }
 
                         const whereTo = b + memoryPosition;
                         this.#setValueAtAddress(
-                            toAdd * (op == parser.OPERATIONS.SUBTRACT ? -1 : 1) + this.#getValueAtAddress(whereTo),
+                            toAdd * (op == deps.parser.OPERATIONS.SUBTRACT ? -1 : 1) + this.#getValueAtAddress(whereTo),
                             whereTo
                         );
 
@@ -271,14 +359,14 @@ module.exports = class Core {
                         break;
                     }
 
-                case parser.OPERATIONS.SKIP_IF_EQUAL:
+                case deps.parser.OPERATIONS.SKIP_IF_EQUAL:
                     {
                         const valueA = this.#getArgumentA(data, memoryPosition);
                         const valueB = this.#getArgumentB(data, memoryPosition);
 
                         if (valueA === false || valueB === false) {
                             this.#killPointer(programPointer);
-                            console.log(`program died (bad sector read)`);
+                            this.#lastKillReason = `bad sector read`;
                             return;
                         }
 
@@ -290,14 +378,14 @@ module.exports = class Core {
                         break;
                     }
 
-                case parser.OPERATIONS.WRITE:
+                case deps.parser.OPERATIONS.WRITE:
                     {
                         const toWrite = this.#getArgumentA(data, memoryPosition);
                         const b = this.#getArgumentB(data, memoryPosition);
 
                         if (b === false) {
                             this.#killPointer(programPointer);
-                            console.log(`program died (bad sector read)`);
+                            this.#lastKillReason = `bad sector read`;
                             return;
                         }
 
@@ -313,8 +401,8 @@ module.exports = class Core {
                         break;
                     }
 
-                case parser.OPERATIONS.COPY:
-                case parser.OPERATIONS.MOVE:
+                case deps.parser.OPERATIONS.COPY:
+                case deps.parser.OPERATIONS.MOVE:
                     {
                         const a = this.#getArgumentA(data, memoryPosition);
                         const b = this.#getArgumentB(data, memoryPosition);
@@ -322,7 +410,7 @@ module.exports = class Core {
 
                         if (a === false || b === false) {
                             this.#killPointer(programPointer);
-                            console.log(`program died (bad sector read)`);
+                            this.#lastKillReason = `bad sector read`;
                             return;
                         }
 
@@ -337,7 +425,7 @@ module.exports = class Core {
                         this.#markSectorRead(origin);
                         this.#markSectorWritten(destination, programPointer.programId);
 
-                        if (op == parser.OPERATIONS.MOVE) {
+                        if (op == deps.parser.OPERATIONS.MOVE) {
                             this.#setValueAtAddress(0, origin);
                             this.#markSectorWritten(origin, programPointer.programId);
                         }
@@ -345,13 +433,13 @@ module.exports = class Core {
                         break;
                     }
 
-                case parser.OPERATIONS.JUMP:
+                case deps.parser.OPERATIONS.JUMP:
                     {
                         const a = this.#getArgumentA(data, memoryPosition);
 
                         if (a === false) {
                             this.#killPointer(programPointer);
-                            console.log(`program died (bad sector read)`);
+                            this.#lastKillReason = `bad sector read`;
                             return;
                         }
 

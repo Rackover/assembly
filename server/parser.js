@@ -14,6 +14,7 @@ const OPERATIONS =
     COPY: 0x5,
     MOVE: 0x6,
     SKIP_IF_EQUAL: 0x7,
+    NOOP: 0x8
 }
 
 const MAX_OP = Object.keys(OPERATIONS).length;
@@ -26,15 +27,19 @@ const STATEMENT_PARSERS = {
     copy: parseCopy,
     move: parseMove,
     "skip if": parseSkipIfEqual,
+    nop: parseNop,
 
     // aliases
     "jump to": parseJump,
     "go to": parseJump,
-    "data": parseData
+    "data": parseData,
+    "do nothing": parseNop,
 }
 
 const WITH_LINKS = [
     "with the value ",
+    "to the value ",
+    "to ",
     ","
 ];
 
@@ -45,8 +50,7 @@ const AT_ADDRESS_LINKS = [
 ];
 
 const EQUAL_LINKS = [
-    "equals the value ",
-    "is equal to the value ",
+    "is equal to ",
     "equals ",
     ","
 ]
@@ -76,19 +80,17 @@ function tokenize(strInput) {
     const tokens = [];
     let instructions = 0;
     let allowMeta = false;
-
     let anyError = false;
+
     for (i in lines) {
         if (lines[i].trim().length > 0) {
             const token = getToken(i + 1, lines[i], allowMeta);
             if (token.isInstruction) {
                 allowMeta = false;
                 instructions++;
-            
-                if (instructions > MAX_PROGRAM_SIZE)
-                {
-                    if (!token.isError)
-                    {
+
+                if (instructions > MAX_PROGRAM_SIZE) {
+                    if (!token.isError) {
                         token.errorMessage = `The program is too long (instruction ${instructions} out of a maximum of ${MAX_PROGRAM_SIZE} allowed instructions)`;
                         token.isError = true;
                     }
@@ -98,7 +100,29 @@ function tokenize(strInput) {
             anyError = anyError || token.isError;
             tokens.push(token);
         }
+        else {
+            // empty line = noop, to preserve line offsets
+            tokens.push({
+                isInstruction: true,
+                operatorText: "",
+                contents: "",
+                remainingData: "",
+                operation: OPERATIONS.NOOP,
+                arguments: []
+            });
+        }
     }
+
+    // Trim program
+    for (let i = tokens.length - 1; i > 0; i--) {
+        if (tokens[i].contents.length == 0) {
+            tokens.pop();
+        }
+        else {
+            break;
+        }
+    }
+
 
     return {
         anyError: anyError,
@@ -164,65 +188,72 @@ function parseStatement(token) {
 }
 
 function parseJump(token, data) {
-    parseOneArgumentStatement(token, data, "Jump");
+    token.remainingData = parseOneArgumentStatement(token, data, "Jump").remainingData;
+    
+    if (token.arguments.length > 0) {
+        token.arguments[0].isReference = true;
+    }
+
     token.operation = OPERATIONS.JUMP;
 }
 
 function parseSkipIfEqual(token, data) {
-    parseTwoArgumentsStatement(token, data, "SkipEq", EQUAL_LINKS);
+    token.remainingData = parseTwoArgumentsStatement(token, data, "SkipEq", EQUAL_LINKS).remainingData;
     token.operation = OPERATIONS.SKIP_IF_EQUAL;
 }
 
 function parseData(token, data) {
-    parseOneArgumentStatement(token, data, "Value");
+    token.remainingData = parseOneArgumentStatement(token, data, "Value").remainingData;
 
     if (token.arguments.length > 0) {
 
         token.arguments.push(token.arguments[0]);
 
-        token.arguments[0] = {depth:0, value:0};
+        token.arguments[0] = { depth: 0, value: 0 };
     }
 
     token.operation = OPERATIONS.DATA;
 }
 
+function parseNop(token, data) {
+    token.operation = OPERATIONS.NOOP;
+}
+
 function parseMove(token, data) {
-    parseTwoArgumentsStatement(token, data, "Move", TO_ADDRESS_LINKS);
+    token.remainingData = parseTwoArgumentsStatement(token, data, "Move", TO_ADDRESS_LINKS).remainingData;
     token.operation = OPERATIONS.MOVE;
-    
-    for(let arg in token.arguments)
-    {
-      arg.isReference = true;
+
+    for (let k in token.arguments) {
+        const arg = token.arguments[k];
+        arg.isReference = true;
     }
 }
 
 function parseCopy(token, data) {
-    parseTwoArgumentsStatement(token, data, "Copy", TO_ADDRESS_LINKS);
+    token.remainingData = parseTwoArgumentsStatement(token, data, "Copy", TO_ADDRESS_LINKS).remainingData;
     token.operation = OPERATIONS.COPY;
-    
-    for(let arg in token.arguments)
-    {
-      arg.isReference = true;
+
+    for (let k in token.arguments) {
+        const arg = token.arguments[k];
+        arg.isReference = true;
     }
 }
 
 function parseWrite(token, data) {
-    parseTwoArgumentsStatement(token, data, "Write", AT_ADDRESS_LINKS);
+    token.remainingData = parseTwoArgumentsStatement(token, data, "Write", AT_ADDRESS_LINKS).remainingData;
     token.operation = OPERATIONS.WRITE;
-    
-    if (token.arguments.length >= 2)
-    {
-      token.arguments[1].isReference = true;
+
+    if (token.arguments.length >= 2) {
+        token.arguments[1].isReference = true;
     }
 }
 
 function parseAdd(token, data) {
-    parseTwoArgumentsStatement(token, data, "Add", WITH_LINKS);
+    token.remainingData = parseTwoArgumentsStatement(token, data, "Add", WITH_LINKS).remainingData;
     token.operation = OPERATIONS.ADD;
-    
-    if (token.arguments.length >= 2)
-    {
-      token.arguments[1].isReference = true;
+
+    if (token.arguments.length >= 2) {
+        token.arguments[1].isReference = true;
     }
 }
 
@@ -255,11 +286,11 @@ function parseTwoArgumentsStatement(token, data, statementName, links) {
 
     for (i in links) {
         if (currentData.startsWith(links[i])) {
-          
+
             token.linkText = links[i];
-          
+
             currentData = currentData.substring(links[i].length);
-            
+
             const secondParseResult = parseStatementArgument(currentData);
             currentData = secondParseResult.remainingData;
             const argumentTwo = secondParseResult.argument;
@@ -271,11 +302,12 @@ function parseTwoArgumentsStatement(token, data, statementName, links) {
                 token.arguments.push(argumentTwo);
             }
 
-            return;
+            return { argument: argumentTwo, remainingData: currentData };
         }
     }
 
     token.errorMessage = `Invalid second argument "${currentData}" in ${statementName} - try specifying "${links[0]}" before it`;
+    return { argument: "", remainingData: currentData };
 }
 
 // return (argument, data remaining)
@@ -323,7 +355,7 @@ function parseStatementArgument(data) {
 
     let integer = parseInt(numberString);
     argument.value = integer;
-    
+
     argument.text = data.substring(0, advance);
 
     return { argument: argument, remainingData: data.substring(advance + 1).trim() };

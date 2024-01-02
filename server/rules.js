@@ -1,4 +1,4 @@
-module.exports = class Rules
+module.exports.Rules = class
 {
     killOnDataExecution = true;
     maxWritePerSector = 0;
