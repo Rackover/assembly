@@ -38,10 +38,6 @@ globalCore.onWindowLoad = function () {
     globalCore.displayScoreboard([], {});
 
     globalCore.initializeSocket();
-
-    // Initially displayed
-    document.getElementById("code-editor").style.display = "none";
-    document.getElementById("global-core").style = {};
 }
 
 globalCore.createGlobalCoreDisplay = function (columns, size) {
@@ -78,15 +74,18 @@ globalCore.bindButtons = function () {
     globalCore.makeProgramButton.onclick = function () {
         document.getElementById("code-editor").style = {};
         document.getElementById("global-core").style.display = "none";
+
+        inputs[0].focus();
+        interactive.refreshLine(0);
     };
 }
 
 globalCore.displayScoreboard = function (scoreboard, activity) {
     const entriesParent = document.getElementById("scoreboard-entries");
-    let codeEditor = document.getElementById("code-editor");
+    let coreDom = document.getElementById("global-core");
 
     if (globalCore.scoreboard &&
-        (!codeEditor || !codeEditor.style || codeEditor.style.display == "none") &&
+        (!coreDom.style || Object.keys(coreDom.style).length == 0) &&
         Object.keys(globalCore.scoreboard).length > scoreboard.length) {
         // someone died
         sound.playBoom();
@@ -187,7 +186,7 @@ globalCore.initializeSocket = function () {
         globalCore.displayScoreboard(obj.scores, obj.activity);
         globalCore.refreshActivity(obj.activity);
 
-        document.getElementById("core-name").textContent = `CORE #${obj.coreInfo.id + 1} [${obj.coreInfo.friendlyName}]`;
+        document.getElementById("core-name").textContent = `ASSEMBLY #${obj.coreInfo.id + 1} [${obj.coreInfo.friendlyName}]`;
 
     });
 
@@ -201,7 +200,21 @@ globalCore.initializeSocket = function () {
         globalCore.refreshGlobalCore(activity);
         globalCore.refreshActivity(activity);
     });
+
+    // Initially displayed
+    // Note: this message may be doubled
+    socket.on("hello", function(returning){
+        if (returning)
+        {
+            document.getElementById("global-core").style = {};
+        }
+        else
+        {
+            document.getElementById("intro").style = {};
+        }
+    });
 }
+
 
 // https://stackoverflow.com/questions/12043187/how-to-check-if-hex-color-is-too-black
 globalCore.wc_hex_is_light = function(color) {

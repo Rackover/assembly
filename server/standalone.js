@@ -1,5 +1,5 @@
-const parser = require('./parser');
-const compiler = require('./compiler');
+const parser = require('./shared/parser');
+const compiler = require('./shared/compiler');
 const { Core } = require('./core');
 const corePrinter = require('./core_printer');
 const { Rules } = require("./rules");

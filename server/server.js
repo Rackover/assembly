@@ -21,10 +21,10 @@ app.get('/', (req, res, next) => {
 
 
 app.use(express.static(__dirname + '/public'));
-app.use('/server', express.static(__dirname + "/."))
+app.use('/server', express.static(__dirname + "/shared"))
 
 app.listen(CONFIG.HTTP_PORT, () => {
-  log.info(`Bootclub HTTP listening on port ${CONFIG.HTTP_PORT}`)
+  log.info(`LSASM HTTP listening on port ${CONFIG.HTTP_PORT}`)
   socket.start();
 })
 

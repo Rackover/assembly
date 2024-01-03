@@ -14,7 +14,7 @@ global.log = winston.createLogger({
             level: 'debug'
         }),
         new (winston.transports.File)({
-            filename: 'logs/bootclub.log',
+            filename: 'logs/activity.log',
             level: 'info'
         })
     ]

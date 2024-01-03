@@ -1,4 +1,3 @@
-
 let isWeb = typeof window !== 'undefined';
 
 const deps = {};
@@ -24,8 +23,8 @@ if (isWeb) {
 
     deps.ProgramPointer = ProgramPointer;
     deps.Rules = Rules;
-    deps.compiler = require('./compiler');
-    deps.parser = require('./parser');
+    deps.compiler = require('./shared/compiler');
+    deps.parser = require('./shared/parser');
     deps.Buffer = Buffer;
 }
 
@@ -337,7 +336,9 @@ module.exports.Core = class {
                 case deps.parser.OPERATIONS.DATA:
                     // dies!
                     this.#killPointer(programPointer);
-                    this.#lastKillReason = `tried to execute operation ${op} [${data}]`;
+
+                    const keys = Object.keys(deps.parser.OPERATIONS);
+                    this.#lastKillReason = `the delegate tried to execute invalid or non-executable instruction '${(op < keys.length && op >= 0) ? keys[op] : op}' [${data}]`;
                     return;
 
                 case deps.parser.OPERATIONS.NOOP:

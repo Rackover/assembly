@@ -47,8 +47,7 @@ interactive.onWindowLoad = function () {
     ready = true;
 
     // Select first
-    inputs[0].focus();
-    programNameInput.value = "MY_PROGRAM";
+    programNameInput.value = "MY_DELEGATE";
 
     // fetch("server/test_program.kcp")
     //     .then((res) => res.text())
@@ -103,10 +102,10 @@ interactive.createTrainingCoreDisplay = function (columns, size) {
 
                 if (x == Math.floor(columns / 2)) {
                     if (y == Math.floor(height / 2)) {
-                        cell.textContent = "[ CORE ]"
+                        cell.textContent = "[ ASMBLY ]"
                     }
                     else if (y == Math.floor(height / 2) + 1) {
-                        cell.textContent = "[ IDLE ]"
+                        cell.textContent = "[ \u00a0IDLE\u00a0 ]"
                     }
                 }
 
@@ -173,7 +172,7 @@ interactive.updateTrainingCoreDisplay = function (nextAddress) {
             }
         }
         else {
-            txt = `DAT.${value.toString().padStart(lineLength - 4, '0')}`;
+            txt = `${value.toString().padStart(lineLength, '0')}`;
 
             if (value == 0) {
                 trainingCoreCells[i].style.color = "gray";
@@ -192,6 +191,15 @@ interactive.updateTrainingCoreDisplay = function (nextAddress) {
 }
 
 interactive.bindButtons = function () {
+
+    const dismissButton = document.getElementById("splash-dismiss");
+    dismissButton.onclick = function () {
+        if (ready)
+        {
+            document.getElementById("intro").style.display = "none";
+            document.getElementById("global-core").style = {};
+        }
+    };
 
     editorButtons.trainingButton = document.getElementById("run-training-program");
     editorButtons.trainingButton.onclick = function () {
@@ -286,7 +294,7 @@ interactive.refreshTrainingCoreButtons = function () {
     editorButtons.speedDownButton.disabled = !trainingCoreIsRunning;
     editorButtons.sendToGlobalCoreButton.disabled = !trainingCoreIsRunning || trainedForCycles < TRAINING_CORE_REQUIRED_LIFESPAN;
 
-    editorButtons.sendToGlobalCoreButton.textContent = "SEND TO CORE >>";
+    editorButtons.sendToGlobalCoreButton.textContent = "SEND TO ASSEMBLY >>";
 
     // Update send to core button
     if (trainingCoreIsRunning) {
@@ -350,6 +358,7 @@ interactive.createEditor = function () {
         inputSpan.onkeydown = interactive.onKeyPress;
         inputSpan.oninput = interactive.onKeyPress;
         inputSpan.onfocus = interactive.refreshSelectedLine;
+        inputSpan.spellcheck = false;
 
         const inputDisplay = document.createElement("div");
         inputDisplay.className = "display";
@@ -649,7 +658,7 @@ interactive.getHTMLExplanationForStatement = function (token) {
 
     let txt = ``;
     if (token.contents.length == 0) {
-        txt = `<p>Add one of the following instructions to your program:</p>${interactive.getHTMLOperatorSummary()}`;
+        txt = `<p>Add one of the following instructions to your delegate:</p>${interactive.getHTMLOperatorSummary()}`;
     }
     else {
         if (token.operation !== undefined && token.contents.length > 0) {
@@ -887,7 +896,7 @@ interactive.fixSpacesInStatement = function (str) {
 interactive.initializeSocket = function () {
     socket.on("invalidProgram", function (programName, reason) {
         console.log("Core refused program");
-        explanationsWindow.innerHTML = `<p class="warn">${document.getElementById("core-name").textContent} refused your program [${programName}]:</p><p class="error">${reason}</p>`;
+        explanationsWindow.innerHTML = `<p class="warn">${document.getElementById("core-name").textContent} refused your delegate [${programName}]:</p><p class="error">${reason}</p>`;
     });
 
     socket.on("programUploaded", function () {
@@ -911,7 +920,7 @@ interactive.initializeSocket = function () {
         interactive.createTrainingCoreDisplay(obj.columnCount, obj.columnSize);
 
         if (obj.error) {
-            explanationsWindow.innerHTML = `<p class="warn">Training core interrupted:</p><p class="error">${obj.error}</p>`;
+            explanationsWindow.innerHTML = `<p class="warn">Delegate training interrupted:</p><p class="error">${obj.error}</p>`;
         }
         else if (obj.delta) {
             interactive.updateTrainingCoreDisplayFromDelta(

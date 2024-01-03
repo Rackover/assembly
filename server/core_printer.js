@@ -1,6 +1,6 @@
 const chalk = require("chalk");
-const parser = require("./parser");
-const compiler = require("./compiler");
+const parser = require("./shared/parser");
+const compiler = require("./shared/compiler");
 const { Core } = require("./core");
 
 

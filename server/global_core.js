@@ -1,5 +1,5 @@
-const parser = require('./parser');
-const compiler = require('./compiler');
+const parser = require('./shared/parser');
+const compiler = require('./shared/compiler');
 const { Rules } = require('./rules');
 const { Core } = require('./core');
 const blacklist = require('./blacklist');
@@ -179,7 +179,7 @@ module.exports = class {
             if (blacklist.isBlacklistedName(name)) {
                 blacklist.ban(fromAddress);
                 log.warn(`Excluding client with address ${fromAddress} due to creating a program named [${name}]`);
-                return [false, "You have been excluded from the boot club! Please reach out on the discord for further assistance."];
+                return [false, "You have been booted off the assembly! Please reach out on the discord for further assistance."];
             }
         }
 
@@ -190,20 +190,20 @@ module.exports = class {
         {
             if (this.#programs[k].name.trim().toLowerCase() == name.toLowerCase())
             {
-                return [false, "Another program with the same name is already running!"];
+                return [false, "Another delegate with the same name is already running!"];
             }
         }
 
         const id = this.#grabProgramId();
 
         if (id === false) {
-            return [false, "The core is full and cannot accept new programs at the time"];
+            return [false, "The assembly is full and cannot accept new delegates at the time"];
         }
 
         const tokens = parser.tokenize(code);
 
         if (tokens.anyError) {
-            return [false, "The program did not compile successfully due to an error in the source code"];
+            return [false, "The delegate did not compile successfully due to an error in the instructions"];
         }
         else {
             const compiled = compiler.compile(tokens.tokens);
@@ -213,7 +213,7 @@ module.exports = class {
                 if (blacklistReason) {
                     log.info(`Refused program [${name}] from address ${fromAddress}: ${blacklistReason}`);
                     this.#availableProgramIDs.push(id);
-                    return [false, "The core's antivirus destroyed your program upon reception. Please update your code and re-submit."];
+                    return [false, "The assembly declared your program harmful and refused your delegate. Please update your instructions and re-submit."];
                 }
             }
 
@@ -418,27 +418,34 @@ function generateBystanderCode() {
 
     if (Math.random() < 0.3) { // Permanent runners
         const instructions = [];
+        
+        // TODO Wall
+        if (Math.random() < 0.4)
+        {
 
-        instructions.push(`add ${randomInt(117, 263)} to 10`);
-
-        if (Math.random() < 0.5) {
-            instructions.push(`copy 3 to the address specified at 9`);
-        } else {
-            instructions.push(`copy 2 to -${randomInt(1, 10)}`);
         }
+        else{
+            instructions.push(`add ${randomInt(117, 263)} to 10`);
 
-        if (Math.random() < 0.5) {
-            instructions.push(`add ${randomInt(1, 2)} to the value at -${randomInt(3, 4)}`);
-        }
-        else {
-            let f = 0.0;
-            while (Math.random() > f) {
-                f += 0.25;
-                instructions.push(`copy 1 to ${randomInt(5, 8)}`);
+            if (Math.random() < 0.5) {
+                instructions.push(`copy 3 to the address specified at 9`);
+            } else {
+                instructions.push(`copy 2 to -${randomInt(1, 10)}`);
             }
-        }
 
-        instructions.push(`go to -${instructions.length}`);
+            if (Math.random() < 0.5) {
+                instructions.push(`add ${randomInt(1, 2)} to the value at -${randomInt(3, 4)}`);
+            }
+            else {
+                let f = 0.0;
+                while (Math.random() > f) {
+                    f += 0.25;
+                    instructions.push(`copy 1 to ${randomInt(5, 8)}`);
+                }
+            }
+
+            instructions.push(`go to -${instructions.length}`);
+        }
 
         return instructions.join('\n');
     }

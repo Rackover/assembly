@@ -57,6 +57,8 @@ h2 {
 	background-color: grey;
 	padding-left: 10px;
 	font-weight: bold;
+	padding-top: 5px;
+	padding-bottom: 5px;
 }
 
 #main-container {
@@ -110,33 +112,30 @@ h2 {
 	bottom: 0;
 }
 
-.button-container button
-{
-	height:32px;
+.button-container button {
+	height: 32px;
 }
 
-.speed-buttons
-{
-	display:flex;
-	flex-direction:column;
+.speed-buttons {
+	display: flex;
+	flex-direction: column;
 	margin-left: 15px;
 	margin-right: 15px;
 }
 
-.speed-buttons button
-{
-	font-weight:normal;
-	padding:0px;
-	height:16px;
-	border:0;
+.speed-buttons button {
+	font-weight: normal;
+	padding: 0px;
+	height: 16px;
+	border: 0;
 }
 
 button#access-core {
-	flex:1;
+	flex: 1;
 }
 
 #explanations-window .button-container {
-	width:100%;
+	width: 100%;
 }
 
 #editor-container .button-container {
@@ -171,7 +170,7 @@ button:hover:not(:disabled) {
 }
 
 button:active:not(:disabled) {
-	background: orange!important;
+	background: orange !important;
 }
 
 
@@ -193,14 +192,12 @@ button:active:not(:disabled) {
 	color: black;
 }
 
-button:disabled
-{
-	font-weight:normal;
-	border-style:dashed;
+button:disabled {
+	font-weight: normal;
+	border-style: dashed;
 }
 
-button#kill-test-core:not(:disabled)
-{
+button#kill-test-core:not(:disabled) {
 	background: red;
 	color: black;
 }
@@ -224,17 +221,15 @@ button#kill-test-core:not(:disabled)
 	}
 }
 
-button#send-to-core
-{
-	flex:1;
+button#send-to-core {
+	flex: 1;
 }
 
-button#send-to-core:not(:disabled)
-{
+button#send-to-core:not(:disabled) {
 	animation-name: send-to-core-button-animation;
 	animation-duration: 2s;
 	animation-iteration-count: infinite;
-	color:black;
+	color: black;
 }
 
 #core-container .button-container.horizontal button {
@@ -244,10 +239,10 @@ button#send-to-core:not(:disabled)
 #core-container .button-container.horizontal {
 	display: flex;
 	flex-direction: row;
-	width:100%;
+	width: 100%;
 }
 
-#address-column{
+#address-column {
 	border-right: 2px groove grey;
 }
 
@@ -273,8 +268,7 @@ button#send-to-core:not(:disabled)
 	flex: 1;
 }
 
-input#program-name
-{
+input#program-name {
 	font-family: Dos;
 	color: #BFBFBF;
 	background-color: #151515;
@@ -309,12 +303,12 @@ input#program-name
 .row .editor-line input {
 	caret-color: yellow;
 	color: rgba(0, 0, 0, 0);
-	background-color: rgba(0,0,0,0);
+	background-color: rgba(0, 0, 0, 0);
 	width: calc(100% - 24px);
-	z-index:3;
+	z-index: 3;
 }
 
-.row .editor-line input::selection{
+.row .editor-line input::selection {
 	color: white;
 }
 
@@ -339,14 +333,12 @@ input#program-name
 	flex-grow: 1;
 }
 
-#core-container #core-training
-{
-	text-align:center;
+#core-container #core-training {
+	text-align: center;
 }
 
 
-#core-container #core-training .row
-{
+#core-container #core-training .row {
 	text-align: left;
 }
 
@@ -392,34 +384,90 @@ input#program-name
 	color: lightgreen;
 }
 
-.editor-line .display .argument-0, #explanations .argument-0 {
+.editor-line .display .argument-0,
+#explanations .argument-0 {
 	color: orange;
 }
 
-.editor-line .display .argument-1, #explanations .argument-1{
+.editor-line .display .argument-1,
+#explanations .argument-1 {
 	color: cyan;
 }
 
-.editor-line .display .link, #explanations .link {
+.editor-line .display .link,
+#explanations .link {
 	color: grey;
 }
 
-#explanations .tutorial-statement{
-	color:white;
-	border-bottom:1px dotted white;
+#explanations .tutorial-statement {
+	color: white;
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	text-decoration-thickness: 1px;
 }
 
-#explanations .tutorial-link{
-	color:white;
+#intro {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+	padding: 40px;
 }
 
-#explanations ul{
-	list-style-type: none;
+#intro .text {
+	flex-grow: 1;
+	position: relative;
+	padding-left: 40px;
+}
+
+#intro .text .intro-text
+{
+	padding-bottom: 30px;
+	max-width: 600px;
+}
+
+#intro .text .intro-text p
+{
+	margin-top:0px;
+}
+
+#intro .text .button-container {
+	position: relative;
+	text-align: center;
+}
+
+#intro .text .button-container button {
+	width: auto;
+	padding-right:20px;
 	padding-left:20px;
 }
 
-#explanations li{
-	margin-bottom:10px;
+#intro .text #splash-dismiss {
+	color: white;
+	border-color: white;
+}
+
+#intro .text b{
+	color:white;
+}
+
+#intro .splash {
+	color:black;
+	font-size: 18px;
+	font-family: Dos, monospace;
+	line-height: 20px;
+}
+
+#explanations .tutorial-link {
+	color: white;
+}
+
+#explanations ul {
+	list-style-type: none;
+	padding-left: 20px;
+}
+
+#explanations li {
+	margin-bottom: 10px;
 }
 
 .address-field.current-field {
@@ -434,13 +482,11 @@ input#program-name
 	color: red;
 }
 
-.warn
-{
+.warn {
 	color: orange;
 }
 
-.unknown-statement
-{
+.unknown-statement {
 	color: darkred;
 }
 
@@ -488,7 +534,7 @@ input.target-1 {
 
 .global-core-grid .cell {
 	border: 1px solid gray;
-	padding:2px;
+	padding: 2px;
 	width: 12px;
 	height: 12px;
 }
@@ -501,22 +547,22 @@ input.target-1 {
 @keyframes create-program-button-animation {
 	0% {
 		border: 1px solid white;
-		color:white;
+		color: white;
 	}
 
 	50% {
 		border: 1px solid yellow;
-		color:yellow;
+		color: yellow;
 	}
 
 	100% {
 		border: 1px solid white;
-		color:white;
+		color: white;
 	}
 }
 
 #create-program-button {
-	border:1px solid yellow;
+	border: 1px solid yellow;
 	position: absolute;
 	bottom: 0;
 	animation-name: create-program-button-animation;
@@ -524,9 +570,8 @@ input.target-1 {
 	animation-iteration-count: infinite;
 }
 
-#create-program-button:hover
-{
-	animation-name:none;
-	color:black;
-	border-color:black;
+#create-program-button:hover {
+	animation-name: none;
+	color: black;
+	border-color: black;
 }

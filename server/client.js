@@ -25,10 +25,12 @@ module.exports = class {
     #handles = [];
     #receivedInitialGlobalTick = false;
     #globalCoreID = 0;
+    #id = "";
 
-    constructor(socket) {
+    constructor(socket, authID, returning = false) {
 
-        this.#globalCoreID = WORLD.getCoreIdForClient(socket.id);
+        this.#globalCoreID = WORLD.getCoreIdForClient(authID);
+        this.#id = authID;
 
         this.#handles.push(this.globalCore.onTicked(this.#onGlobalTick.bind(this)));
         this.#handles.push(this.globalCore.onScoreChanged(this.#onScoreChanged.bind(this)));
@@ -39,8 +41,10 @@ module.exports = class {
         }).bind(this));
 
         socket.on("setSpeed", (function (speedInt) {
-            this.#testCoreSpeed = speedInt;
-            log.debug(`Core speed for socket ${socket.id} is now ${this.#testCoreSpeed}`);
+            if (this.#testCoreSpeed != speedInt) {
+                this.#testCoreSpeed = speedInt;
+                log.debug(`Core speed for socket ${this.#id} is now ${this.#testCoreSpeed}`);
+            }
         }).bind(this));
 
         socket.on("testProgram", (function (programName, programString, speed) {
@@ -50,10 +54,10 @@ module.exports = class {
             const core = new TestCore(programName, programString);
             if (core.state == core.EState.INVALID) {
                 socket.emit("invalidProgram", programName, core.haltReason);
-                capture.captureNonFunctional(socket.id, programName, programString, core.haltReason);
+                capture.captureNonFunctional(this.#id, programName, programString, core.haltReason);
             }
             else {
-                capture.captureFunctional(socket.id, programName, programString, core.compiledProgram);
+                capture.captureFunctional(this.#id, programName, programString, core.compiledProgram);
                 this.#testCore = core;
                 this.#lastFrameTime = Date.now();
                 this.#sendTestCore();
@@ -63,17 +67,17 @@ module.exports = class {
         }).bind(this));
 
         socket.on("reconnect_failed", (function () {
-            log.info(`Killing client ${socket.id}, reconnect failed`);
+            log.info(`Killing client ${this.#id}, reconnect failed`);
             this.#destroy();
         }).bind(this));
 
         socket.on("error", (function () {
-            log.info(`Killing client ${socket.id}, connection error`);
+            log.info(`Killing client ${this.#id}, connection error`);
             this.#destroy();
         }).bind(this));
 
         socket.on("disconnect", (function () {
-            log.info(`Killing client ${socket.id}, graceful disconnect`);
+            log.info(`Killing client ${this.#id}, graceful disconnect`);
             this.#destroy();
         }).bind(this));
 
@@ -87,7 +91,7 @@ module.exports = class {
 
             programName = programName.substring(0, Math.min(programName.length, CONFIG.MAX_PROGRAM_NAME_LENGTH));
 
-            log.info(`Client ${socket.id} uploading program named "${programName}" (${programString.length} characters)`);
+            log.info(`Client ${this.#id} uploading program named "${programName}" (${programString.length} characters)`);
 
             const [id, msg] = this.globalCore.installProgram(programName, programString, socket.handshake.address);
             const success = id !== false;
@@ -95,7 +99,7 @@ module.exports = class {
             log.info(`Installation of program "${programName}" returned ${success}`);
 
             if (success) {
-                capture.captureFunctional(socket.id, programName, programString, this.globalCore.getProgramInstructions(id));
+                capture.captureFunctional(this.#id, programName, programString, this.globalCore.getProgramInstructions(id));
 
                 this.#onScoreChanged(this.globalCore.scores);
                 socket.emit("programUploaded");
@@ -103,17 +107,20 @@ module.exports = class {
             else {
                 socket.emit("invalidProgram", programName, msg);
 
-                if (blacklist.isBannedAddress(socket.handshake.address))
-                {
-                    log.info(`Kicking client ${socket.id} off connection (got banned)`);
+                if (blacklist.isBannedAddress(socket.handshake.address)) {
+                    log.info(`Kicking client ${this.#id} off connection (got banned)`);
                     this.#destroy();
                     socket.disconnect(true);
                 }
             }
         }).bind(this));
 
-        log.info(`Born client ${socket.id} on address ${socket.handshake.address}`);
+        log.info(`Born client ${this.#id} on address ${socket.handshake.address} (returning? ${returning})`);
         this.#socket = socket;
+
+        // mh yes... good code...
+        socket.emit("hello", returning);
+        setTimeout(() => socket.emit("hello", returning), 100);
     }
 
     get dead() { return this.#dead; }
@@ -184,7 +191,7 @@ module.exports = class {
     }
 
     #onGlobalTick(delta) {
-        const gc =this.globalCore;
+        const gc = this.globalCore;
         if (this.#receivedInitialGlobalTick) {
             this.#socket.emit("deltaCore", delta, gc.scores, gc.activePointers);
         }

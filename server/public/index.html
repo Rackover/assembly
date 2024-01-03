@@ -9,7 +9,7 @@
 
     <LINK href="style.css?version=1010" rel="stylesheet" type="text/css">
     <link rel="icon" href="res/favicon/97.ico" />
-    <title>BOOTCLUB</title>
+    <title>ASSEMBLY</title>
 
     <script src="res/scripts/plugins/socket.io.js"></script>
 
@@ -23,26 +23,27 @@
             globalCore.onWindowLoad();
         };
     </script>
-    <script type="text/javascript" src="server/parser.js?v=1020"></script>
-    <script type="text/javascript" src="server/compiler.js?v=1002"></script>
+    <script type="text/javascript" src="server/parser.js"></script>
+    <script type="text/javascript" src="server/compiler.js"></script>
     <script type="text/javascript" src="res/scripts/server-communication.js"></script>
     <script type="text/javascript" src="res/scripts/sound.js"></script>
-    <script type="text/javascript" src="res/scripts/global-core.js?version=13"></script>
-    <script type="text/javascript" src="res/scripts/language-tree.js?version=1010"></script>
-    <script type="text/javascript" src="res/scripts/interactive.js?version=10140"></script>
+    <script type="text/javascript" src="res/scripts/global-core.js"></script>
+    <script type="text/javascript" src="res/scripts/language-tree.js"></script>
+    <script type="text/javascript" src="res/scripts/interactive.js"></script>
 
-    <meta property="og:title" content="BOOTCLUB">
-        <!-- <meta property="og:description" content="Write some bootcode & join the bootclub">
-        <meta name="Description" content="Write some bootcode & join the bootclub!<br>BOOTCLUB is a sandbox game where you write your own">
-        <meta property="og:image" content="/res/img/metapreview.jpg">
-        <meta name="google-site-verification" content="gT6MZWxw3_4XOJVslimPR2nWE8U3hLy-WDvtpW8sPTI" />
-      
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:site" content="@Rackover" />
-        <meta name="twitter:title" content="ADVNTURE [2]" />
-        <meta name="twitter:description" content="Take part in the greatest of adventures: <br>Yours." />
-        <meta name="twitter:image" content="https://advnture.louve.systems/res/img/metapreview.jpg" />
-        <meta name="twitter:image:alt" content="Wilderness. Adventure." /> -->
+    <meta property="og:title" content="LOUVESYSTEMS' ASSEMBLY">
+    <meta property="og:description" content="Write a delegate to join the central assembly">
+    <meta name="Description"
+        content="ASSEMBLY is a sandbox conception game where you write your own delegates and release them in shared online assembly">
+    <meta property="og:image" content="/res/img/metapreview.jpg">
+    <meta name="google-site-verification" content="gT6MZWxw3_4XOJVslimPR2nWE8U3hLy-WDvtpW8sPTI" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@louvenarde" />
+    <meta name="twitter:title" content="ASSEMBLY" />
+    <meta name="twitter:description" content="Write a delegate to join the central assembly" />
+    <meta name="twitter:image" content="https://assembly.louve.systems/res/img/metapreview.jpg" />
+    <meta name="twitter:image:alt" content="An assembly of codes" />
 </head>
 
 <body>
@@ -50,24 +51,216 @@
         <div id="title">
             <h1>
                 <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;"
-                        href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>BOOTCLUB</b> V0.9.0
+                        href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ASSEMBLY</b> <span
+                    style='color:grey;'>V0.9.1</span>
             </h1>
+        </div>
+        <div class="terminal" id="intro" style="display:none">
+            <div class="splash">
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">kkkkkkkkkkkkkkkkkkk</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#ececf9">B</span><span style="color:#ececf9">BBBBBBB</span><span
+                    style="color:#e6e6ff">B</span><span style="color:#e6e6ff">BBB</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#8c8c8c">.</span><span style="color:#8c8c8c">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#4040c0">.</span><span style="color:#4040c0">.....</span><span
+                    style="color:#3333cc">.</span><span style="color:#3333cc">.</span><span
+                    style="color:#0000ff">k</span><span style="color:#0000ff">k</span><span
+                    style="color:#0033ff">Q</span><span style="color:#0033ff">Q</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#e6e6e6">R</span><span style="color:#e6e6e6">RRR</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#4040c0">.</span><span style="color:#4040c0">...</span><span
+                    style="color:#2c2cd3">.</span><span style="color:#2c2cd3">.</span><span
+                    style="color:#0000ff">k</span><span style="color:#0000ff">k</span><span
+                    style="color:#004dff">@</span><span style="color:#004dff">@</span><span
+                    style="color:#00b3ff">M</span><span style="color:#00b3ff">M</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#d3d3d3">g</span><span style="color:#d3d3d3">g</span><span
+                    style="color:#9c9c9c">.</span><span style="color:#9c9c9c">...</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><span
+                    style="color:#d9d9d9">&nbsp;</span><span style="color:#d9d9d9">&nbsp;</span><span
+                    style="color:#59a659">.</span><span style="color:#59a659">.</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#4040c0">.</span><span style="color:#4040c0">.</span><span
+                    style="color:#2626d9">.</span><span style="color:#2626d9">.</span><span
+                    style="color:#0000ff">k</span><span style="color:#0000ff">k</span><span
+                    style="color:#0066ff">@</span><span style="color:#0066ff">@</span><span
+                    style="color:#0099ff">M</span><span style="color:#0099ff">M</span><span
+                    style="color:#0066ff">@</span><span style="color:#0066ff">@</span><span
+                    style="color:#99ffff">@</span><span style="color:#99ffff">@</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#ececec">@</span><span style="color:#ececec">@</span><span
+                    style="color:#e0e0e0">@</span><span style="color:#e0e0e0">@</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><span
+                    style="color:#b3b34d">.</span><span style="color:#b3b34d">.</span><span
+                    style="color:#33cc33">.</span><span style="color:#33cc33">.</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#2020df">.</span><span style="color:#2020df">.</span><span
+                    style="color:#0000ff">k</span><span style="color:#0000ff">k</span><span
+                    style="color:#0080ff">@</span><span style="color:#0080ff">@MM@@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#80ffff">@</span><span style="color:#80ffff">@BB</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#b0b0b0">.</span><span style="color:#b0b0b0">.</span><span
+                    style="color:#bfbf40">w</span><span style="color:#bfbf40">w</span><span
+                    style="color:#9fdf20">T</span><span style="color:#9fdf20">T</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#0000ff">k</span><span style="color:#0000ff">k</span><span
+                    style="color:#0099ff">@</span><span style="color:#0099ff">@</span><span
+                    style="color:#0066ff">T</span><span style="color:#0066ff">T</span><span
+                    style="color:#0099ff">@</span><span style="color:#0099ff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#99ffff">@</span><span style="color:#99ffff">@</span><span
+                    style="color:#66ffff">B</span><span style="color:#66ffff">B</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#b3b3b3">.</span><span style="color:#b3b3b3">.</span><span
+                    style="color:#cccc33">w</span><span style="color:#cccc33">w</span><span
+                    style="color:#8cd926">T</span><span style="color:#8cd926">T</span><span
+                    style="color:#669966">.</span><span style="color:#669966">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#00b3ff">@</span><span style="color:#00b3ff">@</span><span
+                    style="color:#004dff">l</span><span style="color:#004dff">l</span><span
+                    style="color:#00b3ff">@</span><span style="color:#00b3ff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#b3ffff">@</span><span style="color:#b3ffff">@</span><span
+                    style="color:#4dffff">@</span><span style="color:#4dffff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#59a6a6">.</span><span style="color:#59a6a6">.</span><span
+                    style="color:#d9d926">B</span><span style="color:#d9d926">B</span><span
+                    style="color:#79d32c">.</span><span style="color:#79d32c">.</span><span
+                    style="color:#6c936c">.</span><span style="color:#6c936c">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#0033ff">l</span><span style="color:#0033ff">l</span><span
+                    style="color:#00ccff">@</span><span style="color:#00ccff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#ccffff">@</span><span style="color:#ccffff">@</span><span
+                    style="color:#33ffff">@</span><span style="color:#33ffff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#669999">.</span><span style="color:#669999">.</span><span
+                    style="color:#1ae61a">n</span><span style="color:#1ae61a">n</span><span
+                    style="color:#66cc33">.</span><span style="color:#66cc33">.</span><span
+                    style="color:#738c73">.</span><span style="color:#738c73">.</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#00e6ff">@</span><span style="color:#00e6ff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#e6ffff">@</span><span style="color:#e6ffff">@</span><span
+                    style="color:#1affff">@</span><span style="color:#1affff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#3953c6">.</span><span style="color:#3953c6">.</span><span
+                    style="color:#0df20d">n</span><span style="color:#0df20d">n</span><span
+                    style="color:#39c639">.</span><span style="color:#39c639">.</span><span
+                    style="color:#798679">.</span><span style="color:#798679">.</span><span
+                    style="color:#b9b9b9">n</span><span style="color:#b9b9b9">n</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#00ffff">@</span><span style="color:#00ffff">@@@@@</span><span
+                    style="color:#0000ff">k</span><span style="color:#0000ff">k</span><span
+                    style="color:#00ff00">k</span><span style="color:#00ff00">k</span><span
+                    style="color:#4040c0">.</span><span style="color:#4040c0">.</span><span
+                    style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#e0e0e0">@</span><span style="color:#e0e0e0">@</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@@@</span><span
+                    style="color:#26f2f2">@</span><span style="color:#26f2f2">@</span><span
+                    style="color:#ff0000">k</span><span style="color:#ff0000">k</span><span
+                    style="color:#26f2f2">@</span><span style="color:#26f2f2">@</span><span
+                    style="color:#ff0000">k</span><span style="color:#ff0000">k</span><span
+                    style="color:#f2f21a">B</span><span style="color:#f2f21a">B</span><span
+                    style="color:#5353c6">.</span><span style="color:#5353c6">.</span><span
+                    style="color:#c6c6c6">j</span><span style="color:#c6c6c6">j</span><span
+                    style="color:#ffffff">@</span><span style="color:#ffffff">@</span><span
+                    style="color:#e0e0e0">@</span><span style="color:#e0e0e0">@</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#c0c0c0">k</span><span style="color:#c0c0c0">k</span><span
+                    style="color:#f9f9f9">@</span><span style="color:#f9f9f9">@@@</span><span
+                    style="color:#f92d2d">Q</span><span style="color:#f92d2d">QQQQQQQ</span><span
+                    style="color:#6060c6">.</span><span style="color:#6060c6">.</span><span
+                    style="color:#f9f9f9">@</span><span style="color:#f9f9f9">@@@@@</span><span
+                    style="color:#e0e0e0">@</span><span style="color:#e0e0e0">@</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#acacac">.</span><span style="color:#acacac">.</span><span
+                    style="color:#c3c3c3">M</span><span style="color:#c3c3c3">MMMMMMMMMMMMMMMMMMMMM</span><span
+                    style="color:#808080">.</span><span style="color:#808080">.</span><br>
+                <span style="color:#808080">.</span><span style="color:#808080">.........................</span>
+            </div>
+            <div class="text">
+                <div class="intro-text">
+                    <!-- <pre  class="emphasis">
+      :::      ::::::::   ::::::::  :::::::::: ::::    ::::  :::::::::  :::     :::   ::: 
+    :+: :+:   :+:    :+: :+:    :+: :+:        +:+:+: :+:+:+ :+:    :+: :+:     :+:   :+: 
+   +:+   +:+  +:+        +:+        +:+        +:+ +:+:+ +:+ +:+    +:+ +:+      +:+ +:+  
+  +#++:++#++: +#++:++#++ +#++:++#++ +#++:++#   +#+  +:+  +#+ +#++:++#+  +#+       +#++:   
+  +#+     +#+        +#+        +#+ +#+        +#+       +#+ +#+    +#+ +#+        +#+    
+  #+#     #+# #+#    #+# #+#    #+# #+#        #+#       #+# #+#    #+# #+#        #+#    
+  ###     ###  ########   ########  ########## ###       ### #########  ########## ###    
+                    </pre> -->
+                    <!-- <pre class="emphasis">
+    e Y8b      dP"8  dP"8 888'Y88     e   e     888 88b, 888     Y88b Y8P 
+   d8b Y8b    C8b Y C8b Y 888 ,'Y    d8b d8b    888 88P' 888      Y88b Y  
+  d888b Y8b    Y8b   Y8b  888C8     e Y8b Y8b   888 8K   888       Y88b   
+ d888888888b  b Y8D b Y8D 888 ",d  d8b Y8b Y8b  888 88b, 888  ,d    888   
+d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888                                      
+                    </pre> -->
+                    <pre class="emphasis">
+   _|_|      _|_|_|    _|_|_|  _|_|_|_|  _|      _|  _|_|_|    _|    _|      _|  
+ _|    _|  _|        _|        _|        _|_|  _|_|  _|    _|  _|      _|  _|    
+ _|_|_|_|    _|_|      _|_|    _|_|_|    _|  _|  _|  _|_|_|    _|        _|      
+ _|    _|        _|        _|  _|        _|      _|  _|    _|  _|        _|      
+ _|    _|  _|_|_|    _|_|_|    _|_|_|_|  _|      _|  _|_|_|    _|_|_|_|  _|      
+                    </pre><p><b>Welcome to LouveSystems' <span class="emphasis">Assembly</span></b>! We're thrilled to have
+                        you here <span style="color:red">♥</span></p>
+                    <p><span class="emphasis">Assembly</span> is a sandbox conception game, where you design small
+                        programs called <b>delegates</b> using a natural language. </p>
+                    <p>Your delegate is then released on the <b>assembly</b>, free to roam and tag along with other
+                        programs.</p>
+                    <p>You can just <b>take a look</b> at the assembly for now <b>by clicking the button below</b>, and
+                        write a little
+                        delegate whenever you feel ready to try it out!</p>
+                    <div class="button-container">
+                        <button id="splash-dismiss">LET'S TAKE A PEEK &gt;&gt;</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="terminal" id="code-editor" style="display:none">
             <div id="explanations-window">
                 <h1>HELP</h1>
                 <div id="explanations"></div>
                 <div class="button-container">
-                    <button id="access-core">&lt;&lt; ACCESS CORE</button>
+                    <button id="access-core">&lt;&lt; VIEW ASSEMBLY</button>
                 </div>
             </div>
             <div id="editor-container" class="column">
-                <h1>CODE</h1>
+                <h1>DELEGATE INSTRUCTIONS</h1>
 
                 <div class="editor-line" style="height:32px;position:inherit">
                     <div class="row">
-                        <div>PROGRAM:</div>
-                        <input id="program-name" />
+                        <div>DELEGATE NAME:</div>
+                        <input spellcheck="false" id="program-name" maxlength="32" minlength="1" />
                     </div>
                 </div>
 
@@ -78,11 +271,11 @@
                     <button id="clear-program">CLEAR X</button>
                     <button id="load-program">LOAD ⏏</button>
                     <button id="save-program">SAVE V</button>
-                    <button id="run-training-program">TEST PROGRAM &gt;&gt;</button>
+                    <button id="run-training-program">TRAIN DELEGATE &gt;&gt;</button>
                 </div>
             </div>
             <div id="core-container">
-                <h1>LOCAL TEST CORE</h1>
+                <h1>LOCAL TRAINING ASSEMBLY</h1>
                 <div id="core-training" class="core">
                 </div>
                 <div class="button-container horizontal">
@@ -91,7 +284,7 @@
                         <button id="speed-up">SPEED++</button>
                         <button id="speed-down">SPEED--</button>
                     </div>
-                    <button id="send-to-core">SEND TO CORE &gt;&gt;</button>
+                    <button id="send-to-core">SEND TO ASSEMBLY &gt;&gt;</button>
                 </div>
             </div>
         </div>
@@ -102,25 +295,27 @@
 
                 </div>
                 <div id="scoreboard">
-                    ACTIVE PROGRAMS:
+                    ACTIVE DELEGATES:
                     <div id="scoreboard-entries">
-                        <div>1. Tron (32 hits)</div>
+                        <!-- <div>1. Tron (32 hits)</div>
                         <div>2. Word (21 hits)</div>
-                        <div>2. Advanced Core Killer v4 (21 hits)</div>
+                        <div>2. Advanced Core Killer v4 (21 hits)</div> -->
                     </div>
-                    <button id="create-program-button">CREATE PROGRAM &gt;&gt;</button>
+                    <button id="create-program-button">WRITE A DELEGATE &gt;&gt;</button>
                 </div>
             </div>
         </div>
-        <div style="position:absolute; bottom:0; padding:40px; right:0; left:0; display:flex; flex-direction: row; justify-content: space-between; margin-top:5px;">
+        <div
+            style="position:absolute; bottom:0; padding:40px; right:0; left:0; display:flex; flex-direction: row; justify-content: space-between; margin-top:5px;">
             <div style="text-align:left; min-width:100px;">
                 Join the <a style="color:white;" target="_blank" href="https://discord.gg/WQWZBN3">DISCORD</a>!
             </div>
             <div style="text-align:center; min-width:100px;">
-                Inspired by Jones & Dewdney's <a href="https://en.wikipedia.org/wiki/Core_War" target="_blank" style="color:white">Core War</a>
+                Inspired by Jones & Dewdney's <a href="https://en.wikipedia.org/wiki/Core_War" target="_blank"
+                    style="color:white">Core War</a>
             </div>
             <div style="text-align:right; min-width:100px;">
-
+                Follow me on <a style="color:cyan" href="https://bsky.app/profile/louve.systems">Bluesky</a>!
             </div>
         </div>
     </div>
