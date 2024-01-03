@@ -18,6 +18,10 @@ module.exports = class {
     #core;
     #haltReason;
 
+    get compiledProgram() {
+        return this.#program.instructions;
+    }
+
     get haltReason() {
         return this.#haltReason;
     }
@@ -30,11 +34,23 @@ module.exports = class {
         return this.#core.columnCount;
     }
 
+    get nextAddressToExecute() {
+        const ptrs = this.#core.getProgramPointers(0);
+        return ptrs.nextAddressToExecute;
+    }
+
     constructor(programName, programString) {
         const tokens = parser.tokenize(programString);
 
         if (tokens.anyError) {
             this.state = this.EState.INVALID;
+
+            for (const k in tokens.tokens) {
+                if (tokens.tokens[k].isError) {
+                    this.#haltReason = tokens.tokens[k].errorMessage;
+                    break;
+                }
+            }
         }
         else {
             const compiled = compiler.compile(tokens.tokens);
@@ -65,11 +81,6 @@ module.exports = class {
             this.state = this.EState.HALTED;
             this.#haltReason = this.#core.lastKillReason;
         }
-    }
-
-    get nextAddressToExecute() {
-        const ptrs = this.#core.getProgramPointers(0);
-        return ptrs.nextAddressToExecute;
     }
 
     dumpCoreToBuffer(buff) {

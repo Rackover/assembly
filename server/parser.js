@@ -32,7 +32,6 @@ const STATEMENT_PARSERS = {
     // aliases
     "jump to": parseJump,
     "go to": parseJump,
-    "data": parseData,
     "do nothing": parseNop,
 }
 
@@ -72,6 +71,10 @@ const REFERENCE_INDICATORS = [
 
 module.exports.MAX_OP = MAX_OP;
 module.exports.OPERATIONS = OPERATIONS;
+module.exports.TO_ADDRESS_LINKS = TO_ADDRESS_LINKS;
+module.exports.AT_ADDRESS_LINKS = AT_ADDRESS_LINKS;
+module.exports.EQUAL_LINKS = EQUAL_LINKS;
+module.exports.WITH_LINKS = WITH_LINKS;
 module.exports.tokenize = tokenize;
 
 // Returns a (bool, token list)
@@ -183,7 +186,7 @@ function parseStatement(token) {
     }
 
     if (!found) {
-        token.errorMessage = `Unknown operation "${line}". It should start with one of the following: "${Object.keys(STATEMENT_PARSERS).join(", ")}"`;
+        token.errorMessage = `Unknown operation "${line}". It should start with one of the following: "${Object.keys(STATEMENT_PARSERS).splice(0, MAX_OP).join(", ")}"`;
     }
 }
 

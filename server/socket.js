@@ -1,32 +1,34 @@
 const Client = require("./client");
 
 const { createServer } = require("http");
-const { Server  }= require("socket.io");
+const { Server } = require("socket.io");
+
+const blacklist = require("./blacklist");
 
 const httpServer = createServer();
-const io = new Server(httpServer, {
-  // options
-  cors: {
-    origin: "http://rx.louve.systems:4051",
-    methods: ["GET", "POST"]
-  },
-  // transports: ['websocket', 'polling', 'flashsocket'] 
-});
-
-io.on("connection", (socket) => {
-  // ...
-  new Client(socket);
-});
-
-module.exports = 
+module.exports =
 {
-    sendCoreToEveryone: function(core)
-    {
-        io.sockets.emit("core", core);
-    },
-    start: function()
-    {
-        console.log("socket.io bound on port 4050")
-        httpServer.listen(4050);
-    }
+  start: function () {
+
+    const io = new Server(httpServer, {
+      // options
+      cors: {
+        origin: `http://rx.louve.systems:${CONFIG.HTTP_PORT}`,
+        methods: ["GET", "POST"]
+      },
+      // transports: ['websocket', 'polling', 'flashsocket'] 
+    });
+
+    io.on("connection", (socket) => {
+      if (blacklist.isBannedAddress(socket.handshake.address)) {
+        socket.disconnect(true);
+      }
+      else {
+        new Client(socket);
+      }
+    });
+
+    log.info(`Bootclub socket.io bound on port ${CONFIG.SOCKET_PORT}`)
+    httpServer.listen(CONFIG.SOCKET_PORT);
+  }
 }

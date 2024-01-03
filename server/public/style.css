@@ -392,16 +392,34 @@ input#program-name
 	color: lightgreen;
 }
 
-.editor-line .display .argument-0 {
+.editor-line .display .argument-0, #explanations .argument-0 {
 	color: orange;
 }
 
-.editor-line .display .argument-1 {
+.editor-line .display .argument-1, #explanations .argument-1{
 	color: cyan;
 }
 
-.editor-line .display .link {
+.editor-line .display .link, #explanations .link {
 	color: grey;
+}
+
+#explanations .tutorial-statement{
+	color:white;
+	border-bottom:1px dotted white;
+}
+
+#explanations .tutorial-link{
+	color:white;
+}
+
+#explanations ul{
+	list-style-type: none;
+	padding-left:20px;
+}
+
+#explanations li{
+	margin-bottom:10px;
 }
 
 .address-field.current-field {

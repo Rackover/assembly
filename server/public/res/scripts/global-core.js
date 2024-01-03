@@ -1,6 +1,6 @@
 
 globalCore.colors = [
-    'gray',
+    '#808080', // Gray
     '#e6194B',
     '#3cb44b',
     '#ffe119',
@@ -35,7 +35,7 @@ globalCore.onWindowLoad = function () {
     globalCore.createGlobalCoreDisplay(5, 256);
     globalCore.buffer = new Int16Array(5 * 256);
     globalCore.refreshGlobalCore({});
-    globalCore.displayScoreboard([]);
+    globalCore.displayScoreboard([], {});
 
     globalCore.initializeSocket();
 
@@ -81,10 +81,13 @@ globalCore.bindButtons = function () {
     };
 }
 
-globalCore.displayScoreboard = function (scoreboard) {
+globalCore.displayScoreboard = function (scoreboard, activity) {
     const entriesParent = document.getElementById("scoreboard-entries");
+    let codeEditor = document.getElementById("code-editor");
 
-    if (globalCore.scoreboard && Object.keys(globalCore.scoreboard).length > scoreboard.length) {
+    if (globalCore.scoreboard &&
+        (!codeEditor || !codeEditor.style || codeEditor.style.display == "none") &&
+        Object.keys(globalCore.scoreboard).length > scoreboard.length) {
         // someone died
         sound.playBoom();
     }
@@ -95,11 +98,23 @@ globalCore.displayScoreboard = function (scoreboard) {
     for (const k in scoreboard) {
         const scoreEntry = document.createElement("div");
 
-        scoreEntry.textContent = `${scoreboard[k].name} (${scoreboard[k].kills} hits)`;
-        scoreEntry.style.color = globalCore.colors[((scoreboard[k].id - 1) % (globalCore.colors.length - 1) + 1)];
+        const id = scoreboard[k].id;
+        scoreEntry.textContent = scoreboard[k].name + (activity[id].isBystander ? "" : ` (${scoreboard[k].kills} hits)`);
+       
+        const color = activity[id].isBystander ? globalCore.colors[0] : globalCore.colors[((id - 1) % (globalCore.colors.length - 1) + 1)];
+        
+        if (globalCore.wc_hex_is_light(color))
+        {
+            scoreEntry.style.color = color;
+            scoreEntry.style.background = "";
+        }
+        else{
+            scoreEntry.style.color = "black";
+            scoreEntry.style.background = color;
+        }
 
         entriesParent.appendChild(scoreEntry);
-        globalCore.scoreboard[scoreboard[k].id] = scoreEntry;
+        globalCore.scoreboard[id] = scoreEntry;
     }
 }
 
@@ -134,7 +149,7 @@ globalCore.refreshGlobalCore = function (activity) {
     const addressesOwners = {};
     for (const owner in activity) {
         // Reverse map
-        addressesOwners[activity[owner].address] = owner;
+        addressesOwners[activity[owner].address] = activity[owner].isBystander ? 0 : owner;
     }
 
     for (let addr = 0; addr < globalCore.buffer.length; addr++) {
@@ -161,7 +176,7 @@ globalCore.refreshGlobalCore = function (activity) {
 
 globalCore.initializeSocket = function () {
     socket.on("updateScoreboard", function (scoreboard, activity) {
-        globalCore.displayScoreboard(scoreboard);
+        globalCore.displayScoreboard(scoreboard, activity);
         globalCore.refreshActivity(activity);
     });
 
@@ -169,14 +184,31 @@ globalCore.initializeSocket = function () {
         globalCore.createGlobalCoreDisplay(obj.columnCount, obj.columnSize);
         globalCore.buffer = new Int16Array(obj.data, 0, obj.columnCount * obj.columnSize);
         globalCore.refreshGlobalCore(obj.activity);
-        globalCore.displayScoreboard(obj.scores);
+        globalCore.displayScoreboard(obj.scores, obj.activity);
         globalCore.refreshActivity(obj.activity);
+
+        document.getElementById("core-name").textContent = `CORE #${obj.coreInfo.id + 1} [${obj.coreInfo.friendlyName}]`;
 
     });
 
-    socket.on("deltaCore", function (delta, activity) {
+    socket.on("deltaCore", function (delta, scoreboard, activity) {
         globalCore.applyDelta(delta);
+
+        if (scoreboard.length != globalCore.scoreboard.length) {
+            globalCore.displayScoreboard(scoreboard, activity);
+        }
+
         globalCore.refreshGlobalCore(activity);
         globalCore.refreshActivity(activity);
     });
+}
+
+// https://stackoverflow.com/questions/12043187/how-to-check-if-hex-color-is-too-black
+globalCore.wc_hex_is_light = function(color) {
+    const hex = color.replace('#', '');
+    const c_r = parseInt(hex.substring(0, 0 + 2), 16);
+    const c_g = parseInt(hex.substring(2, 2 + 2), 16);
+    const c_b = parseInt(hex.substring(4, 4 + 2), 16);
+    const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+    return brightness > 70;
 }

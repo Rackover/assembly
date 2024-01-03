@@ -13,11 +13,18 @@ sound.boom.src = "res/sound/boom.ogg";
 
 sound.playBop = function (pitch = 1) {
     return;
-// doesnt work
+    // doesnt work
     sound.bop.playbackRate = pitch;
     sound.bop.play();
 }
 
 sound.playBoom = function () {
-    sound.boom.play();
+    try {
+        sound.boom.play().catch(function(error) {
+            console.log(error);
+        });
+    }
+    catch (e) {
+        console.log(e);
+    }
 }

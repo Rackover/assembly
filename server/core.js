@@ -48,6 +48,8 @@ module.exports.Core = class {
 
     get lastKillReason() { return this.#lastKillReason; }
 
+    get rules() { return this.#rules; }
+
     constructor(rules = new deps.Rules()) {
         this.#columnSize = rules.columnSize;
         this.#columnCount = rules.columnCount;
@@ -189,12 +191,12 @@ module.exports.Core = class {
         // Place program
         if (position * 4 + program.instructions.length < this.#memoryBuffer.length) {
             // Fast copy, no fragmentation
-            console.log(`Installing program ${program.name}:${program.id} at ${position} (fast copy)`);
+            log.debug(`Installing program ${program.name}:${program.id} at ${position} (fast copy)`);
             program.instructions.copy(this.#memoryBuffer, position * 4);
         }
         else {
             // slow copy, needs rollover
-            console.log(`Installing program ${program.name}:${program.id} at ${position} (slow copy)`);
+            log.debug(`Installing program ${program.name}:${program.id} at ${position} (slow copy)`);
             for (let i = 0; i < program.instructions.length / 4; i++) {
                 this.#memoryBuffer.writeInt32LE(
                     this.#memoryBuffer.readInt32LE(i * 4),
@@ -208,6 +210,12 @@ module.exports.Core = class {
             start: position,
             end: position + program.instructions.length
         };
+
+        for(let address = placedProgram.start; address < placedProgram.end; address++)
+        {
+            const safe = this.#getSafeAddress(address);
+            this.#ownershipBuffer[safe] = false; // Reset writes here
+        }
 
         // Programs are placed, let's initialize pointers
         this.#pointerGroups.push(new deps.ProgramPointer(program.id, placedProgram.start));
@@ -248,7 +256,8 @@ module.exports.Core = class {
     }
 
     #setValueAtAddress(value, address) {
-        this.#memoryBuffer.writeInt32LE(value, this.#getSafeAddress(address) * 4);
+        const MAX_INT32 = 2147483648;
+        this.#memoryBuffer.writeInt32LE(value % MAX_INT32, this.#getSafeAddress(address) * 4);
     }
 
     #getSafeAddress(address) {
