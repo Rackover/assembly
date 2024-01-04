@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
 
     <LINK href="style.css?version=1010" rel="stylesheet" type="text/css">
-    <link rel="icon" href="res/favicon/97.ico" />
+    <link rel="icon" href="res/favicon/favicon.png" />
     <title>ASSEMBLY</title>
 
     <script src="res/scripts/plugins/socket.io.js"></script>
@@ -32,9 +32,9 @@
     <script type="text/javascript" src="res/scripts/interactive.js?v=2"></script>
 
     <meta property="og:title" content="LOUVESYSTEMS' ASSEMBLY">
-    <meta property="og:description" content="Write a delegate to join the central assembly">
+    <meta property="og:description" content="Write a delegate and send it to wander in the central assembly!">
     <meta name="Description"
-        content="ASSEMBLY is a sandbox conception game where you write your own delegates and release them in shared online assembly">
+        content="ASSEMBLY is a sandbox conception game where you write small programs in natural language, and release them in a global system to coexist freely with others!">
     <meta property="og:image" content="/res/img/metapreview.jpg">
     <meta name="google-site-verification" content="gT6MZWxw3_4XOJVslimPR2nWE8U3hLy-WDvtpW8sPTI" />
 
@@ -52,7 +52,7 @@
             <h1>
                 <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;"
                         href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ASSEMBLY</b> <span
-                    style='color:grey;'>V0.9.2</span>
+                    style='color:grey;'>V1.0.0</span>
             </h1>
         </div>
         <div class="terminal" id="intro" style="display:none">
@@ -209,15 +209,6 @@
             </div>
             <div class="text">
                 <div class="intro-text" id="intro-text">
-                    <!-- <pre  class="emphasis">
-      :::      ::::::::   ::::::::  :::::::::: ::::    ::::  :::::::::  :::     :::   ::: 
-    :+: :+:   :+:    :+: :+:    :+: :+:        +:+:+: :+:+:+ :+:    :+: :+:     :+:   :+: 
-   +:+   +:+  +:+        +:+        +:+        +:+ +:+:+ +:+ +:+    +:+ +:+      +:+ +:+  
-  +#++:++#++: +#++:++#++ +#++:++#++ +#++:++#   +#+  +:+  +#+ +#++:++#+  +#+       +#++:   
-  +#+     +#+        +#+        +#+ +#+        +#+       +#+ +#+    +#+ +#+        +#+    
-  #+#     #+# #+#    #+# #+#    #+# #+#        #+#       #+# #+#    #+# #+#        #+#    
-  ###     ###  ########   ########  ########## ###       ### #########  ########## ###    
-                    </pre>  -->
                     <pre class="emphasis">
     e Y8b      dP"8  dP"8 888'Y88     e   e     888 88b, 888     Y88b Y8P 
    d8b Y8b    C8b Y C8b Y 888 ,'Y    d8b d8b    888 88P' 888      Y88b Y  
@@ -314,18 +305,18 @@ d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888
             <div style="text-align:left; margin-top: auto;  min-width:100px;">
                 join the <a style="color:white;" target="_blank" href="https://discord.gg/8VQYSUpnc3">DISCORD</a>!
             </div>
-            <div style="text-align:center; margin-top: auto; min-width:100px;">
-                Inspired by Jones & Dewdney's <a href="https://corewar.co.uk/" target="_blank"
-                    style="color:white">Core War</a>
-            </div>
-            <div class="credits" style="text-align:right; margin-top: auto; min-width:100px">
+            <div id="credits" class="credits">
                 <p><b>Testing & feedbacks</b><br>
-                    norckan<br>
-                    <a href="https://github.com/Laupetin" target="_blank">laupetin</a><br>
-                    <a href="https://mastodon.gamedev.place/@newin" target="_blank">newin</a>
+                    <span style="color:#3953c6">norckan</span><br>
+                    <a href="https://github.com/Laupetin" target="_blank" style="color:orange">laupetin</a><br>
+                    <a href="https://mastodon.gamedev.place/@newin" target="_blank" style="color:white">newin</a>
                 </p>
                 <b>Development</b><br>
-                <a href="https://bsky.app/profile/louve.systems" target="_blank">louve "rackover" hurlante</a>
+                <a href="https://bsky.app/profile/louve.systems" target="_blank" style="color:rgb(255, 118, 141)">louve "rackover" hurlante</a>
+            </div>
+            <div style="text-align:right; margin-top: auto; min-width:100px;">
+                Inspired by Jones & Dewdney's <a href="https://corewar.co.uk/" target="_blank"
+                    style="color:white">Core War</a>
             </div>
         </div>
     </div>

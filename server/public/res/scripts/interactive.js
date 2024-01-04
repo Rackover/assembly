@@ -281,6 +281,7 @@ interactive.bindButtons = function () {
     editorButtons.accessCoreButton.onclick = function () {
         if (ready) {
             document.getElementById("code-editor").style.display = "none";
+            document.getElementById("credits").style = {};
             document.getElementById("global-core").style = {};
         }
     };
@@ -616,7 +617,6 @@ interactive.showParserResult = function (parseResult, index) {
     if (index == undefined) {
         const currInput = document.activeElement;
         index = inputs.indexOf(currInput);
-
     }
 
     targetedLines.length = 0; // clear
@@ -637,13 +637,14 @@ interactive.showParserResult = function (parseResult, index) {
                 if (token.isError) {
                     explanationsWindow.innerHTML = '';
                 }
-                else{
+                else {
                     explanationsWindow.innerHTML = `<p>This line is an information about the program itself ("self-description").</p><p>It informs that '${token.metaKey}' is '${token.metaValue}'</p>`;
                 }
 
                 display.innerHTML = `<span class='meta'>${META_MAGIC}${token.metaKey}</span>${(token.metaValue != "present" ? ` <span class='meta-value'>${token.metaValue}</span>` : '')}`;
             }
             else {
+                // Means it's an instruction
                 explanationsWindow.innerHTML = interactive.getHTMLExplanationForStatement(token);
                 for (let argIndex in token.arguments) {
                     const a = token.arguments[argIndex];
@@ -656,7 +657,13 @@ interactive.showParserResult = function (parseResult, index) {
                     }
                 }
 
+                const selection = val.selectionStart;
+
                 val.value = interactive.fixSpacesInStatement(val.value);
+
+                val.selectionStart = selection;
+                val.selectionEnd = selection;
+
                 display.innerHTML = interactive.getHTMLForToken(token);
             }
         } else {
@@ -666,7 +673,17 @@ interactive.showParserResult = function (parseResult, index) {
 
         if (parseResult.anyError) {
             const errorMessage = parseResult.tokens[0].errorMessage;
-            explanationsWindow.innerHTML += `<p class='error'><b>This line contains an error!</b><br>${errorMessage}</p>`;
+            let html = ``;
+            if (parseResult.tokens[0].operation === undefined) {
+                html += `<p>Try writing one of the following:</p><p><span class="tutorial-statement">${TUTORIALIZED_OPS
+                        .map(o => interactive.getDescriptionForCommand(o).name)
+                        .join('</span> | <span class="tutorial-statement">')
+                    }</span></p>`;
+            }
+
+            html += `<p class='error'><b>This line contains an error!</b><br>${errorMessage}</p>`;
+
+            explanationsWindow.innerHTML += html;
 
             if (parseResult.tokens[0].softError) {
                 display.innerHTML = `<span class='error'>${val.value}</span>`;
@@ -685,8 +702,11 @@ interactive.getHTMLExplanationForStatement = function (token) {
         txt = `<p>Add one of the following instructions to your delegate:</p>${interactive.getHTMLOperatorSummary()}`;
     }
     else {
+        let commandDescription = false;
         if (token.operation !== undefined && token.contents.length > 0) {
-            const desc = interactive.getDescriptionForCommand(token.operation);
+            commandDescription = interactive.getDescriptionForCommand(token.operation);
+
+            const desc = commandDescription;
             txt = `<p><span class="tutorial-statement">${desc.name}</span> ${(
                 desc.arguments > 0 ?
                     (
@@ -704,97 +724,132 @@ interactive.getHTMLExplanationForStatement = function (token) {
             interactive.wrapHTMLArg(hasArg && token.arguments[0] && !isNaN(token.arguments[0].value) ? ((token.arguments[0].value >= 0 ? '+' : '') + token.arguments[0].value) : 'X', 0),
             interactive.wrapHTMLArg(hasArg && token.arguments[1] && !isNaN(token.arguments[1].value) ? ((token.arguments[1].value >= 0 ? '+' : '') + token.arguments[1].value) : 'Y', 1)
         ];
-        switch (token.operation) {
-            case module.exports.OPERATIONS.DATA:
-                txt += `
+
+        if (token.isInstruction) {
+            const isData = token.operation == module.exports.OPERATIONS_DATA;
+            switch (token.operation) {
+                case module.exports.OPERATIONS.DATA:
+                    txt += `
                 <p>${(token.arguments && token.arguments.length > 1 && !isNaN(token.arguments[1].value) ? `This cell holds the value "${interactive.wrapHTMLArg(token.arguments[1].value, 0)}"` : `Write any number here to access it later!`)}</p>
                 <p><span class="warn">This statement must not be executed!</span> The program will crash if it encounters it, so make sure it won't be reached during execution!</p>
             `;
-                break;
+                    break;
 
-            case module.exports.OPERATIONS.JUMP:
-                {
-                    const isDeep = hasArg && token.arguments[0].depth > 0;
-                    txt += `<p>Upon execution, this instruction will skip ${(hasArg && !isNaN(token.arguments[0].value) ?
-                        (isDeep ?
-                            `directly to the position given at address ${formattedArgs[0]}` :
-                            interactive.wrapHTMLArg(`${Math.abs(token.arguments[0].value)} cells ${(Math.sign(token.arguments[0].value) > 0 ? 'forward' : 'backwards')}`, 0)
-                        ) : 'execution to the address you provide, either forward (+) or backwards (-)'
-                    )}, and resume execution at that final position.</p>`;
-                }
-                break;
+                case module.exports.OPERATIONS.JUMP:
+                    {
+                        const isDeep = hasArg && token.arguments[0].depth > 0;
+                        txt += `<p>Upon execution, this instruction will skip ${(hasArg && !isNaN(token.arguments[0].value) ?
+                            (isDeep ?
+                                `directly to the position given at address ${formattedArgs[0]}` :
+                                interactive.wrapHTMLArg(`${Math.abs(token.arguments[0].value)} cells ${(Math.sign(token.arguments[0].value) > 0 ? 'forward' : 'backwards')}`, 0)
+                            ) : 'execution to the address you provide, either forward (+) or backwards (-)'
+                        )}, and resume execution at that final position.</p>`;
+                    }
+                    break;
 
-            case module.exports.OPERATIONS.MOVE:
-                {
-                    const isDeep = [
-                        hasArg && token.arguments[0].depth > 0,
-                        token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
-                    ];
+                case module.exports.OPERATIONS.MOVE:
+                    {
+                        const isDeep = [
+                            hasArg && token.arguments[0].depth > 0,
+                            token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                        ];
 
-                    txt +=
-                        `<p>This instruction will first copy the ${(isDeep[0] ?
-                            `data from the location specified at ${formattedArgs[0]}` :
-                            `data found ${formattedArgs[0]} cells from here`
-                        )} to the location specified ${(isDeep[1] ?
-                            `at the address found at ${formattedArgs[1]}` :
-                            `in ${formattedArgs[1]}`
-                        )}, and then it will erase the data at ${(isDeep[0] ? `the address specified ${formattedArgs[0]} cells from here` : `the data at ${formattedArgs[0]}`)}</p><p>It only takes a single instruction to do the equivalent of a "copy X to Y, then erase X".</p>`;
-                }
-                break;
+                        txt +=
+                            `<p>This instruction will first copy the ${(isDeep[0] ?
+                                `data from the location specified at ${formattedArgs[0]}` :
+                                `data found ${formattedArgs[0]} cells from here`
+                            )} to the location specified ${(isDeep[1] ?
+                                `at the address found at ${formattedArgs[1]}` :
+                                `in ${formattedArgs[1]}`
+                            )}, and then it will erase the data at ${(isDeep[0] ? `the address specified ${formattedArgs[0]} cells from here` : `the data at ${formattedArgs[0]}`)}</p><p>It only takes a single instruction to do the equivalent of a "copy X to Y, then erase X".</p>`;
+                    }
+                    break;
 
-            case module.exports.OPERATIONS.COPY:
-                {
-                    const isDeep = [
-                        hasArg && token.arguments[0].depth > 0,
-                        token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
-                    ];
+                case module.exports.OPERATIONS.COPY:
+                    {
+                        const isDeep = [
+                            hasArg && token.arguments[0].depth > 0,
+                            token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                        ];
 
-                    txt +=
-                        `<p>Copies all data ${(isDeep[0] ?
-                            `from the location specified at ${formattedArgs[0]}` :
-                            `from the cell at location ${formattedArgs[0]}`
-                        )} to the cell ${(isDeep[1] ?
-                            `at the address found at ${formattedArgs[1]}` :
-                            `at location ${formattedArgs[1]}`
-                        )}</p>`;
-                }
-                break;
+                        txt +=
+                            `<p>Copies all data ${(isDeep[0] ?
+                                `from the location specified at ${formattedArgs[0]}` :
+                                `from the cell at location ${formattedArgs[0]}`
+                            )} to the cell ${(isDeep[1] ?
+                                `at the address found at ${formattedArgs[1]}` :
+                                `at location ${formattedArgs[1]}`
+                            )}</p>`;
+                    }
+                    break;
 
-            case module.exports.OPERATIONS.WRITE:
-                {
-                    const isDeep = [
-                        hasArg && token.arguments[0].depth > 0,
-                        token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
-                    ];
+                case module.exports.OPERATIONS.WRITE:
+                    {
+                        const isDeep = [
+                            hasArg && token.arguments[0].depth > 0,
+                            token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                        ];
 
-                    txt +=
-                        `<p>Simply writes ${(isDeep[0] ?
-                            `data found at location ${formattedArgs[0]}` :
-                            `the number ${formattedArgs[0]}`
-                        )} to the cell ${(isDeep[1] ?
-                            `at the address found at ${formattedArgs[1]}` :
-                            `at location ${formattedArgs[1]}`
-                        )}</p>`;
-                }
-                break;
+                        txt +=
+                            `<p>Simply writes ${(isDeep[0] ?
+                                `data found at location ${formattedArgs[0]}` :
+                                `the number ${formattedArgs[0]}`
+                            )} to the cell ${(isDeep[1] ?
+                                `at the address found at ${formattedArgs[1]}` :
+                                `at location ${formattedArgs[1]}`
+                            )}</p>`;
+                    }
+                    break;
 
-            case module.exports.OPERATIONS.ADD:
-                {
-                    const isDeep = [
-                        hasArg && token.arguments[0].depth > 0,
-                        token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
-                    ];
+                case module.exports.OPERATIONS.ADD:
+                    {
+                        const isDeep = [
+                            hasArg && token.arguments[0].depth > 0,
+                            token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                        ];
 
-                    txt +=
-                        `<p>Computes the sum of two numbers: the first one ${(isDeep[0] ?
-                            `found at location ${formattedArgs[0]}` :
-                            `being ${formattedArgs[0]}`
-                        )}, and the second one found ${(isDeep[1] ?
-                            `at the address specified at ${formattedArgs[1]}` :
-                            `${formattedArgs[1]} cells away from here`
-                        )}, and then stores the result at ${(isDeep[1] ? `the address specified at the location written in ${formattedArgs[1]}` : `the location of ${formattedArgs[1]}`)}</p><p>In practice, that means Y is always overwritten with the result of X + Y</p>`;
-                }
-                break;
+                        txt +=
+                            `<p>Computes the sum of two numbers: the first one ${(isDeep[0] ?
+                                `found at location ${formattedArgs[0]}` :
+                                `being ${formattedArgs[0]}`
+                            )}, and the second one found ${(isDeep[1] ?
+                                `at the address specified at ${formattedArgs[1]}` :
+                                `${formattedArgs[1]} cells away from here`
+                            )}, and then stores the result at ${(isDeep[1] ? `the address specified at the location written in ${formattedArgs[1]}` : `the location of ${formattedArgs[1]}`)}</p><p>In practice, that means Y is always overwritten with the result of X + Y</p>`;
+                    }
+                    break;
+
+                case module.exports.OPERATIONS.SKIP_IF_EQUAL:
+                    {
+                        const isDeep = [
+                            hasArg && token.arguments[0].depth > 0,
+                            token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                        ];
+
+                        txt +=
+                            `<p>Checks if ${(isDeep[0] ?
+                                `the number at ${formattedArgs[0]}` :
+                                `${formattedArgs[0]}`
+                            )} and ${(isDeep[1] ?
+                                `the number at ${formattedArgs[1]}` :
+                                `${formattedArgs[1]}`
+                            )} are equal.</p><p>If they are equal the NEXT instruction is skipped, so this line acts like a <b>GO TO +1</b>.</p>
+                        <p>If they are not equal, this statement will do nothing and execution will resume on the next instruction.</p>`;
+                    }
+                    break;
+            }
+
+            if (!isData && commandDescription && commandDescription.arguments > 0)
+            {
+                txt += `<div style="margin-top: auto; vertical-align:bottom;"><p style="border-bottom:1px dotted gray;"></p>`;
+
+                // Add dereferencement explanations
+                txt += `<p>Note: if you feel ready to write complicated programs, you can write arguments either as <u>an address to look up</u> instead of a plain number. To do that, write "${
+                    interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[0], 0)
+                }" or "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[1], 0)}" before your number, which will fetch the data from said address when executing that statement</li></ul></p>`;
+            
+                txt += `</div>`;
+            }
         }
     }
 

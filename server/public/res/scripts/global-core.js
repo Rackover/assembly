@@ -83,6 +83,7 @@ globalCore.bindButtons = function () {
     globalCore.makeProgramButton.onclick = function () {
         document.getElementById("code-editor").style = {};
         document.getElementById("global-core").style.display = "none";
+        document.getElementById("credits").style.display = "none";
 
         inputs[0].focus();
         interactive.refreshLine(0);

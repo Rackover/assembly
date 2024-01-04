@@ -23,7 +23,7 @@ const MAX_OP = Object.keys(OPERATIONS).length;
 const STATEMENT_PARSERS = {
     write: parseWrite,
     add: parseAdd,
-    jump: parseJump,
+    "go to": parseJump,
     data: parseData,
     copy: parseCopy,
     move: parseMove,
@@ -32,7 +32,7 @@ const STATEMENT_PARSERS = {
 
     // aliases
     "jump to": parseJump,
-    "go to": parseJump,
+    jump: parseJump,
     "do nothing": parseNop,
 }
 
@@ -76,7 +76,9 @@ module.exports.TO_ADDRESS_LINKS = TO_ADDRESS_LINKS;
 module.exports.AT_ADDRESS_LINKS = AT_ADDRESS_LINKS;
 module.exports.EQUAL_LINKS = EQUAL_LINKS;
 module.exports.WITH_LINKS = WITH_LINKS;
+module.exports.REFERENCE_INDICATORS = REFERENCE_INDICATORS;
 module.exports.tokenize = tokenize;
+
 
 // Returns a (bool, token list)
 function tokenize(strInput) {
@@ -220,7 +222,7 @@ function parseStatement(token) {
     }
 
     if (!found) {
-        token.errorMessage = `Unknown operation "${line}". It should start with one of the following: "${Object.keys(STATEMENT_PARSERS).splice(0, MAX_OP).join(", ")}"`;
+        token.errorMessage = `Unknown operation "${line}".`;
     }
 }
 
@@ -299,7 +301,7 @@ function parseOneArgumentStatement(token, data, statementName) {
 
     if (currentData.length == 0)
     {
-        token.errorMessage = `Missing first argument for ${statementName}`;
+        token.errorMessage = `Missing first argument for "${token.operatorText}"`;
         token.softError = true;
         return {argument: '', remainingData: data};
     }
@@ -351,15 +353,15 @@ function parseTwoArgumentsStatement(token, data, statementName, links) {
     }
 
     if (currentData.length == 0) {
-        token.errorMessage = `Missing second argument in ${statementName} - try writing "${links[0]}" and then supplying a second argument`;
+        token.errorMessage = `Missing second argument in ${token.operatorText} - try writing "${links[0]}" and then supplying a second argument`;
         token.softError = true;
     }
     else if (links[0].startsWith(currentData)) {
-        token.errorMessage = `Missing second argument in ${statementName}.`;
+        token.errorMessage = `Missing second argument in ${token.operatorText}.`;
         token.softError = true;
     }
     else {
-        token.errorMessage = `Invalid second argument "${currentData}" in ${statementName} - try specifying "${links[0]}" before it`;
+        token.errorMessage = `Invalid second argument "${currentData}" in ${token.operatorText} - try specifying "${links[0]}" before it`;
     }
 
     return { argument: "", remainingData: currentData };

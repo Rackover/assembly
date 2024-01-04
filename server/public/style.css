@@ -1,19 +1,19 @@
-body,
 html {
 	font-family: Dos;
 	color: #BFBFBF;
 	background-color: #151515;
-	display: flex;
-	flex-direction: row;
-	justify-content: center;
-	width: 100%;
-
 	font-smooth: inherit;
 	font-smoothing: none !important;
 	-webkit-font-smoothing: none !important;
 	-moz-osx-font-smoothing: none !important;
 }
 
+body
+{
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
 /*
 div { border: 1px solid red !important; }
 */
@@ -415,6 +415,11 @@ input#program-name {
 .editor-line .display.comment-field .meta-value
 {
 	color: pink;
+}
+
+#credits
+{
+	text-align:center; margin-top: auto; min-width:100px;
 }
 
 .credits a
