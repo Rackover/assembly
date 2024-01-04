@@ -30,8 +30,8 @@ if (isWeb) {
 
 const OP_COMPARISONS = {};
 OP_COMPARISONS[deps.parser.OPERATIONS.SKIP_IF_EQUAL] = (a, b) => a == b;
-OP_COMPARISONS[deps.parser.OPERATIONS.SKIP_IF_GREATER] = (a, b) => a < b; // uhm
-OP_COMPARISONS[deps.parser.OPERATIONS.SKIP_IF_LOWER] = (a, b) => a > b; // okay
+OP_COMPARISONS[deps.parser.OPERATIONS.SKIP_IF_GREATER] = (a, b) => b > a; // uhm
+OP_COMPARISONS[deps.parser.OPERATIONS.SKIP_IF_LOWER] = (a, b) => b < a; // okay
 
 module.exports.Core = class {
     #columnSize;

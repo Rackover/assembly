@@ -934,12 +934,14 @@ interactive.getHTMLExplanationForStatement = function (token) {
                     break;
             }
 
-            if (!isData && commandDescription && commandDescription.arguments > 0) {
+            if (!isData && !token.isError && commandDescription && commandDescription.arguments > 0) {
                 txt += `<div style="margin-top: auto; vertical-align:bottom;"><p style="border-bottom:1px dotted gray;"></p>`;
 
                 // Add dereferencement explanations
-                txt += `<p>You can write arguments either as a plain number or as <u>an address to look up</u> instead. To do that, write "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[0], 0)
-                    }" or "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[1], 0)}" before your number.<br>This will fetch the data from the given address when executing that statement, allowing you to write more complex programs.</li></ul></p>`;
+                txt += `<p>You can write arguments either as a plain number or as <u>an address to look up</u> instead.</p><p>To do that, write "${
+                    interactive.wrapHTMLArg(`<u>${module.exports.REFERENCE_INDICATORS[0]}</u> X`, 0)
+                    }" or "${
+                        interactive.wrapHTMLArg(`<u>${module.exports.REFERENCE_INDICATORS[2]}</u> X`, 0)}".</p><p>This will fetch the data from the given address when executing that statement, allowing you to write more complex programs.</p>`;
 
                 txt += `</div>`;
             }
