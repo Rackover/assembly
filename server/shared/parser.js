@@ -192,7 +192,7 @@ function parseStatement(token) {
 
 function parseJump(token, data) {
     token.remainingData = parseOneArgumentStatement(token, data, "Jump").remainingData;
-    
+
     if (token.arguments.length > 0) {
         token.arguments[0].isReference = true;
     }
@@ -263,6 +263,13 @@ function parseAdd(token, data) {
 function parseOneArgumentStatement(token, data, statementName) {
     let currentData = data;
 
+    if (currentData.length == 0)
+    {
+        token.errorMessage = `Missing first argument for ${statementName}`;
+        token.softError = true;
+        return {argument: '', remainingData: data};
+    }
+
     const parseResult = parseStatementArgument(currentData);
     const argumentOne = parseResult.argument;
 
@@ -282,7 +289,7 @@ function parseTwoArgumentsStatement(token, data, statementName, links) {
     const parseResult = parseOneArgumentStatement(token, currentData, statementName);
 
     if (token.errorMessage) {
-        return;
+        return { argument: "", remainingData: currentData };
     }
 
     currentData = parseResult.remainingData;
@@ -301,15 +308,26 @@ function parseTwoArgumentsStatement(token, data, statementName, links) {
             if (argumentTwo.errorMessage) {
                 token.errorMessage = `Error parsing second argument "${currentData}" of ${statementName} operation: ${argumentTwo.errorMessage}`;
             }
-            else {
-                token.arguments.push(argumentTwo);
-            }
+
+            // Still push it even if it has an error
+            token.arguments.push(argumentTwo);
 
             return { argument: argumentTwo, remainingData: currentData };
         }
     }
 
-    token.errorMessage = `Invalid second argument "${currentData}" in ${statementName} - try specifying "${links[0]}" before it`;
+    if (currentData.length == 0) {
+        token.errorMessage = `Missing second argument in ${statementName} - try writing "${links[0]}" and then supplying a second argument`;
+        token.softError = true;
+    }
+    else if (links[0].startsWith(currentData)) {
+        token.errorMessage = `Missing second argument in ${statementName}.`;
+        token.softError = true;
+    }
+    else {
+        token.errorMessage = `Invalid second argument "${currentData}" in ${statementName} - try specifying "${links[0]}" before it`;
+    }
+
     return { argument: "", remainingData: currentData };
 }
 
@@ -357,6 +375,10 @@ function parseStatementArgument(data) {
     }
 
     let integer = parseInt(numberString);
+    if (isNaN(integer)) {
+        argument.errorMessage = `"${numberString.length == 0 ? data : numberString}" is not a integer`;
+    }
+
     argument.value = integer;
 
     argument.text = data.substring(0, advance);

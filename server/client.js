@@ -1,6 +1,7 @@
 const TestCore = require("./test_core");
 const capture = require('./program_capture');
 const blacklist = require("./blacklist");
+const sanitize = require("sanitize-filename");
 
 const SPEEDS_MS = [
     2000,
@@ -51,6 +52,8 @@ module.exports = class {
             this.#testCore = false;
             clearInterval(this.#interval);
 
+            programName = sanitize(programName);
+
             const core = new TestCore(programName, programString);
             if (core.state == core.EState.INVALID) {
                 socket.emit("invalidProgram", programName, core.haltReason);
@@ -81,19 +84,39 @@ module.exports = class {
             this.#destroy();
         }).bind(this));
 
+        socket.on("requestKill", (function(id){
+            this.globalCore.killProgramIfOwned(id, this.#id);
+        }).bind(this));
+
         socket.on("uploadProgram", (function (programName, programString) {
             this.#testCore = false;
             clearInterval(this.#interval);
 
+            programName = programName.substring(0, Math.min(programName.length, CONFIG.MAX_PROGRAM_NAME_LENGTH));
+
+            // Allow window cursed names
+            if (!(['CON', 'PRN', 'AUX', 'NUL',
+                'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+                'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'].includes(programName))) {
+                programName = sanitize(programName);
+            }
+
             if (programName.length < 1) {
                 programName = "UNKNOWN.ELF";
             }
-
-            programName = programName.substring(0, Math.min(programName.length, CONFIG.MAX_PROGRAM_NAME_LENGTH));
+            else if (programName.length < 4) {
+                programName += ".d";
+            }
 
             log.info(`Client ${this.#id} uploading program named "${programName}" (${programString.length} characters)`);
 
-            const [id, msg] = this.globalCore.installProgram(programName, programString, socket.handshake.address);
+            const [id, msg] = this.globalCore.installProgram(
+                programName,
+                programString,
+                this.#id,
+                socket.handshake.address
+            );
+
             const success = id !== false;
 
             log.info(`Installation of program "${programName}" returned ${success}`);
@@ -192,8 +215,18 @@ module.exports = class {
 
     #onGlobalTick(delta) {
         const gc = this.globalCore;
+
+        // Transform ownerId into isYours (reduces space and complexity clientside)
+        const activity = gc.activePointers;
+        for (const pId in activity) {
+            const act = activity[pId];
+            act.isYours = act.ownerId == this.#id;
+
+            delete act.ownerId;
+        }
+
         if (this.#receivedInitialGlobalTick) {
-            this.#socket.emit("deltaCore", delta, gc.scores, gc.activePointers);
+            this.#socket.emit("deltaCore", delta, gc.scores, activity);
         }
         else {
 
@@ -203,7 +236,7 @@ module.exports = class {
                 data: gc.serializedBuffer,
                 columnCount: gc.columnCount,
                 columnSize: gc.columnSize,
-                activity: gc.activePointers,
+                activity: activity,
                 coreInfo: {
                     id: gc.id,
                     friendlyName: gc.friendlyName,

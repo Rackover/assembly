@@ -50,6 +50,7 @@ h2 {
 .terminal {
 	border: 1px groove grey;
 	padding: 20px;
+	min-width:1345px;
 }
 
 .terminal h1 {
@@ -542,6 +543,30 @@ input.target-1 {
 #scoreboard {
 	position: relative;
 	min-width: 20%;
+}
+
+#scoreboard #scoreboard-entries div
+{
+	display:flex;
+	flex-direction:row;
+}
+
+#scoreboard #scoreboard-entries div button{
+	width:auto;	
+	color:white;
+	border:1px dashed red;
+	font-size:8px;
+	display:inline;
+	padding:0;
+	margin:0;
+	flex:1;
+}
+
+#scoreboard #scoreboard-entries div button:hover
+{
+	color:black;
+	border-color:black;
+	background-color:red;
 }
 
 @keyframes create-program-button-animation {

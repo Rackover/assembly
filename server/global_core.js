@@ -50,7 +50,12 @@ const BYSTANDER_NAMES = [
     "Crow",
     "Raven",
     "Xunlai",
-    "Moose"
+    "Moose",
+    "System",
+    "CTHelper",
+    "Svchost",
+    "ZinLogon",
+    "Haiku"
 ]
 
 // const BYSTANDER_CODE = `copy 3 to 4\nadd 1 to the value at 3\njump -2`;
@@ -103,7 +108,11 @@ module.exports = class {
             active[ptrs.programId] = {
                 address: ptrs.nextAddressToExecute,
                 executesNext: nextToPlay === ptrs,
-                isBystander: this.#isBystander[ptrs.programId]
+                isBystander: this.#isBystander[ptrs.programId],
+                ownerId:
+                    this.#programs[i] == undefined || this.#programs[i].owner == undefined ?
+                        0 :
+                        this.#programs[i].owner.id
             };
         }
 
@@ -174,7 +183,7 @@ module.exports = class {
         clearInterval(this.#interval);
     }
 
-    installProgram(name, code, fromAddress = false) {
+    installProgram(name, code, ownerId = 0, fromAddress = false) {
         if (fromAddress !== false) { // Remote client - exercise caution
             if (blacklist.isBlacklistedName(name)) {
                 blacklist.ban(fromAddress);
@@ -186,10 +195,8 @@ module.exports = class {
         name = name.trim();
 
         // Check if name already exists
-        for(const k in this.#programs)
-        {
-            if (this.#programs[k].name.trim().toLowerCase() == name.toLowerCase())
-            {
+        for (const k in this.#programs) {
+            if (this.#programs[k].name.trim().toLowerCase() == name.toLowerCase()) {
                 return [false, "Another delegate with the same name is already running!"];
             }
         }
@@ -221,6 +228,10 @@ module.exports = class {
             program.name = name;
             program.id = id;
             program.instructions = compiled;
+            program.owner = {
+                address: fromAddress,
+                id: ownerId
+            };
 
             let position = Math.floor(this.#core.maxAddress / 2);
 
@@ -289,6 +300,19 @@ module.exports = class {
 
                 this.#broadcastOnTicked(delta);
                 this.#fullTick ++;
+
+                // Recheck in case banlist has changed
+                {
+                    const info = this.#programs[this.#core.nextProgramToPlay];
+                    if (info && blacklist.isBlacklistedName(info.name)) {
+                        if (info.owner) {
+                            blacklist.ban(info.owner.address);
+                            log.warn(`Excluding client with address ${info.owner.address} due to creating a program named [${info.name}], and killing the running program with said name`);
+                        }
+
+                        this.#core.killProgram(this.#core.nextProgramToPlay);
+                    }
+                }
             }
         }
         else {
@@ -303,6 +327,25 @@ module.exports = class {
         }
 
         this.#internalTick ++;
+    }
+
+    killProgramIfOwned(id, ownerId) {
+        for (const k in this.#programs) {
+            if (this.#programs[k].id == id) {
+                if (this.#programs[k].owner && this.#programs[k].owner.id == ownerId) {
+                    this.#core.killProgram(k);
+                    return true;
+                }
+                else {
+                    log.warn(`Client id ${ownerId} tried to kill a program they do not own ${this.#programs[k].id} named ${this.#programs[k].name})`);
+                    return false;
+                }
+            }
+        }
+
+        log.info(`Could not kill ${id} owned by ${ownerId} (no such program)`);
+
+        return false;
     }
 
     getProgramInstructions(id) {
@@ -418,13 +461,12 @@ function generateBystanderCode() {
 
     if (Math.random() < 0.3) { // Permanent runners
         const instructions = [];
-        
+
         // TODO Wall
-        if (Math.random() < 0.4)
-        {
+        if (Math.random() < 0.4) {
 
         }
-        else{
+        else {
             instructions.push(`add ${randomInt(117, 263)} to 10`);
 
             if (Math.random() < 0.5) {

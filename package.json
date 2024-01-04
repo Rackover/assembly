@@ -16,6 +16,7 @@
     "getmac": "^6.6.0",
     "obscenity": "^0.1.4",
     "readline-sync": "^1.4.10",
+    "sanitize-filename": "^1.6.3",
     "socket.io": "^4.7.2",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"

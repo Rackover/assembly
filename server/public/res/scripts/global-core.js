@@ -27,7 +27,7 @@ globalCore.colors = [
 // global core
 globalCore.cells = [];
 globalCore.buffer = null;
-globalCore.scoreboard = {};
+globalCore.scoreboardDisplays = {};
 
 globalCore.onWindowLoad = function () {
     globalCore.bindButtons();
@@ -91,42 +91,104 @@ globalCore.displayScoreboard = function (scoreboard, activity) {
         sound.playBoom();
     }
 
-    entriesParent.innerHTML = [];
-    globalCore.scoreboard = {};
-
+    const seenIds = [];
     for (const k in scoreboard) {
-        const scoreEntry = document.createElement("div");
-
         const id = scoreboard[k].id;
-        scoreEntry.textContent = scoreboard[k].name + (activity[id].isBystander ? "" : ` (${scoreboard[k].kills} hits)`);
-       
-        const color = activity[id].isBystander ? globalCore.colors[0] : globalCore.colors[((id - 1) % (globalCore.colors.length - 1) + 1)];
-        
-        if (globalCore.wc_hex_is_light(color))
-        {
-            scoreEntry.style.color = color;
-            scoreEntry.style.background = "";
-        }
-        else{
-            scoreEntry.style.color = "black";
-            scoreEntry.style.background = color;
+
+        const scoreDisplay = globalCore.scoreboardDisplays[id] ?? {
+            entryDiv: document.createElement("div"),
+            textDiv: document.createElement("div"),
+            button: null
+        };
+
+        seenIds.push(id);
+
+        if (!globalCore.scoreboardDisplays[id]) {
+            scoreDisplay.entryDiv.appendChild(scoreDisplay.textDiv);
         }
 
-        entriesParent.appendChild(scoreEntry);
-        globalCore.scoreboard[id] = scoreEntry;
+        scoreDisplay.textDiv.textContent = scoreboard[k].name + (activity[id].isBystander ? "" : ` (${scoreboard[k].kills} hits)`);
+
+        const color = activity[id].isBystander ? globalCore.colors[0] : globalCore.colors[((id - 1) % (globalCore.colors.length - 1) + 1)];
+
+        if (globalCore.wc_hex_is_light(color)) {
+            scoreDisplay.textDiv.style.color = color;
+            scoreDisplay.textDiv.style.background = "";
+        }
+        else {
+            scoreDisplay.textDiv.style.color = "black";
+            scoreDisplay.textDiv.style.background = color;
+        }
+
+        if (!globalCore.scoreboardDisplays[id]) {
+            entriesParent.appendChild(scoreDisplay.entryDiv);
+            globalCore.scoreboardDisplays[id] = scoreDisplay;
+        }
+    }
+
+    // Deletes the ones I have not seen
+    for (const id in globalCore.scoreboardDisplays) {
+        const scoreDisplay = globalCore.scoreboardDisplays[id];
+        if (!seenIds.includes(parseInt(id))) {
+            if (scoreDisplay.button) {
+                if (scoreDisplay.button.parentNode) {
+                    scoreDisplay.button.parentNode.removeChild(scoreDisplay.button);
+                }
+            }
+
+            if (entriesParent) {
+                entriesParent.removeChild(scoreDisplay.entryDiv);
+            }
+
+            delete globalCore.scoreboardDisplays[id];
+        }
+    }
+
+
+    // Buttons
+    for (const k in seenIds) {
+        const id = seenIds[k];
+        const scoreDisplay = globalCore.scoreboardDisplays[id];
+
+        if (activity[id].isYours) {
+            const killButton = scoreDisplay.button ?? document.createElement("button");
+
+            killButton.className = "kill-button";
+            killButton.textContent = "❌";
+            killButton.onclick = function()
+            {
+                if (socket && ready)
+                {
+                    socket.emit("requestKill", id);
+                }
+            }
+
+            if (!scoreDisplay.button) {
+                scoreDisplay.button = killButton;
+                scoreDisplay.entryDiv.appendChild(killButton);
+            }
+        }
+        else if (scoreDisplay.button) {
+            if (scoreDisplay.button.parentNode) {
+                scoreDisplay.button.parentNode.removeChild(scoreDisplay.button);
+            }
+
+            scoreDisplay.button = null;
+        }
     }
 }
 
 globalCore.refreshActivity = function (activity) {
     for (const programId in activity) {
-        if (globalCore.scoreboard[programId]) {
-            let name = globalCore.scoreboard[programId].className;
+        const scoreDisplay = globalCore.scoreboardDisplays[programId];
+        if (scoreDisplay) {
+            let name = scoreDisplay.textDiv.className;
             name = name.replace("plays-next", "");
             if (activity[programId].executesNext) {
                 name += " plays-next";
             }
 
-            globalCore.scoreboard[programId].className = name;
+            scoreDisplay.textDiv.className = name;
         }
     }
 
@@ -193,7 +255,7 @@ globalCore.initializeSocket = function () {
     socket.on("deltaCore", function (delta, scoreboard, activity) {
         globalCore.applyDelta(delta);
 
-        if (scoreboard.length != globalCore.scoreboard.length) {
+        if (scoreboard.length != globalCore.scoreboardDisplays.length) {
             globalCore.displayScoreboard(scoreboard, activity);
         }
 
@@ -203,13 +265,13 @@ globalCore.initializeSocket = function () {
 
     // Initially displayed
     // Note: this message may be doubled
-    socket.on("hello", function(returning){
-        if (returning)
-        {
+    socket.on("hello", function (returning) {
+        if (returning) {
             document.getElementById("global-core").style = {};
         }
-        else
-        {
+        else {
+            document.getElementById("global-core").style.display = "none";
+            document.getElementById("code-editor").style.display = "none";
             document.getElementById("intro").style = {};
         }
     });
@@ -217,7 +279,7 @@ globalCore.initializeSocket = function () {
 
 
 // https://stackoverflow.com/questions/12043187/how-to-check-if-hex-color-is-too-black
-globalCore.wc_hex_is_light = function(color) {
+globalCore.wc_hex_is_light = function (color) {
     const hex = color.replace('#', '');
     const c_r = parseInt(hex.substring(0, 0 + 2), 16);
     const c_g = parseInt(hex.substring(2, 2 + 2), 16);

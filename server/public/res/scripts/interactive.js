@@ -328,7 +328,7 @@ interactive.getProgramString = function () {
     let program = "";
     for (let i = 0; i < LINE_COUNT; i++) {
         const input = inputs[i];
-        program += input.value.substring(0, 64) + "\n"; // Limit to 64 characters
+        program += input.value.substring(0, 128) + "\n"; // Limit to 128 characters
     }
 
     return program;
@@ -649,7 +649,15 @@ interactive.showParserResult = function (parseResult, index) {
         if (parseResult.anyError) {
             const errorMessage = parseResult.tokens[0].errorMessage;
             explanationsWindow.innerHTML += `<p class='error'><b>This line contains an error!</b><br>${errorMessage}</p>`;
-            display.innerHTML = `<span class='error'>${val.value}</span>`;
+            
+            if (parseResult.tokens[0].softError)
+            {
+                display.innerHTML = `<span class='error'>${val.value}</span>`;
+            }
+            else
+            {
+                display.innerHTML = `<span style='text-decoration:underline; text-decoration-color:red;'>${display.innerHTML}</span>`;
+            }
         }
     }
 }
@@ -675,7 +683,7 @@ interactive.getHTMLExplanationForStatement = function (token) {
             )}<br>${desc.text}</p><p style="border-bottom:1px dotted gray;"></p>`;
         }
 
-        const hasArg = token.arguments;
+        const hasArg = token.arguments &&  token.arguments.length > 0;
         const formattedArgs = [
             interactive.wrapHTMLArg(hasArg && token.arguments[0] && !isNaN(token.arguments[0].value) ? ((token.arguments[0].value >= 0 ? '+' : '') + token.arguments[0].value) : 'X', 0),
             interactive.wrapHTMLArg(hasArg && token.arguments[1] && !isNaN(token.arguments[1].value) ? ((token.arguments[1].value >= 0 ? '+' : '') + token.arguments[1].value) : 'Y', 1)
@@ -802,9 +810,8 @@ interactive.getDescriptionForCommand = function (i) {
             description.arguments = 1;
             break;
         case module.exports.OPERATIONS.ADD:
-            description.name = "GO TO";
             description.text = `Adds ${interactive.wrapHTMLArg('X', 0)} to the value present at ${interactive.wrapHTMLArg('Y', 1)}, and stores the result at address ${interactive.wrapHTMLArg('Y', 1)}`;
-            description.arguments = 1;
+            description.arguments = 2;
             break;
         case module.exports.OPERATIONS.WRITE:
             description.text = `Writes ${interactive.wrapHTMLArg('X', 0)} at the location given in ${interactive.wrapHTMLArg('Y', 1)}, overwriting what is already there`;

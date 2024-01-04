@@ -41,7 +41,7 @@ if(serverCom.clientId  == null)
     }
 }
 
-// serverCom.setCookie("id", serverCom.clientId);
+serverCom.setCookie("id", serverCom.clientId);
 
 const socket = io("ws://rx.louve.systems:4050", {
     reconnectionDelayMax: 10000,

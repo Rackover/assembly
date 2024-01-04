@@ -131,6 +131,7 @@ module.exports.Core = class {
         const programPointer = this.#pointerGroups[this.#turnOfProgram];
 
         const memoryPosition = programPointer.pointers[programPointer.nextPointerToExecute];
+
         this.#executePointerGroup(programPointer);
 
         if (programPointer.isDead) {
@@ -252,6 +253,33 @@ module.exports.Core = class {
             this.#pointerGroups.push(new deps.ProgramPointer(placedPrograms[i].programId, placedPrograms[i].start / 4));
             this.#programs.push(programsToPlace[i]);
         }
+    }
+
+    killProgram(index)
+    {
+        const programPointer = this.getProgramPointers(index);
+        log.warn(`Force killing program ${index} (pointer is valid? ${programPointer != undefined})`);
+
+        while(!programPointer.isDead)
+        {
+            this.#killPointer(programPointer);
+        }
+
+        this.#pointerGroups.splice(index, 1);
+        this.#programs.splice(index, 1);
+
+        if (this.#turnOfProgram == index)
+        {
+            this.#turnOfProgram = this.#programs.length <= 0 ?
+            0 :
+            ((this.#turnOfProgram + 1) % this.#programs.length);
+        }
+        
+        this.#broadcastOnProgramKilled(
+            programPointer.programId,
+            false,
+            "forced termination"
+        );
     }
 
     #setValueAtAddress(value, address) {
