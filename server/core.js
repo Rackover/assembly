@@ -128,6 +128,16 @@ module.exports.Core = class {
             }
         }
 
+        if (this.#turnOfProgram >= this.#pointerGroups.length)
+        {
+            log.error(`Not sure what happened but it's turn of program ${this.#turnOfProgram} and I only have ${this.#pointerGroups.length} programs to run, so I'm gonna correct it and dump some stuff.`);
+
+            log.error(`POINTER GROUPS: ${JSON.stringify(this.#pointerGroups)}`);
+            log.error(`INSTALLED PROGRAMS: ${JSON.stringify(this.#programs)}`);
+
+            this.#turnOfProgram = 0;
+        }
+
         const programPointer = this.#pointerGroups[this.#turnOfProgram];
 
         const memoryPosition = programPointer.pointers[programPointer.nextPointerToExecute];
@@ -273,6 +283,8 @@ module.exports.Core = class {
             this.#turnOfProgram = this.#programs.length <= 0 ?
             0 :
             ((this.#turnOfProgram + 1) % this.#programs.length);
+
+            log.info(`It was this program's turn to play (${index}) so I made it ${this.#turnOfProgram}'s turn instead`);
         }
         
         this.#broadcastOnProgramKilled(
@@ -336,7 +348,7 @@ module.exports.Core = class {
     #killPointer(programPointer) {
         programPointer.pointers.splice(programPointer.nextPointerToExecute, 1);
 
-        if (programPointer.isDead == 0 && this.#rules.clearOwnershipOnDeath) {
+        if (programPointer.isDead && this.#rules.clearOwnershipOnDeath) {
             for (let i = 0; i < this.maxAddress; i++) {
                 if (this.#ownershipBuffer[i] == programPointer.programId) {
                     this.#ownershipBuffer[i] = 0;

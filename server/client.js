@@ -28,9 +28,9 @@ module.exports = class {
     #globalCoreID = 0;
     #id = "";
 
-    constructor(socket, authID, returning = false) {
+    constructor(socket, authID, coreID, returning = false) {
 
-        this.#globalCoreID = WORLD.getCoreIdForClient(authID);
+        this.#globalCoreID = coreID;
         this.#id = authID;
 
         this.#handles.push(this.globalCore.onTicked(this.#onGlobalTick.bind(this)));
@@ -211,6 +211,8 @@ module.exports = class {
 
         clearInterval(this.#interval); // Kill client
         this.#dead = true;
+        
+        WORLD.trimCores();
     }
 
     #onGlobalTick(delta) {

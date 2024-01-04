@@ -2,6 +2,12 @@ const OPERATION_BITS = 4;
 const OPERAND_FLAGS_BITS = 2;
 const OPERAND_BITS = 12;
 
+const thirtyTwo = OPERATION_BITS + (OPERAND_FLAGS_BITS + OPERAND_BITS) * 2;
+if (thirtyTwo != 32)
+{
+    throw new Exception(`OPERATION_BITS + (OPERAND_FLAGS_BITS + OPERAND_BITS) * 2 = ${thirtyTwo} != 32`);
+}
+
 const OPERAND_MASK = ((1 << OPERAND_BITS) - 1);
 const OPERATION_MASK = ((1 << OPERATION_BITS) - 1);
 const OPERAND_FLAGS_MASK = ((1 << OPERAND_FLAGS_BITS) - 1);

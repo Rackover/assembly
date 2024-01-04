@@ -3,6 +3,7 @@ const MAX_RECURSION = 2;
 const MAX_PROGRAM_SIZE = 48;
 
 const COMMENT = "#";
+const META_MAGIC = "@";
 
 const OPERATIONS =
 {
@@ -36,8 +37,8 @@ const STATEMENT_PARSERS = {
 }
 
 const WITH_LINKS = [
-    "with the value ",
-    "to the value ",
+    "with the value at ",
+    "to the value at ",
     "to ",
     ","
 ];
@@ -82,8 +83,10 @@ function tokenize(strInput) {
     const lines = strInput.split('\n');
     const tokens = [];
     let instructions = 0;
-    let allowMeta = false;
+    let allowMeta = true;
     let anyError = false;
+
+    const metadata = {};
 
     for (i in lines) {
         if (lines[i].trim().length > 0) {
@@ -100,10 +103,16 @@ function tokenize(strInput) {
                 }
             }
 
+            if (token.isMeta)
+            {
+                metadata[token.metaKey] = token.metaValue;
+            }
+
             anyError = anyError || token.isError;
             tokens.push(token);
         }
         else {
+            allowMeta = false;
             // empty line = noop, to preserve line offsets
             tokens.push({
                 isInstruction: true,
@@ -129,7 +138,8 @@ function tokenize(strInput) {
 
     return {
         anyError: anyError,
-        tokens: tokens
+        tokens: tokens,
+        metadata
     };
 }
 
@@ -143,9 +153,10 @@ function getToken(lineNumber, line, allowMeta) {
     token.lineNumber = lineNumber;
 
     switch (trimmed[0]) {
-        case "@":
+        case META_MAGIC:
             if (allowMeta) {
                 token.isMeta = true;
+                parseMeta(token);
             }
             else {
                 token.errorMessage = "Self-description ('@' statement) is not allowed after program definition has began. Please put your self-descriptions before any other program instruction.";
@@ -168,6 +179,29 @@ function getToken(lineNumber, line, allowMeta) {
     token.isError = (undefined != token.errorMessage) && token.errorMessage != "";
 
     return token;
+}
+
+function parseMeta(token)
+{
+    if (token.contents.length == 1)
+    {
+        token.softError = true;
+        token.errorMessage = "Empty meta tag!";
+        return;
+    }
+
+    const line = token.contents;
+    let separator = line.indexOf(' ');
+    if (separator == -1)
+    {
+        separator = line.length;
+    }
+
+    const meta = line.substring(0, separator);
+    const info = separator < token.contents.length ? line.substring(separator+1) : 'present';
+
+    token.metaKey = meta.substring(1).toLowerCase();
+    token.metaValue = info;
 }
 
 function parseStatement(token) {

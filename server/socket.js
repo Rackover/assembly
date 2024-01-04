@@ -45,7 +45,16 @@ module.exports =
         socket.disconnect(true);
       }
       else {
-        new Client(socket, socket.handshake.auth.token, knownUsers.includes(socket.handshake.auth.token));
+        WORLD.trimCores();
+        
+        const coreID = WORLD.getCoreIdForClient(socket.handshake.auth.token);
+        if (coreID === false) {
+          // Game full, maybe dispatch message?
+          socket.disconnect(true);
+        }
+        else {
+          new Client(socket, socket.handshake.auth.token, coreID, knownUsers.includes(socket.handshake.auth.token));
+        }
         knownUsers.push(socket.handshake.auth.token);
       }
     });

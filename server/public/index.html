@@ -52,7 +52,7 @@
             <h1>
                 <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;"
                         href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ASSEMBLY</b> <span
-                    style='color:grey;'>V0.9.1</span>
+                    style='color:grey;'>V0.9.2</span>
             </h1>
         </div>
         <div class="terminal" id="intro" style="display:none">
@@ -208,7 +208,7 @@
                 <span style="color:#808080">.</span><span style="color:#808080">.........................</span>
             </div>
             <div class="text">
-                <div class="intro-text">
+                <div class="intro-text" id="intro-text">
                     <!-- <pre  class="emphasis">
       :::      ::::::::   ::::::::  :::::::::: ::::    ::::  :::::::::  :::     :::   ::: 
     :+: :+:   :+:    :+: :+:    :+: :+:        +:+:+: :+:+:+ :+:    :+: :+:     :+:   :+: 
@@ -217,21 +217,22 @@
   +#+     +#+        +#+        +#+ +#+        +#+       +#+ +#+    +#+ +#+        +#+    
   #+#     #+# #+#    #+# #+#    #+# #+#        #+#       #+# #+#    #+# #+#        #+#    
   ###     ###  ########   ########  ########## ###       ### #########  ########## ###    
-                    </pre> -->
-                    <!-- <pre class="emphasis">
+                    </pre>  -->
+                    <pre class="emphasis">
     e Y8b      dP"8  dP"8 888'Y88     e   e     888 88b, 888     Y88b Y8P 
    d8b Y8b    C8b Y C8b Y 888 ,'Y    d8b d8b    888 88P' 888      Y88b Y  
   d888b Y8b    Y8b   Y8b  888C8     e Y8b Y8b   888 8K   888       Y88b   
  d888888888b  b Y8D b Y8D 888 ",d  d8b Y8b Y8b  888 88b, 888  ,d    888   
 d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888                                      
-                    </pre> -->
-                    <pre class="emphasis">
+                    </pre>
+                    <!-- <pre class="emphasis">
    _|_|      _|_|_|    _|_|_|  _|_|_|_|  _|      _|  _|_|_|    _|    _|      _|  
  _|    _|  _|        _|        _|        _|_|  _|_|  _|    _|  _|      _|  _|    
  _|_|_|_|    _|_|      _|_|    _|_|_|    _|  _|  _|  _|_|_|    _|        _|      
  _|    _|        _|        _|  _|        _|      _|  _|    _|  _|        _|      
  _|    _|  _|_|_|    _|_|_|    _|_|_|_|  _|      _|  _|_|_|    _|_|_|_|  _|      
-                    </pre><p><b>Welcome to LouveSystems' <span class="emphasis">Assembly</span></b>! We're thrilled to have
+                    </pre> -->
+                    <p><b>Welcome to LouveSystems' <span class="emphasis">Assembly</span></b>! We're thrilled to have
                         you here <span style="color:red">♥</span></p>
                     <p><span class="emphasis">Assembly</span> is a sandbox conception game, where you design small
                         programs called <b>delegates</b> using a natural language. </p>
@@ -289,7 +290,10 @@ d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888
             </div>
         </div>
         <div class="terminal" id="global-core" style="display:none">
-            <h1 id="core-name">CORE</h1>
+            <div id="core-name-container">
+                <h1 id="core-name">LOADING...</h1>
+            </div>
+
             <div id="global-core-container">
                 <div id="global-core-grid-container">
 
@@ -306,16 +310,22 @@ d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888
             </div>
         </div>
         <div
-            style="position:absolute; bottom:0; padding:40px; right:0; left:0; display:flex; flex-direction: row; justify-content: space-between; margin-top:5px;">
-            <div style="text-align:left; min-width:100px;">
-                Join the <a style="color:white;" target="_blank" href="https://discord.gg/WQWZBN3">DISCORD</a>!
+            style="position:absolute;z-index:-1; bottom:0; padding:40px; right:0; left:0; display:flex; flex-direction: row; justify-content: space-between; margin-top:5px;">
+            <div style="text-align:left; margin-top: auto;  min-width:100px;">
+                join the <a style="color:white;" target="_blank" href="https://discord.gg/WQWZBN3">DISCORD</a>!
             </div>
-            <div style="text-align:center; min-width:100px;">
+            <div style="text-align:center; margin-top: auto; min-width:100px;">
                 Inspired by Jones & Dewdney's <a href="https://en.wikipedia.org/wiki/Core_War" target="_blank"
                     style="color:white">Core War</a>
             </div>
-            <div style="text-align:right; min-width:100px;">
-                Follow me on <a style="color:cyan" href="https://bsky.app/profile/louve.systems">Bluesky</a>!
+            <div class="credits" style="text-align:right; margin-top: auto; min-width:100px">
+                <p><b>Testing & feedbacks</b><br>
+                    norckan<br>
+                    <a href="https://github.com/Laupetin" target="_blank">laupetin</a><br>
+                    <a href="https://mastodon.gamedev.place/@newin" target="_blank">newin</a>
+                </p>
+                <b>Development</b><br>
+                <a href="https://bsky.app/profile/louve.systems" target="_blank">louve "rackover" hurlante</a>
             </div>
         </div>
     </div>

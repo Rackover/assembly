@@ -3,6 +3,7 @@ const compiler = require('./shared/compiler');
 const { Rules } = require('./rules');
 const { Core } = require('./core');
 const blacklist = require('./blacklist');
+const generator = require('./shared/generator');
 
 const BYSTANDER_NAMES = [
     "Maverick",
@@ -162,6 +163,7 @@ module.exports = class {
         rules.runForever = true;
         rules.columnCount = 5;
         rules.columnSize = 256;
+        rules.bystanders = CONFIG.GCORE_BYSTANDERS; 
 
         const core = new Core(rules);
         core.onProgramKilled(this.#onProgramKilled.bind(this));
@@ -288,7 +290,7 @@ module.exports = class {
 
     advance() {
         if (this.#core.programCount > 0) {
-            const pCount = Math.floor((CONFIG.MAX_PROGRAMS - 1) / this.#core.programCount);
+            const pCount = Math.floor((CONFIG.MAX_PROGRAMS) / this.#core.programCount);
             // console.log("NEXT is %d, Waiting for %d to equal %d (pcount %d, program count %d)", this.#core.nextProgramToPlay, this.#core.nextProgramToPlay * pCount, this.#tick % MAX_PROGRAMS, pCount, this.#core.programCount);
             if (this.#core.nextProgramToPlay * pCount == (this.#internalTick % CONFIG.MAX_PROGRAMS)) {
                 const finished = this.#core.advance();
@@ -361,7 +363,7 @@ module.exports = class {
     #createBystanders(count) {
         for (let i = 0; i < count; i++) {
             const name = `${BYSTANDER_NAMES[Math.floor(Math.random() * BYSTANDER_NAMES.length)].toLowerCase()}.d`;
-            const [id, reason] = this.installProgram(name, generateBystanderCode());
+            const [id, reason] = this.installProgram(name, generator.bystander.generate(true));
 
             if (id === false) {
                 log.info(`Did not create bystander! ${reason}`);
@@ -451,50 +453,5 @@ module.exports = class {
 
         this.#lastPlayerProgramActivity = this.#fullTick;
         this.#broadcastOnScoreChanged(this.#scores);
-    }
-}
-
-function generateBystanderCode() {
-    function randomInt(min, max) {
-        return Math.floor(Math.random() * (max - min) + min);
-    }
-
-    if (Math.random() < 0.3) { // Permanent runners
-        const instructions = [];
-
-        // TODO Wall
-        if (Math.random() < 0.4) {
-
-        }
-        else {
-            instructions.push(`add ${randomInt(117, 263)} to 10`);
-
-            if (Math.random() < 0.5) {
-                instructions.push(`copy 3 to the address specified at 9`);
-            } else {
-                instructions.push(`copy 2 to -${randomInt(1, 10)}`);
-            }
-
-            if (Math.random() < 0.5) {
-                instructions.push(`add ${randomInt(1, 2)} to the value at -${randomInt(3, 4)}`);
-            }
-            else {
-                let f = 0.0;
-                while (Math.random() > f) {
-                    f += 0.25;
-                    instructions.push(`copy 1 to ${randomInt(5, 8)}`);
-                }
-            }
-
-            instructions.push(`go to -${instructions.length}`);
-        }
-
-        return instructions.join('\n');
-    }
-    else { // Suicide
-        return `add 1 to 3
-        skip if the value at 2 equals ${randomInt(11, 45)}
-        jump -2
-        data 0`;
     }
 }

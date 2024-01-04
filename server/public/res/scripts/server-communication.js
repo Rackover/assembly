@@ -1,5 +1,7 @@
 const serverCom = {};
 
+serverCom.connected = false;
+
 serverCom.setCookie = function(name, value)
 {
     document.cookie = `${name}=${value}`;
@@ -43,9 +45,10 @@ if(serverCom.clientId  == null)
 
 serverCom.setCookie("id", serverCom.clientId);
 
-const socket = io("ws://rx.louve.systems:4050", {
+const socket = io("ws://$SERVER:$PORT", {
     reconnectionDelayMax: 10000,
     auth: {
         token: serverCom.clientId
-    }
+    },
+    autoConnect: false
 });

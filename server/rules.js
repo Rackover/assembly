@@ -10,7 +10,7 @@ module.exports.Rules = class
     randomColumn = true;
     randomPositionInColumn = true;
 
-    bystanders = 3;
+    bystanders = 0;
     repopulateBystanderEveryTick = 50;
 
     clearOwnershipOnDeath = true;

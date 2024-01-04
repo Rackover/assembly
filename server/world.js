@@ -10,13 +10,14 @@ const NAMES = [
     "GIST",
 ];
 
+const MAX_CLIENTS_PER_CORE = 10;
+
 class CoreInfo {
     core = null; // GlobalCore
     clients = [];
     id = 0;
 
-    constructor(id)
-    {
+    constructor(id) {
         this.core = new GlobalCore();
         this.clients = [];
         this.id = id;
@@ -24,35 +25,48 @@ class CoreInfo {
         log.info(`Created core ${id} (${this.friendlyName})`);
     }
 
-    get isFull()
-    {
-        this.clients = this.clients.filter(o=>o && !o.isDead);
-        return this.clients.length 
+    trim() {
+        this.clients = this.clients.filter(o => o && !o.isDead);
     }
 
-    get friendlyName()
-    {
-        return NAMES[this.id%NAMES.length] + (this.id >= NAMES.length ? `_${this.id}` : '');
+    get isFull() {
+        return this.clients.length >= MAX_CLIENTS_PER_CORE || this.core.programCount >= CONFIG.MAX_PROGRAMS;
+    }
+
+    get isDesirable() {
+        return this.clients.length < MAX_CLIENTS_PER_CORE && this.core.programCount < CONFIG.MAX_PROGRAMS * 0.75;
+    }
+
+    get isEmpty() {
+        return this.clients.length <= 0;
+    }
+
+    get friendlyName() {
+        return NAMES[this.id % NAMES.length] + (this.id >= NAMES.length ? `_${this.id}` : '');
     }
 }
 
 const cores = [];
 
 module.exports = {
-    getCoreIdForClient: function(clientIdString)
-    {
+    trimCores: trimCores,
+    
+    getCoreIdForClient: function (clientIdString) {
+        trimCores();
+
         let coreId = -1;
-        for(let k in cores)
-        {
-            if (!cores[k].isFull)
-            {
+        for (let k in cores) {
+            if (!cores[k].isFull) {
                 coreId = k;
                 break;
             }
         }
 
-        if (coreId < 0)
-        {
+        if (coreId < 0) {
+            if (cores.length >= CONFIG.MAX_CORES) {
+                return false;
+            }
+
             coreId = cores.length;
             cores.push(new CoreInfo(coreId));
         }
@@ -60,24 +74,44 @@ module.exports = {
         return coreId;
     },
 
-    getAvailableCores: function(){ 
+    getAvailableCores: function () {
         let availableCores = [];
-        for(let k in cores)
-        {
+        for (let k in cores) {
             availableCores.push({
                 friendlyName: cores[k].friendlyName,
-                id:cores[k].id,
+                id: cores[k].id,
                 programCount: cores[k].core.programCount
             });
         }
 
         return availableCores;
     },
-    maxCore: function(){return cores.length;},
-    getCore: function(i){
+    coreCount: function () { return cores.length; },
+    getCore: function (i) {
         const c = cores[i].core;
         c.id = cores[i].id;
         c.friendlyName = cores[i].friendlyName;
         return c;
+    }
+}
+
+function trimCores() {
+    const toKill = [];
+    if (cores.length <= 1)
+    {
+        return; // Never trim first core?
+    }
+
+    for (let k in cores) {
+        cores[k].trim();
+        if (cores[k].isEmpty) {
+            log.info(`Core ${cores[k].id} was empty and got trimmed!`);
+            toKill.push(k);
+        }
+    }
+
+    for (const i in toKill)
+    {
+        delete cores[i];
     }
 }

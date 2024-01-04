@@ -1,0 +1,31 @@
+# Artillery
+
+skip if the value at 10 is equal to 32
+go to +4
+write 8 at address 8 # reset the distance at which we shoot
+go to +2
+
+add 4 to the value at 5
+write 0 at the address specified at 4
+go to -7
+
+
+data 8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

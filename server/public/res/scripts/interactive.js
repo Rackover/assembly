@@ -51,13 +51,19 @@ interactive.onWindowLoad = function () {
 
     // fetch("server/test_program.kcp")
     //     .then((res) => res.text())
-    //     .then((text) => {
+    //     .then((text) => {z
     //         // do something with "text"
     //         // loadProgram(text);
     //     })
     //     .catch((e) => console.error(e));
 
     interactive.initializeSocket();
+    interactive.ready = true;
+
+    if (globalCore.ready && interactive.ready && !serverCom.connected) {
+        serverCom.connected = true;
+        socket.connect();
+    }
 }
 
 interactive.loadProgram = function (name, str) {
@@ -194,8 +200,7 @@ interactive.bindButtons = function () {
 
     const dismissButton = document.getElementById("splash-dismiss");
     dismissButton.onclick = function () {
-        if (ready)
-        {
+        if (ready) {
             document.getElementById("intro").style.display = "none";
             document.getElementById("global-core").style = {};
         }
@@ -359,6 +364,8 @@ interactive.createEditor = function () {
         inputSpan.oninput = interactive.onKeyPress;
         inputSpan.onfocus = interactive.refreshSelectedLine;
         inputSpan.spellcheck = false;
+        inputSpan.maxLength = 64;
+        inputSpan.autocomplete = false;
 
         const inputDisplay = document.createElement("div");
         inputDisplay.className = "display";
@@ -552,7 +559,7 @@ interactive.refreshCodeLines = function () {
         const input = document.getElementById(`input-${i}`);
         const trimmedContents = input.value.trim();
         const lineIsEmpty = trimmedContents.length == 0;
-        const lineIsComment = !lineIsEmpty && trimmedContents[0] == COMMENT;
+        const lineIsComment = !lineIsEmpty && (trimmedContents[0] == COMMENT || trimmedContents[0] == META_MAGIC);
 
         trimmedLines[i] = trimmedContents;
 
@@ -576,7 +583,7 @@ interactive.refreshInputForSelection = function (index) {
 
         let lineIsCurrent = false;
         const lineIsEmpty = trimmedContents.length == 0;
-        const lineIsComment = !lineIsEmpty && trimmedContents[0] == COMMENT;
+        const lineIsComment = !lineIsEmpty && (trimmedContents[0] == COMMENT || trimmedContents[0] == META_MAGIC);
 
         const classes = [];
 
@@ -625,7 +632,18 @@ interactive.showParserResult = function (parseResult, index) {
             if (token.isComment) {
                 explanationsWindow.innerHTML = "<p>This line is a comment and will not be executed.<br>It serves as documentation for you and whoever might read this program.</p>";
                 display.innerHTML = `<span class='comment'>${val.value}</span>`;
-            } else {
+            }
+            else if (token.isMeta) {
+                if (token.isError) {
+                    explanationsWindow.innerHTML = '';
+                }
+                else{
+                    explanationsWindow.innerHTML = `<p>This line is an information about the program itself ("self-description").</p><p>It informs that '${token.metaKey}' is '${token.metaValue}'</p>`;
+                }
+
+                display.innerHTML = `<span class='meta'>${META_MAGIC}${token.metaKey}</span>${(token.metaValue != "present" ? ` <span class='meta-value'>${token.metaValue}</span>` : '')}`;
+            }
+            else {
                 explanationsWindow.innerHTML = interactive.getHTMLExplanationForStatement(token);
                 for (let argIndex in token.arguments) {
                     const a = token.arguments[argIndex];
@@ -649,13 +667,11 @@ interactive.showParserResult = function (parseResult, index) {
         if (parseResult.anyError) {
             const errorMessage = parseResult.tokens[0].errorMessage;
             explanationsWindow.innerHTML += `<p class='error'><b>This line contains an error!</b><br>${errorMessage}</p>`;
-            
-            if (parseResult.tokens[0].softError)
-            {
+
+            if (parseResult.tokens[0].softError) {
                 display.innerHTML = `<span class='error'>${val.value}</span>`;
             }
-            else
-            {
+            else {
                 display.innerHTML = `<span style='text-decoration:underline; text-decoration-color:red;'>${display.innerHTML}</span>`;
             }
         }
@@ -683,7 +699,7 @@ interactive.getHTMLExplanationForStatement = function (token) {
             )}<br>${desc.text}</p><p style="border-bottom:1px dotted gray;"></p>`;
         }
 
-        const hasArg = token.arguments &&  token.arguments.length > 0;
+        const hasArg = token.arguments && token.arguments.length > 0;
         const formattedArgs = [
             interactive.wrapHTMLArg(hasArg && token.arguments[0] && !isNaN(token.arguments[0].value) ? ((token.arguments[0].value >= 0 ? '+' : '') + token.arguments[0].value) : 'X', 0),
             interactive.wrapHTMLArg(hasArg && token.arguments[1] && !isNaN(token.arguments[1].value) ? ((token.arguments[1].value >= 0 ? '+' : '') + token.arguments[1].value) : 'Y', 1)
@@ -726,59 +742,59 @@ interactive.getHTMLExplanationForStatement = function (token) {
                 }
                 break;
 
-                case module.exports.OPERATIONS.COPY:
-                    {
-                        const isDeep = [
-                            hasArg && token.arguments[0].depth > 0,
-                            token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
-                        ];
-    
-                        txt +=
-                            `<p>Copies all data ${(isDeep[0] ?
-                                `from the location specified at ${formattedArgs[0]}` :
-                                `from the cell at location ${formattedArgs[0]}`
-                            )} to the cell ${(isDeep[1] ?
-                                `at the address found at ${formattedArgs[1]}` :
-                                `at location ${formattedArgs[1]}`
-                            )}</p>`;
-                    }
-                    break;
+            case module.exports.OPERATIONS.COPY:
+                {
+                    const isDeep = [
+                        hasArg && token.arguments[0].depth > 0,
+                        token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                    ];
 
-                    case module.exports.OPERATIONS.WRITE:
-                        {
-                            const isDeep = [
-                                hasArg && token.arguments[0].depth > 0,
-                                token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
-                            ];
-        
-                            txt +=
-                                `<p>Simply writes ${(isDeep[0] ?
-                                    `data found at location ${formattedArgs[0]}` :
-                                    `the number ${formattedArgs[0]}`
-                                )} to the cell ${(isDeep[1] ?
-                                    `at the address found at ${formattedArgs[1]}` :
-                                    `at location ${formattedArgs[1]}`
-                                )}</p>`;
-                        }
-                        break;
+                    txt +=
+                        `<p>Copies all data ${(isDeep[0] ?
+                            `from the location specified at ${formattedArgs[0]}` :
+                            `from the cell at location ${formattedArgs[0]}`
+                        )} to the cell ${(isDeep[1] ?
+                            `at the address found at ${formattedArgs[1]}` :
+                            `at location ${formattedArgs[1]}`
+                        )}</p>`;
+                }
+                break;
 
-                        case module.exports.OPERATIONS.ADD:
-                            {
-                                const isDeep = [
-                                    hasArg && token.arguments[0].depth > 0,
-                                    token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
-                                ];
-            
-                                txt +=
-                                    `<p>Computes the sum of two numbers: the first one ${(isDeep[0] ?
-                                        `found at location ${formattedArgs[0]}` :
-                                        `being ${formattedArgs[0]}`
-                                    )}, and the second one found ${(isDeep[1] ?
-                                        `at the address specified at ${formattedArgs[1]}` :
-                                        `${formattedArgs[1]} cells away from here`
-                                    )}, and then stores the result at ${(isDeep[0] ? `the address specified at the location written in ${formattedArgs[0]}` : `the location of ${formattedArgs[0]}`)}</p><p>In practice, that means Y is always overwritten with the result of X + Y</p>`;
-                            }
-                            break;
+            case module.exports.OPERATIONS.WRITE:
+                {
+                    const isDeep = [
+                        hasArg && token.arguments[0].depth > 0,
+                        token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                    ];
+
+                    txt +=
+                        `<p>Simply writes ${(isDeep[0] ?
+                            `data found at location ${formattedArgs[0]}` :
+                            `the number ${formattedArgs[0]}`
+                        )} to the cell ${(isDeep[1] ?
+                            `at the address found at ${formattedArgs[1]}` :
+                            `at location ${formattedArgs[1]}`
+                        )}</p>`;
+                }
+                break;
+
+            case module.exports.OPERATIONS.ADD:
+                {
+                    const isDeep = [
+                        hasArg && token.arguments[0].depth > 0,
+                        token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                    ];
+
+                    txt +=
+                        `<p>Computes the sum of two numbers: the first one ${(isDeep[0] ?
+                            `found at location ${formattedArgs[0]}` :
+                            `being ${formattedArgs[0]}`
+                        )}, and the second one found ${(isDeep[1] ?
+                            `at the address specified at ${formattedArgs[1]}` :
+                            `${formattedArgs[1]} cells away from here`
+                        )}, and then stores the result at ${(isDeep[1] ? `the address specified at the location written in ${formattedArgs[1]}` : `the location of ${formattedArgs[1]}`)}</p><p>In practice, that means Y is always overwritten with the result of X + Y</p>`;
+                }
+                break;
         }
     }
 
@@ -812,6 +828,7 @@ interactive.getDescriptionForCommand = function (i) {
         case module.exports.OPERATIONS.ADD:
             description.text = `Adds ${interactive.wrapHTMLArg('X', 0)} to the value present at ${interactive.wrapHTMLArg('Y', 1)}, and stores the result at address ${interactive.wrapHTMLArg('Y', 1)}`;
             description.arguments = 2;
+            description.link = module.exports.WITH_LINKS[0];
             break;
         case module.exports.OPERATIONS.WRITE:
             description.text = `Writes ${interactive.wrapHTMLArg('X', 0)} at the location given in ${interactive.wrapHTMLArg('Y', 1)}, overwriting what is already there`;

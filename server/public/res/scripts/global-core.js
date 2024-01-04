@@ -28,6 +28,8 @@ globalCore.colors = [
 globalCore.cells = [];
 globalCore.buffer = null;
 globalCore.scoreboardDisplays = {};
+globalCore.coreName = "The assembly";
+globalCore.ready = false;
 
 globalCore.onWindowLoad = function () {
     globalCore.bindButtons();
@@ -37,7 +39,14 @@ globalCore.onWindowLoad = function () {
     globalCore.refreshGlobalCore({});
     globalCore.displayScoreboard([], {});
 
+    globalCore.coreNameDiv = document.getElementById("core-name-container");
     globalCore.initializeSocket();
+    globalCore.ready = true;
+
+    if (globalCore.ready && interactive.ready && !serverCom.connected) {
+        serverCom.connected = true;
+        socket.connect();
+    }
 }
 
 globalCore.createGlobalCoreDisplay = function (columns, size) {
@@ -107,6 +116,7 @@ globalCore.displayScoreboard = function (scoreboard, activity) {
             scoreDisplay.entryDiv.appendChild(scoreDisplay.textDiv);
         }
 
+        scoreDisplay.textDiv.className = "score-name";
         scoreDisplay.textDiv.textContent = scoreboard[k].name + (activity[id].isBystander ? "" : ` (${scoreboard[k].kills} hits)`);
 
         const color = activity[id].isBystander ? globalCore.colors[0] : globalCore.colors[((id - 1) % (globalCore.colors.length - 1) + 1)];
@@ -155,10 +165,8 @@ globalCore.displayScoreboard = function (scoreboard, activity) {
 
             killButton.className = "kill-button";
             killButton.textContent = "❌";
-            killButton.onclick = function()
-            {
-                if (socket && ready)
-                {
+            killButton.onclick = function () {
+                if (socket && ready) {
                     socket.emit("requestKill", id);
                 }
             }
@@ -235,6 +243,37 @@ globalCore.refreshGlobalCore = function (activity) {
     }
 }
 
+globalCore.updateCoreName = function (coreInfo) {
+    globalCore.coreNameDiv.innerHTML = "";
+    if (coreInfo.availableCores.length <= 1) {
+        const h1 = document.createElement("h1");
+        h1.id = "core-name";
+        h1.textContent = `ASSEMBLY #${coreInfo.id + 1} [${coreInfo.friendlyName}]`;
+        globalCore.coreName = h1.textContent;
+        globalCore.coreNameDiv.appendChild(h1);
+    }
+    else {
+        const select = document.createElement("select");
+        select.id = "core-name";
+        const cores = coreInfo.availableCores.sort((a, b) => (a.id == coreInfo.id) - (b.id == coreInfo.id));
+        for (const k in cores) {
+            const info = coreInfo.availableCores[k];
+            const option = document.createElement("option");
+            option.textContent = `ASSEMBLY #${info.id + 1} [${info.friendlyName}]`;
+            option.value = info.id;
+
+            if (info.id == coreInfo.id) {
+                globalCore.coreName = option.textContent;
+                option.selected = "selected";
+            }
+
+            select.appendChild(option);
+        }
+
+        globalCore.coreNameDiv.appendChild(select);
+    }
+}
+
 globalCore.initializeSocket = function () {
     socket.on("updateScoreboard", function (scoreboard, activity) {
         globalCore.displayScoreboard(scoreboard, activity);
@@ -248,8 +287,7 @@ globalCore.initializeSocket = function () {
         globalCore.displayScoreboard(obj.scores, obj.activity);
         globalCore.refreshActivity(obj.activity);
 
-        document.getElementById("core-name").textContent = `ASSEMBLY #${obj.coreInfo.id + 1} [${obj.coreInfo.friendlyName}]`;
-
+        globalCore.updateCoreName(obj.coreInfo);
     });
 
     socket.on("deltaCore", function (delta, scoreboard, activity) {
@@ -274,6 +312,20 @@ globalCore.initializeSocket = function () {
             document.getElementById("code-editor").style.display = "none";
             document.getElementById("intro").style = {};
         }
+    });
+
+    socket.on("disconnect", () => {
+        const txt = document.getElementById("intro-text");
+
+        if (txt)
+        {
+            txt.className += " error";
+            txt.innerHTML = "<p>The remote assembly server closed the connection - probably because it is full and cannot accept new clients at the time.</p><p>Come back later ♥</p>";
+        }
+
+        document.getElementById("global-core").style.display = "none";
+        document.getElementById("code-editor").style.display = "none";
+        document.getElementById("intro").style = {};
     });
 }
 
