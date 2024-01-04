@@ -42,13 +42,18 @@ module.exports = class {
         }).bind(this));
 
         socket.on("setSpeed", (function (speedInt) {
-            if (this.#testCoreSpeed != speedInt) {
+            if (!isNaN(speedInt) && Number.isSafeInteger(speedInt) && this.#testCoreSpeed != speedInt) {
                 this.#testCoreSpeed = speedInt;
                 log.debug(`Core speed for socket ${this.#id} is now ${this.#testCoreSpeed}`);
             }
         }).bind(this));
 
         socket.on("testProgram", (function (programName, programString, speed) {
+
+            if (!programName || typeof programName !== 'string') return;
+            if (!programString || typeof programString !== 'string') return;
+            if (!Number.isSafeInteger(speedInt)) return;
+
             this.#testCore = false;
             clearInterval(this.#interval);
 
@@ -85,10 +90,14 @@ module.exports = class {
         }).bind(this));
 
         socket.on("requestKill", (function(id){
+            if (!Number.isSafeInteger(id)) return;
             this.globalCore.killProgramIfOwned(id, this.#id);
         }).bind(this));
 
         socket.on("uploadProgram", (function (programName, programString) {
+            if (!programName || typeof programName !== 'string') return;
+            if (!programString || typeof programString !== 'string') return;
+            
             this.#testCore = false;
             clearInterval(this.#interval);
 

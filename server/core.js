@@ -28,6 +28,10 @@ if (isWeb) {
     deps.Buffer = Buffer;
 }
 
+const OP_COMPARISONS = {};
+OP_COMPARISONS[deps.parser.OPERATIONS.SKIP_IF_EQUAL] = (a, b) => a == b;
+OP_COMPARISONS[deps.parser.OPERATIONS.SKIP_IF_GREATER] = (a, b) => a < b; // uhm
+OP_COMPARISONS[deps.parser.OPERATIONS.SKIP_IF_LOWER] = (a, b) => a > b; // okay
 
 module.exports.Core = class {
     #columnSize;
@@ -44,6 +48,7 @@ module.exports.Core = class {
     #programs = [];
     #turnOfProgram = 0;
     #lastKillReason;
+
 
     get lastKillReason() { return this.#lastKillReason; }
 
@@ -128,8 +133,7 @@ module.exports.Core = class {
             }
         }
 
-        if (this.#turnOfProgram >= this.#pointerGroups.length)
-        {
+        if (this.#turnOfProgram >= this.#pointerGroups.length) {
             log.error(`Not sure what happened but it's turn of program ${this.#turnOfProgram} and I only have ${this.#pointerGroups.length} programs to run, so I'm gonna correct it and dump some stuff.`);
 
             log.error(`POINTER GROUPS: ${JSON.stringify(this.#pointerGroups)}`);
@@ -221,8 +225,7 @@ module.exports.Core = class {
             end: position + program.instructions.length
         };
 
-        for(let address = placedProgram.start; address < placedProgram.end; address++)
-        {
+        for (let address = placedProgram.start; address < placedProgram.end; address++) {
             const safe = this.#getSafeAddress(address);
             this.#ownershipBuffer[safe] = false; // Reset writes here
         }
@@ -265,28 +268,25 @@ module.exports.Core = class {
         }
     }
 
-    killProgram(index)
-    {
+    killProgram(index) {
         const programPointer = this.getProgramPointers(index);
         log.warn(`Force killing program ${index} (pointer is valid? ${programPointer != undefined})`);
 
-        while(!programPointer.isDead)
-        {
+        while (!programPointer.isDead) {
             this.#killPointer(programPointer);
         }
 
         this.#pointerGroups.splice(index, 1);
         this.#programs.splice(index, 1);
 
-        if (this.#turnOfProgram == index)
-        {
+        if (this.#turnOfProgram == index) {
             this.#turnOfProgram = this.#programs.length <= 0 ?
-            0 :
-            ((this.#turnOfProgram + 1) % this.#programs.length);
+                0 :
+                ((this.#turnOfProgram + 1) % this.#programs.length);
 
             log.info(`It was this program's turn to play (${index}) so I made it ${this.#turnOfProgram}'s turn instead`);
         }
-        
+
         this.#broadcastOnProgramKilled(
             programPointer.programId,
             false,
@@ -385,10 +385,12 @@ module.exports.Core = class {
                     // Do nothing
                     break;
 
+                // All arithmetic is very similar
                 case deps.parser.OPERATIONS.ADD:
                 case deps.parser.OPERATIONS.SUBTRACT:
+                case deps.parser.OPERATIONS.MULTIPLY:
                     {
-                        const toAdd = this.#getArgumentA(data, memoryPosition);
+                        const operand = this.#getArgumentA(data, memoryPosition);
                         const b = this.#getArgumentB(data, memoryPosition);
 
                         if (b === false) {
@@ -398,8 +400,17 @@ module.exports.Core = class {
                         }
 
                         const whereTo = b + memoryPosition;
+                        let result = this.#getValueAtAddress(whereTo);
+                        if (op == deps.parser.OPERATIONS.MULTIPLY) {
+                            result *= operand;
+                        }
+                        else {
+                            result += operand * (op == deps.parser.OPERATIONS.SUBTRACT ? -1 : 1);
+                        }
+
+
                         this.#setValueAtAddress(
-                            toAdd * (op == deps.parser.OPERATIONS.SUBTRACT ? -1 : 1) + this.#getValueAtAddress(whereTo),
+                            result,
                             whereTo
                         );
 
@@ -410,6 +421,8 @@ module.exports.Core = class {
                     }
 
                 case deps.parser.OPERATIONS.SKIP_IF_EQUAL:
+                case deps.parser.OPERATIONS.SKIP_IF_GREATER:
+                case deps.parser.OPERATIONS.SKIP_IF_LOWER:
                     {
                         const valueA = this.#getArgumentA(data, memoryPosition);
                         const valueB = this.#getArgumentB(data, memoryPosition);
@@ -420,7 +433,7 @@ module.exports.Core = class {
                             return;
                         }
 
-                        if (valueA == valueB) {
+                        if (OP_COMPARISONS[op](valueA, valueB)) {
                             memoryPosition += 2;
                             moved = true;
                         }

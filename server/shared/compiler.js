@@ -1,10 +1,9 @@
-const OPERATION_BITS = 6;
+const OPERATION_BITS = 4;
 const OPERAND_FLAGS_BITS = 2;
-const OPERAND_BITS = 11;
+const OPERAND_BITS = 12;
 
 const thirtyTwo = OPERATION_BITS + (OPERAND_FLAGS_BITS + OPERAND_BITS) * 2;
-if (thirtyTwo != 32)
-{
+if (thirtyTwo != 32) {
     throw new Exception(`OPERATION_BITS + (OPERAND_FLAGS_BITS + OPERAND_BITS) * 2 = ${thirtyTwo} != 32`);
 }
 
@@ -21,17 +20,19 @@ const OPERAND_B_SHIFT = OPERAND_B_FLAGS_SHIFT - OPERAND_BITS;
 
 const MAX_ADDRESSING = 2 ^ OPERAND_BITS;
 
-module.exports.OPERAND_MASK= OPERAND_MASK;
-module.exports.OPERATION_MASK= OPERATION_MASK;
-module.exports.OPERAND_FLAGS_MASK= OPERAND_FLAGS_MASK;
+module.exports.OPERAND_MASK = OPERAND_MASK;
+module.exports.OPERATION_MASK = OPERATION_MASK;
+module.exports.OPERAND_FLAGS_MASK = OPERAND_FLAGS_MASK;
 
-module.exports.OPERATION_SHIFT= OPERATION_SHIFT;
-module.exports.OPERAND_A_FLAGS_SHIFT= OPERAND_A_FLAGS_SHIFT;
-module.exports.OPERAND_A_SHIFT= OPERAND_A_SHIFT;
-module.exports.OPERAND_B_FLAGS_SHIFT= OPERAND_B_FLAGS_SHIFT;
-module.exports.OPERAND_B_SHIFT= OPERAND_B_SHIFT;
+module.exports.OPERATION_BITS = OPERATION_BITS;
 
-module.exports.MAX_ADDRESSING= MAX_ADDRESSING;
+module.exports.OPERATION_SHIFT = OPERATION_SHIFT;
+module.exports.OPERAND_A_FLAGS_SHIFT = OPERAND_A_FLAGS_SHIFT;
+module.exports.OPERAND_A_SHIFT = OPERAND_A_SHIFT;
+module.exports.OPERAND_B_FLAGS_SHIFT = OPERAND_B_FLAGS_SHIFT;
+module.exports.OPERAND_B_SHIFT = OPERAND_B_SHIFT;
+
+module.exports.MAX_ADDRESSING = MAX_ADDRESSING;
 
 module.exports.compile = compile;
 module.exports.getSignedXBitsValue = getSignedXBitsValue;
@@ -80,8 +81,7 @@ function compileInstruction(token) {
         val |= (token.arguments[1].value & OPERAND_MASK) << OPERAND_B_SHIFT;
     }
 
-    if (token.operation == 0)
-    {
+    if (token.operation == 0) {
         // If data, sign
         val = getSignedXBitsValue(val);
     }

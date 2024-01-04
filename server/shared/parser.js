@@ -15,7 +15,14 @@ const OPERATIONS =
     COPY: 0x5,
     MOVE: 0x6,
     SKIP_IF_EQUAL: 0x7,
-    NOOP: 0x8
+    NOOP: 0x8,
+
+    // XIS
+    SKIP_IF_GREATER: 0x9,
+    SKIP_IF_LOWER: 0xA,
+    MULTIPLY: 0xB,
+
+    // MAX == 0xE
 }
 
 const MAX_OP = Object.keys(OPERATIONS).length;
@@ -23,11 +30,13 @@ const MAX_OP = Object.keys(OPERATIONS).length;
 const STATEMENT_PARSERS = {
     write: parseWrite,
     add: parseAdd,
+    subtract: parseSubtract,
+    multiply: parseMultiply,
     "go to": parseJump,
     data: parseData,
     copy: parseCopy,
     move: parseMove,
-    "skip if": parseSkipIfEqual,
+    "skip if": parseSkipIf,
     nop: parseNop,
 
     // aliases
@@ -43,6 +52,12 @@ const WITH_LINKS = [
     ","
 ];
 
+const FROM_LINKS = [
+    "from the value at ",
+    "from ",
+    ","
+]
+
 const AT_ADDRESS_LINKS = [
     "at address ",
     "at ",
@@ -52,8 +67,30 @@ const AT_ADDRESS_LINKS = [
 const EQUAL_LINKS = [
     "is equal to ",
     "equals ",
-    ","
+    "="
 ]
+
+const GREATER_LINKS = [
+    "is greater than ",
+    "greater than ",
+    "is over ",
+    "over",
+    "is bigger than ",
+    "bigger than ",
+    ">"
+]
+
+
+const LOWER_LINKS = [
+    "is less than ",
+    "less than ",
+    "is under ",
+    "under ",
+    "is lower than ",
+    "lower than ",
+    "<"
+]
+
 
 const TO_ADDRESS_LINKS = [
     "to address ",
@@ -75,6 +112,9 @@ module.exports.OPERATIONS = OPERATIONS;
 module.exports.TO_ADDRESS_LINKS = TO_ADDRESS_LINKS;
 module.exports.AT_ADDRESS_LINKS = AT_ADDRESS_LINKS;
 module.exports.EQUAL_LINKS = EQUAL_LINKS;
+module.exports.GREATER_LINKS = GREATER_LINKS;
+module.exports.LOWER_LINKS = LOWER_LINKS;
+module.exports.FROM_LINKS = FROM_LINKS;
 module.exports.WITH_LINKS = WITH_LINKS;
 module.exports.REFERENCE_INDICATORS = REFERENCE_INDICATORS;
 module.exports.tokenize = tokenize;
@@ -105,8 +145,7 @@ function tokenize(strInput) {
                 }
             }
 
-            if (token.isMeta)
-            {
+            if (token.isMeta) {
                 metadata[token.metaKey] = token.metaValue;
             }
 
@@ -183,10 +222,8 @@ function getToken(lineNumber, line, allowMeta) {
     return token;
 }
 
-function parseMeta(token)
-{
-    if (token.contents.length == 1)
-    {
+function parseMeta(token) {
+    if (token.contents.length == 1) {
         token.softError = true;
         token.errorMessage = "Empty meta tag!";
         return;
@@ -194,13 +231,12 @@ function parseMeta(token)
 
     const line = token.contents;
     let separator = line.indexOf(' ');
-    if (separator == -1)
-    {
+    if (separator == -1) {
         separator = line.length;
     }
 
     const meta = line.substring(0, separator);
-    const info = separator < token.contents.length ? line.substring(separator+1) : 'present';
+    const info = separator < token.contents.length ? line.substring(separator + 1) : 'present';
 
     token.metaKey = meta.substring(1).toLowerCase();
     token.metaValue = info;
@@ -236,9 +272,27 @@ function parseJump(token, data) {
     token.operation = OPERATIONS.JUMP;
 }
 
-function parseSkipIfEqual(token, data) {
-    token.remainingData = parseTwoArgumentsStatement(token, data, "SkipEq", EQUAL_LINKS).remainingData;
-    token.operation = OPERATIONS.SKIP_IF_EQUAL;
+function parseSkipIf(token, data) {
+    const links = EQUAL_LINKS.concat(GREATER_LINKS, LOWER_LINKS);
+    token.remainingData = parseTwoArgumentsStatement(token, data, "SkipIf", links).remainingData;
+
+    if (token.linkText) {
+        if (GREATER_LINKS.includes(token.linkText))
+        {
+            token.operation = OPERATIONS.SKIP_IF_GREATER;
+        }
+        else if (LOWER_LINKS.includes(token.linkText))
+        {
+            token.operation = OPERATIONS.SKIP_IF_LOWER;
+        }
+        else
+        {
+            token.operation = OPERATIONS.SKIP_IF_EQUAL;
+        }
+    }
+    else {
+        token.operation = OPERATIONS.SKIP_IF_EQUAL;
+    }
 }
 
 function parseData(token, data) {
@@ -296,14 +350,31 @@ function parseAdd(token, data) {
     }
 }
 
+function parseMultiply(token, data) {
+    token.remainingData = parseTwoArgumentsStatement(token, data, "Multiply", WITH_LINKS).remainingData;
+    token.operation = OPERATIONS.MULTIPLY;
+
+    if (token.arguments.length >= 2) {
+        token.arguments[1].isReference = true;
+    }
+}
+
+function parseSubtract(token, data) {
+    token.remainingData = parseTwoArgumentsStatement(token, data, "Subtract", FROM_LINKS).remainingData;
+    token.operation = OPERATIONS.SUBTRACT;
+
+    if (token.arguments.length >= 2) {
+        token.arguments[1].isReference = true;
+    }
+}
+
 function parseOneArgumentStatement(token, data, statementName) {
     let currentData = data;
 
-    if (currentData.length == 0)
-    {
+    if (currentData.length == 0) {
         token.errorMessage = `Missing first argument for "${token.operatorText}"`;
         token.softError = true;
-        return {argument: '', remainingData: data};
+        return { argument: '', remainingData: data };
     }
 
     const parseResult = parseStatementArgument(currentData);

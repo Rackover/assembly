@@ -388,7 +388,7 @@ module.exports = class {
                 writer = 0;
             }
 
-            // 4 bits for op (up to 15)  
+            // X bits for op (up to )  
             const op = (value >> compiler.OPERATION_SHIFT) & compiler.OPERATION_MASK;
 
             // 5 bits for lastWriter (up to 31)
@@ -399,9 +399,9 @@ module.exports = class {
 
             let summarized = 0;
             summarized |= op;
-            summarized |= owner << 4;
-            summarized |= hasPointer << (4 + 5);
-            // = 10 bits (closest available: 16 bit integer)
+            summarized |= owner << compiler.OPERATION_BITS;
+            summarized |= hasPointer << (compiler.OPERATION_BITS + 5);
+            // = 6+X bits (closest available: 16 bit integer)
 
             if (this.#serializedBuffer.readInt16LE(i * 2) != summarized) {
                 this.#serializedBuffer.writeInt16LE(summarized, i * 2);

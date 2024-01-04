@@ -11,6 +11,9 @@ let matcher = null;
 
 let kills = [];
 
+const MOVE = 6 << 4;
+const COPY = 5 << 4;
+
 module.exports = {
     isBlacklisted: function (bytecode) {
         if (!Number.isInteger(bytecode.length / 4)) {
@@ -98,7 +101,7 @@ function isSimpleWorm(buff) {
             if (buff.readInt8(address * 4 + 1) == 0  // Self op
                 && buff.readInt8(address * 4 + 2) == 0
             ) {
-                if (buff.readInt8(address * 4 + 3) == 0x14 || buff.readInt8(address * 4 + 3) == 0x18) // copy or move
+                if (buff.readInt8(address * 4 + 3) == MOVE || buff.readInt8(address * 4 + 3) == COPY) // copy or move
                 {
                     return true;
                 }
@@ -120,7 +123,7 @@ function isWormFragment(buff) {
             if (buff.readInt8(address * 4 + 1) == 0  // Self op
                 && buff.readInt8(address * 4 + 2) == 0
             ) {
-                if (buff.readInt8(address * 4 + 3) == 0x14 || buff.readInt8(address * 4 + 3) == 0x18) // copy or move
+                if (buff.readInt8(address * 4 + 3) == MOVE || buff.readInt8(address * 4 + 3) == COPY) // copy or move
                 {
                     return true;
                 }

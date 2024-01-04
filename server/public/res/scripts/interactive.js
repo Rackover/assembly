@@ -19,6 +19,16 @@ const TUTORIALIZED_OPS = [
     module.exports.OPERATIONS.DATA
 ];
 
+const SKIP_LINKS = {};
+SKIP_LINKS[module.exports.OPERATIONS.SKIP_IF_EQUAL] = module.exports.EQUAL_LINKS[0];
+SKIP_LINKS[module.exports.OPERATIONS.SKIP_IF_GREATER] = module.exports.GREATER_LINKS[0];
+SKIP_LINKS[module.exports.OPERATIONS.SKIP_IF_LOWER] = module.exports.LOWER_LINKS[0];
+
+const SKIP_VERBS = {};
+SKIP_VERBS[module.exports.OPERATIONS.SKIP_IF_EQUAL] = "equals";
+SKIP_VERBS[module.exports.OPERATIONS.SKIP_IF_GREATER] = "is greater than";
+SKIP_VERBS[module.exports.OPERATIONS.SKIP_IF_LOWER] = "is lower than";
+
 // parse results
 const targetedLines = [];
 
@@ -174,7 +184,14 @@ interactive.updateTrainingCoreDisplay = function (nextAddress) {
                 txt = operation.toUpperCase().substring(0, lineLength).padEnd(lineLength);
             }
             else {
-                txt = `? unk ${op}`.padEnd(lineLength).substring(0, lineLength);
+                if (value > 0)
+                {
+                txt = `${value.toString().padStart(lineLength, '0')}`;
+                }
+                else
+                {
+                    txt = `-${Math.abs(value).toString().padStart(lineLength-1, '0')}`;
+                }
             }
         }
         else {
@@ -831,6 +848,7 @@ interactive.getHTMLExplanationForStatement = function (token) {
                     }
                     break;
 
+                case module.exports.OPERATIONS.MULTIPLY:
                 case module.exports.OPERATIONS.ADD:
                     {
                         const isDeep = [
@@ -838,14 +856,35 @@ interactive.getHTMLExplanationForStatement = function (token) {
                             token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
                         ];
 
+                        const sign = token.operation == module.exports.OPERATIONS.ADD ? '+' : 'x';
+                        const opName = token.operation == module.exports.OPERATIONS.ADD ? 'sum' : 'product';
+
                         txt +=
-                            `<p>Computes the sum of two numbers: the first one ${(isDeep[0] ?
+                            `<p>Computes the ${opName} of two numbers: the first one ${(isDeep[0] ?
                                 `found at location ${formattedArgs[0]}` :
                                 `being ${formattedArgs[0]}`
                             )}, and the second one found ${(isDeep[1] ?
                                 `at the address specified at ${formattedArgs[1]}` :
                                 `${formattedArgs[1]} cells away from here`
-                            )}, and then stores the result at ${(isDeep[1] ? `the address specified at the location written in ${formattedArgs[1]}` : `the location of ${formattedArgs[1]}`)}</p><p>In practice, that means Y is always overwritten with the result of X + Y</p>`;
+                            )}, and then stores the result at ${(isDeep[1] ? `the address specified at the location written in ${formattedArgs[1]}` : `the location of ${formattedArgs[1]}`)}</p><p>In practice, that means Y is always overwritten with the result of X ${sign} Y</p>`;
+                    }
+                    break;
+
+                case module.exports.OPERATIONS.SUBTRACT:
+                    {
+                        const isDeep = [
+                            hasArg && token.arguments[0].depth > 0,
+                            token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                        ];
+
+                        txt +=
+                            `<p>Subtracts two numbers: the first one ${(isDeep[0] ?
+                                `found at location ${formattedArgs[0]}` :
+                                `being ${formattedArgs[0]}`
+                            )} is <u>removed</u> from the second one found ${(isDeep[1] ?
+                                `at the address specified at ${formattedArgs[1]}` :
+                                `${formattedArgs[1]} cells away from here`
+                            )}, and then the result is stored at ${(isDeep[1] ? `the address specified at the location written in ${formattedArgs[1]}` : `the location of ${formattedArgs[1]}`)}</p><p>In practice, that means Y is always overwritten with the result of Y - X</p>`;
                     }
                     break;
 
@@ -867,14 +906,40 @@ interactive.getHTMLExplanationForStatement = function (token) {
                         <p>If they are not equal, this statement will do nothing and execution will resume on the next instruction.</p>`;
                     }
                     break;
+
+
+                case module.exports.OPERATIONS.SKIP_IF_LOWER:
+                case module.exports.OPERATIONS.SKIP_IF_GREATER:
+                    {
+                        const isDeep = [
+                            hasArg && token.arguments[0].depth > 0,
+                            token.arguments.length > 1 && token.arguments[1] && token.arguments[1].depth > 0
+                        ];
+
+                        const a0 = isDeep[0] ?
+                            `the number at ${formattedArgs[0]}` :
+                            `${formattedArgs[0]}`;
+
+                        const a1 = isDeep[1] ?
+                            `the number at ${formattedArgs[1]}` :
+                            `${formattedArgs[1]}`;
+
+                        const isGreaterThan = `is <u>${token.operation == module.exports.OPERATIONS.SKIP_IF_LOWER ? 'lower' : 'greater'}</u> than`;
+                        const isNotGreaterThan = `is <u>${token.operation == module.exports.OPERATIONS.SKIP_IF_LOWER ? 'greater' : 'lower'}</u> than`;
+
+                        txt +=
+                            `<p>Checks if ${a0} ${isGreaterThan} ${a1}.</p><p>If that is true, the NEXT instruction is skipped, so this line acts like a <b>GO TO +1</b>.</p>
+                        <p>If ${a0} ${isNotGreaterThan} ${a1}, this statement will do nothing and execution will resume on the next instruction.</p>`;
+                    }
+                    break;
             }
 
             if (!isData && commandDescription && commandDescription.arguments > 0) {
                 txt += `<div style="margin-top: auto; vertical-align:bottom;"><p style="border-bottom:1px dotted gray;"></p>`;
 
                 // Add dereferencement explanations
-                txt += `<p>Note: if you feel ready to write complicated programs, you can write arguments either as <u>an address to look up</u> instead of a plain number. To do that, write "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[0], 0)
-                    }" or "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[1], 0)}" before your number, which will fetch the data from said address when executing that statement</li></ul></p>`;
+                txt += `<p>You can write arguments either as a plain number or as <u>an address to look up</u> instead. To do that, write "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[0], 0)
+                    }" or "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[1], 0)}" before your number.<br>This will fetch the data from the given address when executing that statement, allowing you to write more complex programs.</li></ul></p>`;
 
                 txt += `</div>`;
             }
@@ -913,16 +978,30 @@ interactive.getDescriptionForCommand = function (i) {
             description.arguments = 2;
             description.link = module.exports.WITH_LINKS[0];
             break;
+        case module.exports.OPERATIONS.MULTIPLY:
+            description.text = `Multiplies ${interactive.wrapHTMLArg('X', 0)} with the value present at ${interactive.wrapHTMLArg('Y', 1)}, and stores the result at address ${interactive.wrapHTMLArg('Y', 1)}`;
+            description.arguments = 2;
+            description.link = module.exports.WITH_LINKS[0];
+            break;
+        case module.exports.OPERATIONS.SUBTRACT:
+            description.text = `Takes ${interactive.wrapHTMLArg('X', 0)} from the value present at ${interactive.wrapHTMLArg('Y', 1)}, and stores the result at address ${interactive.wrapHTMLArg('Y', 1)}`;
+            description.arguments = 2;
+            description.link = module.exports.FROM_LINKS[0];
+            break;
         case module.exports.OPERATIONS.WRITE:
             description.text = `Writes ${interactive.wrapHTMLArg('X', 0)} at the location given in ${interactive.wrapHTMLArg('Y', 1)}, overwriting what is already there`;
             description.arguments = 2;
             description.link = module.exports.AT_ADDRESS_LINKS[0];
             break;
         case module.exports.OPERATIONS.SKIP_IF_EQUAL:
-            description.name = "SKIP IF";
-            description.text = `If ${interactive.wrapHTMLArg('X', 0)} equals ${interactive.wrapHTMLArg('Y', 1)}, the next instruction is skipped - otherwise this instruction does nothing.`;
-            description.arguments = 2;
-            description.link = module.exports.EQUAL_LINKS[0];
+        case module.exports.OPERATIONS.SKIP_IF_GREATER:
+        case module.exports.OPERATIONS.SKIP_IF_LOWER:
+            {
+                description.name = "SKIP IF";
+                description.text = `If ${interactive.wrapHTMLArg('X', 0)} ${SKIP_VERBS[i]} ${interactive.wrapHTMLArg('Y', 1)}, the next instruction is skipped - otherwise this instruction does nothing.`;
+                description.arguments = 2;
+                description.link = SKIP_LINKS[i];
+            }
             break;
         case module.exports.OPERATIONS.DATA:
             description.text = "Declare some data to access or use later";
