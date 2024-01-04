@@ -295,8 +295,15 @@ module.exports.Core = class {
     }
 
     #setValueAtAddress(value, address) {
-        const MAX_INT32 = 2147483648;
-        this.#memoryBuffer.writeInt32LE(value % MAX_INT32, this.#getSafeAddress(address) * 4);
+        const MAX_INT32 = 2147483647;
+        const MIN_INT32 = -2147483648;
+
+        const clamped =
+            value > MAX_INT32 ? MIN_INT32 + value % MAX_INT32 :
+                (value < MIN_INT32 ? MAX_INT32 + value % MIN_INT32 :
+                    value);
+
+        this.#memoryBuffer.writeInt32LE(clamped, this.#getSafeAddress(address) * 4);
     }
 
     #getSafeAddress(address) {
@@ -480,8 +487,10 @@ module.exports.Core = class {
                         const origin = a + memoryPosition;
                         const destination = b + memoryPosition;
 
+                        const value = this.#getValueAtAddress(origin);
+
                         this.#setValueAtAddress(
-                            this.#getValueAtAddress(origin),
+                            value,
                             destination
                         );
 
