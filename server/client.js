@@ -52,7 +52,7 @@ module.exports = class {
 
             if (!programName || typeof programName !== 'string') return;
             if (!programString || typeof programString !== 'string') return;
-            if (!Number.isSafeInteger(speedInt)) return;
+            if (!Number.isSafeInteger(speed)) return;
 
             this.#testCore = false;
             clearInterval(this.#interval);
@@ -97,7 +97,7 @@ module.exports = class {
         socket.on("uploadProgram", (function (programName, programString) {
             if (!programName || typeof programName !== 'string') return;
             if (!programString || typeof programString !== 'string') return;
-            
+
             this.#testCore = false;
             clearInterval(this.#interval);
 
