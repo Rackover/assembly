@@ -1,6 +1,6 @@
-const OPERATION_BITS = 4;
+const OPERATION_BITS = 6;
 const OPERAND_FLAGS_BITS = 2;
-const OPERAND_BITS = 12;
+const OPERAND_BITS = 11;
 
 const thirtyTwo = OPERATION_BITS + (OPERAND_FLAGS_BITS + OPERAND_BITS) * 2;
 if (thirtyTwo != 32)
@@ -34,7 +34,7 @@ module.exports.OPERAND_B_SHIFT= OPERAND_B_SHIFT;
 module.exports.MAX_ADDRESSING= MAX_ADDRESSING;
 
 module.exports.compile = compile;
-module.exports.getSigned12BitsValue = getSigned12BitsValue;
+module.exports.getSignedXBitsValue = getSignedXBitsValue;
 
 
 function compile(tokenList) {
@@ -58,7 +58,7 @@ function compile(tokenList) {
     return programBuffer;
 }
 
-function getSigned12BitsValue(value) {
+function getSignedXBitsValue(value) {
     if ((value & OPERAND_SIGN_MASK) == OPERAND_SIGN_MASK) {
         value = value - (OPERAND_SIGN_MASK << 1);
     }
@@ -83,7 +83,7 @@ function compileInstruction(token) {
     if (token.operation == 0)
     {
         // If data, sign
-        val = getSigned12BitsValue(val);
+        val = getSignedXBitsValue(val);
     }
 
     return val;

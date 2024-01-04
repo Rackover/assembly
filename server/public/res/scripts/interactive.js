@@ -217,6 +217,8 @@ interactive.bindButtons = function () {
     editorButtons.killTestCoreButton.onclick = function () {
         if (socket) {
             socket.emit("stopTestingProgram");
+            trainingCoreIsRunning = false;
+            interactive.refreshButtons();
         }
     };
 
@@ -233,6 +235,22 @@ interactive.bindButtons = function () {
         if (socket) {
             requestedSpeed = Math.max(0, Math.min(--requestedSpeed, 5));
             socket.emit("setSpeed", requestedSpeed);
+        }
+    };
+
+    editorButtons.loadSamplesButton = document.getElementById("load-sample");
+    editorButtons.loadSamplesButton.onclick = function () {
+        if (ready && programIsEmpty) {
+            // Load sample
+            const progName = module.exports.samplePrograms[Math.floor(Math.random() * module.exports.samplePrograms.length)];
+
+            fetch(`res/support/${progName}.SRC`)
+                .then((res) => res.text())
+                .then((text) => {
+                    interactive.loadProgram(progName, text);
+                })
+                .catch((e) => console.error(e));
+
         }
     };
 
@@ -257,6 +275,8 @@ interactive.bindButtons = function () {
             const input = inputs[0];
             input.setSelectionRange(0, 0);
             input.focus();
+
+            interactive.refreshButtons();
         }
     };
 
@@ -291,7 +311,12 @@ interactive.bindButtons = function () {
 
 interactive.refreshEditorButtons = function () {
     editorButtons.saveButton.disabled = programIsEmpty;
-    editorButtons.trainingButton.disabled = programIsEmpty;
+    editorButtons.trainingButton.disabled = trainingCoreIsRunning || programIsEmpty;
+    editorButtons.clearButton.disabled = programIsEmpty;
+
+    editorButtons.loadSamplesButton.style.display = programIsEmpty ? "block" : "none";
+    editorButtons.saveButton.style.display = !programIsEmpty ? "block" : "none";
+    editorButtons.clearButton.style.display = !programIsEmpty ? "block" : "none";
 }
 
 interactive.refreshTrainingCoreButtons = function () {
@@ -299,7 +324,7 @@ interactive.refreshTrainingCoreButtons = function () {
     editorButtons.speedUpButton.disabled = !trainingCoreIsRunning;
     editorButtons.speedDownButton.disabled = !trainingCoreIsRunning;
     editorButtons.sendToGlobalCoreButton.disabled = !trainingCoreIsRunning || trainedForCycles < TRAINING_CORE_REQUIRED_LIFESPAN;
-
+    editorButtons.trainingButton.disabled = trainingCoreIsRunning || programIsEmpty;
     editorButtons.sendToGlobalCoreButton.textContent = "SEND TO ASSEMBLY >>";
 
     // Update send to core button
@@ -658,11 +683,16 @@ interactive.showParserResult = function (parseResult, index) {
                 }
 
                 const selection = val.selectionStart;
+                const contents = val.value;
 
                 val.value = interactive.fixSpacesInStatement(val.value);
 
                 val.selectionStart = selection;
                 val.selectionEnd = selection;
+
+                if (val.value != contents) {
+                    interactive.programModified();
+                }
 
                 display.innerHTML = interactive.getHTMLForToken(token);
             }
@@ -676,8 +706,8 @@ interactive.showParserResult = function (parseResult, index) {
             let html = ``;
             if (parseResult.tokens[0].operation === undefined) {
                 html += `<p>Try writing one of the following:</p><p><span class="tutorial-statement">${TUTORIALIZED_OPS
-                        .map(o => interactive.getDescriptionForCommand(o).name)
-                        .join('</span> | <span class="tutorial-statement">')
+                    .map(o => interactive.getDescriptionForCommand(o).name)
+                    .join('</span> | <span class="tutorial-statement">')
                     }</span></p>`;
             }
 
@@ -839,15 +869,13 @@ interactive.getHTMLExplanationForStatement = function (token) {
                     break;
             }
 
-            if (!isData && commandDescription && commandDescription.arguments > 0)
-            {
+            if (!isData && commandDescription && commandDescription.arguments > 0) {
                 txt += `<div style="margin-top: auto; vertical-align:bottom;"><p style="border-bottom:1px dotted gray;"></p>`;
 
                 // Add dereferencement explanations
-                txt += `<p>Note: if you feel ready to write complicated programs, you can write arguments either as <u>an address to look up</u> instead of a plain number. To do that, write "${
-                    interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[0], 0)
-                }" or "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[1], 0)}" before your number, which will fetch the data from said address when executing that statement</li></ul></p>`;
-            
+                txt += `<p>Note: if you feel ready to write complicated programs, you can write arguments either as <u>an address to look up</u> instead of a plain number. To do that, write "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[0], 0)
+                    }" or "${interactive.wrapHTMLArg(module.exports.REFERENCE_INDICATORS[1], 0)}" before your number, which will fetch the data from said address when executing that statement</li></ul></p>`;
+
                 txt += `</div>`;
             }
         }
@@ -972,14 +1000,22 @@ interactive.fixSpacesInStatement = function (str) {
     return str;
 }
 
+interactive.programModified = function () {
+    trainedForCycles = 0;
+    this.refreshTrainingCoreButtons();
+}
+
 interactive.initializeSocket = function () {
     socket.on("invalidProgram", function (programName, reason) {
         console.log("Core refused program");
+        trainingCoreIsRunning = false;
         explanationsWindow.innerHTML = `<p class="warn">${document.getElementById("core-name").textContent} refused your delegate [${programName}]:</p><p class="error">${reason}</p>`;
+        interactive.refreshButtons();
     });
 
     socket.on("programUploaded", function () {
         console.log("Program uploaded, back to core");
+        trainingCoreIsRunning = false;
         editorButtons.accessCoreButton.click();
     });
 

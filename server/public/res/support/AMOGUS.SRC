@@ -1,0 +1,33 @@
+@author norckan 
+@description reproduces a familiar pattern on the global core
+
+go to 2
+data -8
+add 30 with the value at -1
+copy -2 to the value at -2
+copy -3 to the value at -3
+copy -4 to the value at -4
+add 6 with the value at -5
+copy -6 to the value at -6
+copy -7 to the value at -7
+add 3 with the value at -8
+copy -9 to the value at -9
+copy -10 to the value at -10
+copy -11 to the value at -11
+copy -12 to the value at -12
+add 3 with the value at -13
+copy -14 to the value at -14
+copy -15 to the value at -15
+copy -16 to the value at -16
+add 4 with the value at -17
+copy -18 to the value at -18
+add 0 with the value at -19
+copy -20 to the value at -20
+go to -20
+
+
+
+
+
+
+

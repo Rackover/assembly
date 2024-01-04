@@ -98,7 +98,7 @@ function isSimpleWorm(buff) {
             if (buff.readInt8(address * 4 + 1) == 0  // Self op
                 && buff.readInt8(address * 4 + 2) == 0
             ) {
-                if (buff.readInt8(address * 4 + 3) == 0x50 || buff.readInt8(address * 4 + 3) == 0x60) // copy or move
+                if (buff.readInt8(address * 4 + 3) == 0x14 || buff.readInt8(address * 4 + 3) == 0x18) // copy or move
                 {
                     return true;
                 }
@@ -120,7 +120,7 @@ function isWormFragment(buff) {
             if (buff.readInt8(address * 4 + 1) == 0  // Self op
                 && buff.readInt8(address * 4 + 2) == 0
             ) {
-                if (buff.readInt8(address * 4 + 3) == 0x50 || buff.readInt8(address * 4 + 3) == 0x60) // copy or move
+                if (buff.readInt8(address * 4 + 3) == 0x14 || buff.readInt8(address * 4 + 3) == 0x18) // copy or move
                 {
                     return true;
                 }

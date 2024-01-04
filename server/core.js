@@ -320,7 +320,7 @@ module.exports.Core = class {
         const rawOperand = (data >> operandShift) & deps.compiler.OPERAND_MASK;
 
         let value = rawOperand;
-        value = deps.compiler.getSigned12BitsValue(value);
+        value = deps.compiler.getSignedXBitsValue(value);
 
         let depth = (data >> operandFlagsShift) & deps.compiler.OPERAND_FLAGS_MASK;
         while (depth > 0) {

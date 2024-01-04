@@ -1,0 +1,6 @@
+@author norckan
+@description locks a position by repeatingly writing to it
+
+write 0 at address -2
+go to -1
+

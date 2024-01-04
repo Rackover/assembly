@@ -25,6 +25,7 @@
     </script>
     <script type="text/javascript" src="server/parser.js?v=2"></script>
     <script type="text/javascript" src="server/compiler.js"></script>
+    <script type="text/javascript" src="server/generator.js"></script>
     <script type="text/javascript" src="res/scripts/server-communication.js"></script>
     <script type="text/javascript" src="res/scripts/sound.js"></script>
     <script type="text/javascript" src="res/scripts/global-core.js"></script>
@@ -260,9 +261,10 @@ d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888
                     <!-- leave empty-->
                 </div>
                 <div class="button-container">
-                    <button id="clear-program">CLEAR X</button>
-                    <button id="load-program">LOAD ⏏</button>
-                    <button id="save-program">SAVE V</button>
+                    <button id="clear-program" style="display:none">X CLEAR</button>
+                    <button id="load-program">⏏ LOAD</button>
+                    <button id="save-program" style="display:none">💾 SAVE</button>
+                    <button id="load-sample" style="display:none">⏏ LOAD AN EXAMPLE</button>
                     <button id="run-training-program">TRAIN DELEGATE &gt;&gt;</button>
                 </div>
             </div>

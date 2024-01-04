@@ -50,4 +50,4 @@ module.exports.bystander = {
     }
 }
 
-module.exports.programs = ['ARTILLERY', ];
+module.exports.samplePrograms = ['ARTILLERY', 'ADDITION', 'AMOGUS', 'PINGPONG', 'REVKILL', 'SLEDDER', 'WALL'];

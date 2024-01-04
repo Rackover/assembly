@@ -1,11 +1,12 @@
-# Artillery
+@author louve
+@description writes in memory to disrupt other delegates
 
 skip if the value at 10 is equal to 32
 go to +4
-write 8 at address 8 # reset the distance at which we shoot
+write 8 at address 8
 go to +2
 
-add 4 to the value at 5
+add 4 with the value at 5
 write 0 at the address specified at 4
 go to -7
 

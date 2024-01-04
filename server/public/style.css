@@ -220,7 +220,7 @@ button:active:not(:disabled) {
 }
 
 #editor-container button#run-training-program:not(:disabled) {
-	background: lightgreen;
+	background: rgb(59, 235, 59);
 	color: black;
 }
 
@@ -643,6 +643,15 @@ input.target-1 {
 	}
 }
 
+#load-sample
+{
+	color:yellow;
+	border:1px solid yellow;
+	animation-name: create-program-button-animation;
+	animation-duration: 2s;
+	animation-iteration-count: infinite;
+}
+
 #create-program-button {
 	border: 1px solid yellow;
 	position: absolute;
@@ -652,7 +661,7 @@ input.target-1 {
 	animation-iteration-count: infinite;
 }
 
-#create-program-button:hover {
+#create-program-button:hover, #load-sample:hover {
 	animation-name: none;
 	color: black;
 	border-color: black;
