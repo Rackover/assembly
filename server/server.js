@@ -30,7 +30,7 @@ app.get('/res/scripts/server-communication.js', (req, res, next) => {
   let index =  fs.readFileSync(path.join(__dirname, 'public/res/scripts/server-communication.js'), 'utf8');
    
   index = index.replace('$SERVER', CONFIG.HTTP_HOST.replace('http', 'ws'));
-  index = index.replace('$PORT', CONFIG.SOCKET_PORT);
+  index = index.replace('$PORT', CONFIG.HTTP_PORT);
 
   return res.send(index);
 })
@@ -39,8 +39,9 @@ app.get('/res/scripts/server-communication.js', (req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/server', express.static(path.join(__dirname, "shared")))
 
-app.listen(CONFIG.HTTP_PORT, () => {
-  log.info(`LSASM HTTP listening on port ${CONFIG.HTTP_PORT}`)
-  socket.start();
-})
+socket.startWithExpress(app);
+
+// app.listen(CONFIG.HTTP_PORT, () => {
+//   log.info(`LSASM HTTP listening on port ${CONFIG.HTTP_PORT}`)
+// })
 

@@ -1,23 +1,21 @@
 const Client = require("./client");
-
-const { createServer } = require("http");
-const { Server } = require("socket.io");
-
 const blacklist = require("./blacklist");
 
 const knownUsers = [];
 
-const httpServer = createServer();
 module.exports =
 {
-  start: function () {
-
-    const io = new Server(httpServer, {
+  startWithExpress: function (expressApp) {
+    const http = require('http').createServer(expressApp);
+    const {Server} = require('socket.io');
+    
+    const io = new Server(http, {
       // options
       cors: {
         origin: `${CONFIG.HTTP_HOST}:${CONFIG.HTTP_PORT}`,
         methods: ["GET", "POST"]
       },
+
       // transports: ['websocket', 'polling', 'flashsocket'] 
     });
 
@@ -59,7 +57,7 @@ module.exports =
       }
     });
 
-    log.info(`LSASM socket.io bound on port ${CONFIG.SOCKET_PORT}`)
-    httpServer.listen(CONFIG.SOCKET_PORT);
+    log.info(`LSASM socket.io bound on port ${CONFIG.HTTP_PORT}`)
+    http.listen(CONFIG.HTTP_PORT);
   }
 }

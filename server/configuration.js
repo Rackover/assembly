@@ -1,5 +1,4 @@
 module.exports = {
-    SOCKET_PORT: 4050,
     HTTP_PORT: 4051,
     MAX_PROGRAMS: 16,
     MAX_CLIENTS_PER_CORE: 10,
