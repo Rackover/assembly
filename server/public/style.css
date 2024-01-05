@@ -621,6 +621,11 @@ input.target-1 {
 	margin-top:50px;
 }
 
+#scoreboard .score-header {
+	font-weight:bold;
+	border-bottom: 1px dotted gray;
+}
+
 #scoreboard #scoreboard-entries div .score-name {
 	flex: 1;
 }
