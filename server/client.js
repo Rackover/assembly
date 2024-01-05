@@ -31,7 +31,7 @@ module.exports = class {
     get address()
     {
         return this.#socket.handshake.headers && this.#socket.handshake.headers["x-forwarded-for"] ?
-             this.#socket.headers["x-forwarded-for"].split(',')[0] :
+             this.#socket.handshake.headers["x-forwarded-for"].split(',')[0] :
              this.#socket.handshake.address;
     }
 
@@ -40,9 +40,6 @@ module.exports = class {
         this.#globalCoreID = coreID;
         this.#id = authID;
         this.#socket = socket;
-
-        console.log(socket.handshake.headers);
-
         this.#handles.push(this.globalCore.onTicked(this.#onGlobalTick.bind(this)));
         this.#handles.push(this.globalCore.onScoreChanged(this.#onScoreChanged.bind(this)));
 
