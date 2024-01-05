@@ -77,7 +77,6 @@ module.exports = class {
     #fullTick = 0;
     #serializedBuffer;
     #scores = [];
-    #highestScoresEver = [];
 
     #lastPlayerProgramActivity = 0;
     #isBystander = {};
@@ -301,6 +300,7 @@ module.exports = class {
             this.#scores.push({
                 id: id,
                 name: program.name,
+                ownerId: program.owner.id,
                 kills: 0
             });
 

@@ -81,7 +81,7 @@ module.exports.Core = class {
     // END OF
 
     isEmpty() {
-        return this.#programs.length() == 0;
+        return this.programCount == 0;
     }
 
     peek(address) {

@@ -47,8 +47,12 @@ class CoreInfo {
 }
 
 const cores = [];
+let highestScoresEver = [];
 
 module.exports = {
+    loadHighscores: function(hs) { highestScoresEver = hs;},
+    getHighscores: function () { return [...highestScoresEver];},
+    pushScores: refreshHighestScores,
     trimCores: trimCores,
     nameCheckAllCores: function () {
         for (let k in cores) {
@@ -137,4 +141,52 @@ function trimCores() {
     for (const i in toKill) {
         delete cores[i];
     }
+}
+
+function refreshHighestScores(scores) {
+    let changed = false;
+    const previousLast = highestScoresEver.length == 0 ?
+        false :
+        highestScoresEver[highestScoresEver.length - 1];
+
+    for (const i in scores) {
+        if (scores[i].ownerId <= 0) continue; // bystander?
+
+        const scoreId = `${scores[i].name}@${scores[i].ownerId}`;
+        let exists = false;
+
+        for (const k in highestScoresEver) {
+            const entry = highestScoresEver[k];
+            const entryId = `${entry.name}@${entry.ownerId}`;
+            // Check if exists
+
+            if (scoreId == entryId) {
+                if (entry.kills < scores[i].kills) {
+                    log.info(`Highscore for ${entry.name}: ${entry.kills} => ${scores[i].kills}`);
+                    entry.kills = scores[i].kills;
+                    changed = true;
+                }
+
+                exists = true;
+                break;
+            }
+        }
+
+        if (!exists) {
+            highestScoresEver.push({
+                name: scores[i].name,
+                ownerId: scores[i].ownerId,
+                kills: scores[i].kills
+            });
+
+            log.info(`Pushed a new highscore on the list (${scores[i].name}) because it did not exist yet`);
+        }
+
+        highestScoresEver.sort((a, b) => { b.kills - a.kills })
+        highestScoresEver = highestScoresEver.splice(0, 6);
+        
+        changed |= previousLast != highestScoresEver[highestScoresEver.length - 1];
+    }
+
+    return changed;
 }

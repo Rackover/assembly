@@ -27,12 +27,11 @@ module.exports = class {
     #receivedInitialGlobalTick = false;
     #globalCoreID = 0;
     #id = "";
-    
-    get address()
-    {
+
+    get address() {
         return this.#socket.handshake.headers && this.#socket.handshake.headers["x-forwarded-for"] ?
-             this.#socket.handshake.headers["x-forwarded-for"].split(',')[0] :
-             this.#socket.handshake.address;
+            this.#socket.handshake.headers["x-forwarded-for"].split(',')[0] :
+            this.#socket.handshake.address;
     }
 
     constructor(socket, authID, coreID, returning = false) {
@@ -286,6 +285,7 @@ module.exports = class {
                 columnCount: gc.columnCount,
                 columnSize: gc.columnSize,
                 activity: activity,
+                highestScores: WORLD.getHighscores(),
                 coreInfo: {
                     id: gc.id,
                     friendlyName: gc.friendlyName,
@@ -296,6 +296,16 @@ module.exports = class {
     }
 
     #onScoreChanged(scores) {
+        this.#updateHighestScore(scores);
         this.#socket.emit("updateScoreboard", scores, this.globalCore.activePointers);
+    }
+
+    #updateHighestScore(scores) {
+        const changed = WORLD.pushScores(scores);
+
+        if (changed)
+        {
+            this.#socket.emit("highestScores", WORLD.getHighscores());
+        }
     }
 }

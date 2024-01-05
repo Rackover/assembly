@@ -259,7 +259,13 @@ interactive.bindButtons = function () {
     editorButtons.loadSamplesButton.onclick = function () {
         if (ready && programIsEmpty) {
             // Load sample
-            const progName = module.exports.samplePrograms[Math.floor(Math.random() * module.exports.samplePrograms.length)];
+            let progName =  module.exports.samplePrograms[Math.floor(Math.random() * module.exports.samplePrograms.length)];
+
+            if (NEW_PLAYER)
+            {
+                NEW_PLAYER = false;
+                progName = module.exports.samplePrograms[0];
+            }
 
             fetch(`res/support/${progName}.SRC`)
                 .then((res) => res.text())

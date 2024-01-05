@@ -601,9 +601,20 @@ input.target-1 {
 	min-width: 20%;
 }
 
-#scoreboard #scoreboard-entries div {
+#scoreboard #scoreboard-entries {
+	display: flex;
+	flex-direction: column;
+	flex-grow:1;
+}
+
+#scoreboard #scoreboard-entries div{
 	display: flex;
 	flex-direction: row;
+}
+
+#scoreboard #highest-scores {
+	margin-bottom:50px;
+	margin-top:50px;
 }
 
 #scoreboard #scoreboard-entries div .score-name {
