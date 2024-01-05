@@ -39,8 +39,8 @@ app.use(session({
 app.get('/res/scripts/server-communication.js', (req, res, next) => {
   let index = fs.readFileSync(path.join(__dirname, 'public/res/scripts/server-communication.js'), 'utf8');
 
-  index = index.replace('$SERVER', CONFIG.HTTP_HOST.replace('http', 'ws'));
-  index = index.replace('$PORT', CONFIG.HTTP_PORT);
+  const uri = `${CONFIG.HTTP_HOST.replace('http', 'ws')}${(CONFIG.SECURE_CONTEXT ? '' : `:${CONFIG.HTTP_PORT}`)}`;
+  index = index.replace('$URI', uri);
 
   return res.send(index);
 })

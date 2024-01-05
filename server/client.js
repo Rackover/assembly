@@ -37,6 +37,8 @@ module.exports = class {
     constructor(socket, authID, coreID, returning = false) {
 
         this.#globalCoreID = coreID;
+        WORLD.registerClient(this, coreID);
+
         this.#id = authID;
         this.#socket = socket;
         this.#handles.push(this.globalCore.onTicked(this.#onGlobalTick.bind(this)));
@@ -119,9 +121,9 @@ module.exports = class {
             }
 
             this.#reset();
-
             this.#globalCoreID = coreID;
             this.#receivedInitialGlobalTick = false;
+            WORLD.registerClient(this, coreID);
 
             // Re-subscribe
             this.#handles.push(this.globalCore.onTicked(this.#onGlobalTick.bind(this)));
@@ -252,6 +254,8 @@ module.exports = class {
             this.#handles[k]();
         }
 
+        WORLD.forgetClient(this);
+
         clearInterval(this.#interval); // Kill client
     }
 
@@ -259,6 +263,10 @@ module.exports = class {
         this.#reset();
         this.#dead = true;
         WORLD.trimCores();
+
+        // Print client count
+        const clientCount = WORLD.getClientCount();
+        log.info(`We currently have ${clientCount}(-) active clients`);
     }
 
     #onGlobalTick(delta) {

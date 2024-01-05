@@ -446,6 +446,7 @@ module.exports = class {
         for (const k in this.#scores) {
             if (this.#scores[k].id == killerId) {
                 this.#scores[k].kills++;
+                log.info(`Scoring kill for ${killerId}`);
                 break;
             }
         }

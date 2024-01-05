@@ -45,7 +45,7 @@ if(serverCom.clientId  == null)
 
 serverCom.setCookie("id", serverCom.clientId);
 
-const socket = io("$SERVER:$PORT", {
+const socket = io("$URI", {
     reconnectionDelayMax: 10000,
     auth: {
         token: serverCom.clientId

@@ -159,7 +159,7 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
         // Pick color
         let color;
         if (podium) {
-            color = k > globalCore.podiumColors.length ? globalCore.colors[0] : globalCore.podiumColors[k];
+            color = k >= globalCore.podiumColors.length ? globalCore.colors[0] : globalCore.podiumColors[k];
         }
         else {
             color = isBystander ?
@@ -177,7 +177,7 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
             scoreDisplay.textDiv.style.background = color;
         }
 
-        if (!displays[id]) {
+        if (!displays[id] || podium) {
             entriesParent.appendChild(scoreDisplay.entryDiv);
             displays[id] = scoreDisplay;
         }

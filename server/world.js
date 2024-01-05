@@ -50,14 +50,31 @@ const cores = [];
 let highestScoresEver = [];
 
 module.exports = {
-    loadHighscores: function(hs) { highestScoresEver = hs;},
-    getHighscores: function () { return [...highestScoresEver];},
+    loadHighscores: function (hs) { highestScoresEver = hs; },
+    getHighscores: function () { return [...highestScoresEver]; },
     pushScores: refreshHighestScores,
     trimCores: trimCores,
+    getClientCount: getClientCount,
     nameCheckAllCores: function () {
         for (let k in cores) {
             cores[k].core.performNameCheck();
         }
+    },
+    forgetClient: function (client) {
+        for (let k in cores) {
+            cores[k].clients = cores[k].clients.filter(o => o != client);
+        }
+    },
+    registerClient: function (client, coreID) {
+        const core = getCoreInfo(coreID);
+        if (core === false) {
+            log.err(`Could not register client ${client} on core ID ${coreID} ???`);
+            return false;
+        }
+
+        log.info(`Registered client ${client} in core ID ${coreID}`);
+        core.clients.push(client);
+        return true;
     },
     getCoreIdForClient: function (clientIdString) {
         trimCores();
@@ -110,18 +127,28 @@ module.exports = {
         return availableCores;
     },
     coreCount: function () { return cores.length; },
-    getCore: function (i) {
-        for (const k in cores) {
-            if (cores[k].id == i) {
-                const c = cores[k].core;
-                c.id = cores[k].id;
-                c.friendlyName = cores[k].friendlyName;
-                return c;
-            }
+    getCore: function (id) {
+        const info = getCoreInfo(id);
+        if (info === false) {
+            return false;
         }
 
-        return false;
+        const c = info.core;
+        c.id = info.id;
+        c.friendlyName = info.friendlyName;
+
+        return c;
     }
+}
+
+function getCoreInfo(id) {
+    for (const k in cores) {
+        if (cores[k].id == id) {
+            return cores[k];
+        }
+    }
+
+    return false;
 }
 
 function trimCores() {
@@ -141,6 +168,15 @@ function trimCores() {
     for (const i in toKill) {
         delete cores[i];
     }
+}
+
+function getClientCount() {
+    let clientCount = 0;
+    for (let k in cores) {
+        clientCount += cores[k].clients.filter(o => !o.isDead).length;
+    }
+
+    return clientCount;
 }
 
 function refreshHighestScores(scores) {
@@ -182,9 +218,9 @@ function refreshHighestScores(scores) {
             log.info(`Pushed a new highscore on the list (${scores[i].name}) because it did not exist yet`);
         }
 
-        highestScoresEver.sort((a, b) => { b.kills - a.kills })
+        highestScoresEver.sort((a, b) => { return b.kills - a.kills; });
         highestScoresEver = highestScoresEver.splice(0, 6);
-        
+
         changed |= previousLast != highestScoresEver[highestScoresEver.length - 1];
     }
 

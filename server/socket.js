@@ -53,7 +53,10 @@ module.exports =
         else {
           new Client(socket, socket.handshake.auth.token, coreID, knownUsers.includes(socket.handshake.auth.token));
         }
+        
         knownUsers.push(socket.handshake.auth.token);
+        const clientCount = WORLD.getClientCount();
+        log.info(`We currently have ${clientCount}(+) active clients`);
       }
     });
 
