@@ -65,6 +65,7 @@ globalCore.createGlobalCoreDisplay = function (columns, size) {
     if (globalCore.cells.length != columns * size) {
         globalCore.cells.length = 0;
         const parent = document.getElementById("global-core-grid-container");
+        parent.className = null;
         parent.innerHTML = "";
 
         globalCore.cells.length = 0;
@@ -111,7 +112,8 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
 
         if (Object.keys(displays).length == 0 && scoreboard.length != 0) {
             const title = document.createElement("div");
-            title.textContent = "HIGHEST SCORES";
+            title.className = "score-header";
+            title.textContent = "MOST HITS";
             entriesParent.appendChild(title);
         }
     }
@@ -121,7 +123,8 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
 
         if (Object.keys(displays).length == 0 && scoreboard.length != 0) {
             const title = document.createElement("div");
-            title.textContent = "ACTIVE PROGRAMS";
+            title.className = "score-header";
+            title.textContent = "ACTIVE DELEGATES";
             entriesParent.appendChild(title);
         }
     }
@@ -351,8 +354,7 @@ globalCore.initializeSocket = function () {
         globalCore.updateCoreName(obj.coreInfo);
     });
 
-    socket.on("highestScores", function(highestScores)
-    {
+    socket.on("highestScores", function (highestScores) {
         globalCore.displayScoreboard(highestScores, null, true);
     });
 
@@ -374,24 +376,30 @@ globalCore.initializeSocket = function () {
             document.getElementById("global-core").style = {};
         }
         else {
-            NEW_PLAYER = true;
-            document.getElementById("global-core").style.display = "none";
-            document.getElementById("code-editor").style.display = "none";
-            document.getElementById("intro").style = {};
+            if (document.getElementById("global-core").style.display == "none") {
+                // User already in editor, probably the serveur restarted
+            }
+            else {
+                NEW_PLAYER = true;
+                document.getElementById("global-core").style.display = "none";
+                document.getElementById("code-editor").style.display = "none";
+                document.getElementById("intro").style = {};
+            }
         }
     });
 
     socket.on("disconnect", () => {
-        const txt = document.getElementById("intro-text");
+        const txt = document.getElementById("global-core-grid-container");
 
         if (txt) {
+            globalCore.cells.length = 0;
             txt.className += " error";
             txt.innerHTML = "<p>The remote assembly server closed the connection - probably because it is full and cannot accept new clients at the time.</p><p>Come back later ♥</p>";
         }
 
-        document.getElementById("global-core").style.display = "none";
-        document.getElementById("code-editor").style.display = "none";
-        document.getElementById("intro").style = {};
+        // document.getElementById("global-core").style.display = "none";
+        // document.getElementById("code-editor").style.display = "none";
+        // document.getElementById("intro").style = {};
     });
 }
 
