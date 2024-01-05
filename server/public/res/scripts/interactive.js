@@ -646,7 +646,7 @@ interactive.refreshInputForSelection = function (index) {
             lineIsCurrent = true;
         } else if (codeLineIndex != undefined && !lineIsComment) {
             const visualIndex = codeLineIndex - codeLineIndices[i];
-            addr.textContent = `${(i > codeLineIndex ? "+" : "-")}${(Math.abs(visualIndex)).toString().padStart(7, '0')}`;
+            addr.textContent = `${(i >= codeLineIndex ? "+" : "-")}${(Math.abs(visualIndex)).toString().padStart(7, '0')}`;
         }
 
         addr.className = "address-field " + classes.join(" ");
@@ -902,7 +902,7 @@ interactive.getHTMLExplanationForStatement = function (token) {
                             )} and ${(isDeep[1] ?
                                 `the number at ${formattedArgs[1]}` :
                                 `${formattedArgs[1]}`
-                            )} are equal.</p><p>If they are equal the NEXT instruction is skipped, so this line acts like a <b>GO TO +1</b>.</p>
+                            )} are equal.</p><p>If they are equal the NEXT instruction is skipped, so this line acts like a <b>GO TO +2</b>.</p>
                         <p>If they are not equal, this statement will do nothing and execution will resume on the next instruction.</p>`;
                     }
                     break;
@@ -993,7 +993,7 @@ interactive.getDescriptionForCommand = function (i) {
         case module.exports.OPERATIONS.WRITE:
             description.text = `Writes ${interactive.wrapHTMLArg('X', 0)} at the location given in ${interactive.wrapHTMLArg('Y', 1)}, overwriting what is already there`;
             description.arguments = 2;
-            description.link = module.exports.AT_ADDRESS_LINKS[0];
+            description.link = module.exports.TO_AT_ADDRESS_LINKS[0];
             break;
         case module.exports.OPERATIONS.SKIP_IF_EQUAL:
         case module.exports.OPERATIONS.SKIP_IF_GREATER:

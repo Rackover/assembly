@@ -98,6 +98,8 @@ const TO_ADDRESS_LINKS = [
     ","
 ]
 
+const TO_AT_ADDRESS_LINKS = [...TO_ADDRESS_LINKS, ...TO_AT_ADDRESS_LINKS];
+
 const REFERENCE_INDICATORS = [
     "the value at ",
     "the address given at ",
@@ -116,6 +118,7 @@ module.exports.GREATER_LINKS = GREATER_LINKS;
 module.exports.LOWER_LINKS = LOWER_LINKS;
 module.exports.FROM_LINKS = FROM_LINKS;
 module.exports.WITH_LINKS = WITH_LINKS;
+module.exports.TO_AT_ADDRESS_LINKS = TO_AT_ADDRESS_LINKS;
 module.exports.REFERENCE_INDICATORS = REFERENCE_INDICATORS;
 module.exports.tokenize = tokenize;
 

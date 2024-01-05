@@ -77,6 +77,7 @@ module.exports = class {
     #fullTick = 0;
     #serializedBuffer;
     #scores = [];
+    #highestScoresEver = [];
 
     #lastPlayerProgramActivity = 0;
     #isBystander = {};
