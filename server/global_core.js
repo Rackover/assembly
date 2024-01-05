@@ -163,7 +163,7 @@ module.exports = class {
         rules.runForever = true;
         rules.columnCount = 5;
         rules.columnSize = 256;
-        rules.bystanders = CONFIG.GCORE_BYSTANDERS; 
+        rules.bystanders = CONFIG.GCORE_BYSTANDERS;
 
         const core = new Core(rules);
         core.onProgramKilled(this.#onProgramKilled.bind(this));
@@ -185,12 +185,33 @@ module.exports = class {
         clearInterval(this.#interval);
     }
 
+    performNameCheck() {
+        // Recheck in case banlist has changed
+        for (const k in this.#programs) {
+            const info = this.#programs[k];
+            if (info && info.owner && info.owner.id) {
+                if (blacklist.isBlacklistedName(info.name)) {
+                    if (info.owner) {
+                        blacklist.ban(info.owner.address);
+                        log.warn(`Excluding client with address ${info.owner.address} due to creating a program named [${info.name}], and killing the running program with said name`);
+                    }
+
+                    log.info(`Killing program with forbidden name '${info.name}'`);
+                    this.#core.killProgram(k);
+                }
+            }
+        }
+    }
+
     installProgram(name, code, ownerId = 0, fromAddress = false) {
         if (fromAddress !== false) { // Remote client - exercise caution
             if (blacklist.isBlacklistedName(name)) {
                 blacklist.ban(fromAddress);
                 log.warn(`Excluding client with address ${fromAddress} due to creating a program named [${name}]`);
                 return [false, "You have been booted off the assembly! Please reach out on the discord for further assistance."];
+            }
+            else {
+                log.debug(`Namecheck "${name}" OK`);
             }
         }
 
@@ -302,19 +323,6 @@ module.exports = class {
 
                 this.#broadcastOnTicked(delta);
                 this.#fullTick ++;
-
-                // Recheck in case banlist has changed
-                {
-                    const info = this.#programs[this.#core.nextProgramToPlay];
-                    if (info && blacklist.isBlacklistedName(info.name)) {
-                        if (info.owner) {
-                            blacklist.ban(info.owner.address);
-                            log.warn(`Excluding client with address ${info.owner.address} due to creating a program named [${info.name}], and killing the running program with said name`);
-                        }
-
-                        this.#core.killProgram(this.#core.nextProgramToPlay);
-                    }
-                }
             }
         }
         else {

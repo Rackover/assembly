@@ -33,11 +33,21 @@ module.exports = {
     },
 
     isBlacklistedName: function (name) {
-        if (matcher) {
-            if (matcher.hasMatch(name)) {
+        
+        for (const k in matcher.blacklistedTerms)
+        {
+            if (matcher.blacklistedTerms[k].regExp.test(name))
+            {
                 return true;
             }
         }
+
+    // Doesn't work !
+        // if (matcher) {
+        //     if (matcher.hasMatch(name)) {
+        //         return true;
+        //     }
+        // }
 
         return false;
     },
@@ -64,7 +74,7 @@ function refreshBanList() {
 
 function refreshWordsBlacklist() {
     fs.readFile("badnames.txt", { encoding: 'utf-8' }, function (err, buff) {
-        const dataset = englishDataset;
+        const dataset = new DataSet().addAll(englishDataset); // copy array
 
         if (err) {
             // It's fine
@@ -72,8 +82,8 @@ function refreshWordsBlacklist() {
         else {
             const additionalBlacklistedWords = buff
                 .split('\n')
-                .filter(o => o && o.length != 0)
-                .map(o => o.trim());
+                .map(o => o.trim())
+                .filter(o => o.length > 0);
 
             for (const k in additionalBlacklistedWords) {
                 dataset.addPhrase((phrase) =>
@@ -88,6 +98,10 @@ function refreshWordsBlacklist() {
             ...dataset.build(),
             ...englishRecommendedTransformers,
         });
+
+        // fs.writeFileSync("output.txt", JSON.stringify(matcher));
+        
+        WORLD.nameCheckAllCores();
     });
 }
 

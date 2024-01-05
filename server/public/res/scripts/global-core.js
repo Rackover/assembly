@@ -29,6 +29,7 @@ globalCore.cells = [];
 globalCore.buffer = null;
 globalCore.scoreboardDisplays = {};
 globalCore.coreName = "The assembly";
+globalCore.coreId = 0;
 globalCore.ready = false;
 
 globalCore.onWindowLoad = function () {
@@ -246,6 +247,7 @@ globalCore.refreshGlobalCore = function (activity) {
 
 globalCore.updateCoreName = function (coreInfo) {
     globalCore.coreNameDiv.innerHTML = "";
+    globalCore.coreId = coreInfo.id;
     if (coreInfo.availableCores.length <= 1) {
         const h1 = document.createElement("h1");
         h1.id = "core-name";
@@ -271,7 +273,20 @@ globalCore.updateCoreName = function (coreInfo) {
             select.appendChild(option);
         }
 
+        select.onchange = function(){ globalCore.onCoreSelected(select); };
+
         globalCore.coreNameDiv.appendChild(select);
+    }
+}
+
+globalCore.onCoreSelected = function(dom)
+{
+    const coreId = dom.value;
+    
+    console.log('selected core %d (from %d)', coreId, globalCore.coreId);
+    if (coreId != globalCore.coreId)
+    {
+        socket.emit("switchCore", coreId);
     }
 }
 

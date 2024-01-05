@@ -27,11 +27,21 @@ module.exports = class {
     #receivedInitialGlobalTick = false;
     #globalCoreID = 0;
     #id = "";
+    
+    get address()
+    {
+        return this.#socket.handshake.headers && this.#socket.handshake.headers["x-forwarded-for"] ?
+             this.#socket.headers["x-forwarded-for"].split(',')[0] :
+             this.#socket.handshake.address;
+    }
 
     constructor(socket, authID, coreID, returning = false) {
 
         this.#globalCoreID = coreID;
         this.#id = authID;
+        this.#socket = socket;
+
+        console.log(socket.handshake.headers);
 
         this.#handles.push(this.globalCore.onTicked(this.#onGlobalTick.bind(this)));
         this.#handles.push(this.globalCore.onScoreChanged(this.#onScoreChanged.bind(this)));
@@ -42,7 +52,8 @@ module.exports = class {
         }).bind(this));
 
         socket.on("setSpeed", (function (speedInt) {
-            if (!isNaN(speedInt) && Number.isSafeInteger(speedInt) && this.#testCoreSpeed != speedInt) {
+            speedInt = parseInt(speedInt);
+            if (!isNaN(speedInt) && Number.isInteger(speedInt) && this.#testCoreSpeed != speedInt) {
                 this.#testCoreSpeed = speedInt;
                 log.debug(`Core speed for socket ${this.#id} is now ${this.#testCoreSpeed}`);
             }
@@ -52,7 +63,9 @@ module.exports = class {
 
             if (!programName || typeof programName !== 'string') return;
             if (!programString || typeof programString !== 'string') return;
-            if (!Number.isSafeInteger(speed)) return;
+
+            speed = parseInt(speed);
+            if (!Number.isInteger(speed)) return;
 
             this.#testCore = false;
             clearInterval(this.#interval);
@@ -89,9 +102,35 @@ module.exports = class {
             this.#destroy();
         }).bind(this));
 
-        socket.on("requestKill", (function(id){
-            if (!Number.isSafeInteger(id)) return;
+        socket.on("requestKill", (function (id) {
+
+            id = parseInt(id);
+            if (!Number.isInteger(id)) return;
+
             this.globalCore.killProgramIfOwned(id, this.#id);
+        }).bind(this));
+
+        socket.on("switchCore", (function (coreID) {
+
+            coreID = parseInt(coreID);
+            if (!Number.isInteger(coreID)) return; // joker
+
+            const core = WORLD.getCore(coreID);
+            if (core === false) {
+                // Do nothing
+                log.warn("Tried to switch to non existing core %d", coreID);
+                return;
+            }
+
+            this.#reset();
+
+            this.#globalCoreID = coreID;
+            this.#receivedInitialGlobalTick = false;
+
+            // Re-subscribe
+            this.#handles.push(this.globalCore.onTicked(this.#onGlobalTick.bind(this)));
+            this.#handles.push(this.globalCore.onScoreChanged(this.#onScoreChanged.bind(this)));
+
         }).bind(this));
 
         socket.on("uploadProgram", (function (programName, programString) {
@@ -123,7 +162,7 @@ module.exports = class {
                 programName,
                 programString,
                 this.#id,
-                socket.handshake.address
+                this.address
             );
 
             const success = id !== false;
@@ -139,7 +178,7 @@ module.exports = class {
             else {
                 socket.emit("invalidProgram", programName, msg);
 
-                if (blacklist.isBannedAddress(socket.handshake.address)) {
+                if (blacklist.isBannedAddress(this.address)) {
                     log.info(`Kicking client ${this.#id} off connection (got banned)`);
                     this.#destroy();
                     socket.disconnect(true);
@@ -147,8 +186,7 @@ module.exports = class {
             }
         }).bind(this));
 
-        log.info(`Born client ${this.#id} on address ${socket.handshake.address} (returning? ${returning})`);
-        this.#socket = socket;
+        log.info(`Born client ${this.#id} on address ${this.address} (returning? ${returning})`);
 
         // mh yes... good code...
         socket.emit("hello", returning);
@@ -213,14 +251,17 @@ module.exports = class {
         this.#socket.emit("testCore", obj);
     }
 
-    #destroy() {
+    #reset() {
         for (const k in this.#handles) {
             this.#handles[k]();
         }
 
         clearInterval(this.#interval); // Kill client
+    }
+
+    #destroy() {
+        this.#reset();
         this.#dead = true;
-        
         WORLD.trimCores();
     }
 

@@ -34,7 +34,7 @@ class CoreInfo {
     }
 
     get isDesirable() {
-        return this.clients.length < MAX_CLIENTS_PER_CORE && this.core.programCount < CONFIG.MAX_PROGRAMS * 0.75;
+        return this.clients.length < MAX_CLIENTS_PER_CORE * 0.5 && this.core.programCount < 8;
     }
 
     get isEmpty() {
@@ -50,28 +50,47 @@ const cores = [];
 
 module.exports = {
     trimCores: trimCores,
-    
+    nameCheckAllCores: function () {
+        for (let k in cores) {
+            cores[k].core.performNameCheck();
+        }
+    },
     getCoreIdForClient: function (clientIdString) {
         trimCores();
 
-        let coreId = -1;
+        let coreID = -1;
+        let nonFullCore = -1;
         for (let k in cores) {
-            if (!cores[k].isFull) {
-                coreId = k;
+            if (cores[k].isDesirable) {
+                coreID = k;
+                nonFullCore = k;
+                log.info(`Core ${coreID} is desirable for client ${clientIdString}, putting them here`);
                 break;
             }
+            else if (!cores[k].isFull) {
+                nonFullCore = k;
+            }
         }
 
-        if (coreId < 0) {
+        if (coreID < 0) {
             if (cores.length >= CONFIG.MAX_CORES) {
-                return false;
+                if (nonFullCore < 0) {
+                    log.warn(`Cannot create any new cores (hit config limit ${CONFIG.MAX_CORES}), refusing client :(`);
+                    return false;
+                }
+                else {
+                    log.info(`Core ${nonFullCore} is not desirable but it's not full, putting client ${clientIdString} there`)
+                    return nonFullCore;
+                }
             }
 
-            coreId = cores.length;
-            cores.push(new CoreInfo(coreId));
+            log.info(`Created new core ${coreID} for client ${clientIdString}`);
+
+            coreID = cores.length;
+            cores.push(new CoreInfo(coreID));
         }
 
-        return coreId;
+        return coreID;
     },
 
     getAvailableCores: function () {
@@ -88,17 +107,22 @@ module.exports = {
     },
     coreCount: function () { return cores.length; },
     getCore: function (i) {
-        const c = cores[i].core;
-        c.id = cores[i].id;
-        c.friendlyName = cores[i].friendlyName;
-        return c;
+        for (const k in cores) {
+            if (cores[k].id == i) {
+                const c = cores[k].core;
+                c.id = cores[k].id;
+                c.friendlyName = cores[k].friendlyName;
+                return c;
+            }
+        }
+
+        return false;
     }
 }
 
 function trimCores() {
     const toKill = [];
-    if (cores.length <= 1)
-    {
+    if (cores.length <= 1) {
         return; // Never trim first core?
     }
 
@@ -110,8 +134,7 @@ function trimCores() {
         }
     }
 
-    for (const i in toKill)
-    {
+    for (const i in toKill) {
         delete cores[i];
     }
 }
