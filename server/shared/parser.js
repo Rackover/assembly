@@ -98,7 +98,7 @@ const TO_ADDRESS_LINKS = [
     ","
 ]
 
-const TO_AT_ADDRESS_LINKS = [...TO_ADDRESS_LINKS, ...TO_AT_ADDRESS_LINKS];
+const TO_AT_ADDRESS_LINKS = [...TO_ADDRESS_LINKS, ...AT_ADDRESS_LINKS];
 
 const REFERENCE_INDICATORS = [
     "the value at ",
@@ -336,7 +336,7 @@ function parseCopy(token, data) {
 }
 
 function parseWrite(token, data) {
-    token.remainingData = parseTwoArgumentsStatement(token, data, "Write", AT_ADDRESS_LINKS).remainingData;
+    token.remainingData = parseTwoArgumentsStatement(token, data, "Write", TO_AT_ADDRESS_LINKS).remainingData;
     token.operation = OPERATIONS.WRITE;
 
     if (token.arguments.length >= 2) {
