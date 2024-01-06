@@ -270,7 +270,7 @@ module.exports.Core = class {
 
     killProgram(index) {
         const programPointer = this.getProgramPointers(index);
-        log.warn(`Force killing program ${index} (pointer is valid? ${programPointer != undefined})`);
+        log.info(`Force killing program ${index} (pointer is valid? ${programPointer != undefined})`);
 
         while (!programPointer.isDead) {
             this.#killPointer(programPointer);

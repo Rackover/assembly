@@ -155,6 +155,21 @@ module.exports = class {
             }
 
             log.info(`Client ${this.#id} uploading program named "${programName}" (${programString.length} characters)`);
+            
+            // !
+            // This happened at least once
+            if (!this.globalCore)
+            {
+                log.error(`I don't know what happened but client ${this.#id} has an invalid global core! Dumping all & killing`);
+
+                log.error(this.globalCore);
+                log.error(this.#globalCoreID);
+                log.error(`core count: ${WORLD.coreCount()}`);
+
+                socket.disconnect();
+                this.#destroy();
+                return;
+            }
 
             const [id, msg] = this.globalCore.installProgram(
                 programName,

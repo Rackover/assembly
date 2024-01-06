@@ -11,6 +11,7 @@ const NAMES = [
 ];
 
 const MAX_CLIENTS_PER_CORE = 10;
+const HIGH_SCOREBOARD_LENGTH = 10;
 
 class CoreInfo {
     core = null; // GlobalCore
@@ -157,7 +158,8 @@ function trimCores() {
         return; // Never trim first core?
     }
 
-    for (let k in cores) {
+    for (let k = cores.length-1; k >= 0; k--)
+    {
         cores[k].trim();
         if (cores[k].isEmpty) {
             log.info(`Core ${cores[k].id} was empty and got trimmed!`);
@@ -219,7 +221,7 @@ function refreshHighestScores(scores) {
         }
 
         highestScoresEver.sort((a, b) => { return b.kills - a.kills; });
-        highestScoresEver = highestScoresEver.splice(0, 6);
+        highestScoresEver = highestScoresEver.splice(0, HIGH_SCOREBOARD_LENGTH);
 
         changed |= previousLast != highestScoresEver[highestScoresEver.length - 1];
     }

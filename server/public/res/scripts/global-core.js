@@ -372,11 +372,12 @@ globalCore.initializeSocket = function () {
     // Initially displayed
     // Note: this message may be doubled
     socket.on("hello", function (returning) {
+        console.log(`Received HELLO ${returning}`);
         if (returning) {
             document.getElementById("global-core").style = {};
         }
         else {
-            if (document.getElementById("global-core").style.display == "none") {
+            if (document.getElementById("code-editor").style?.display !== "none") {
                 // User already in editor, probably the serveur restarted
             }
             else {

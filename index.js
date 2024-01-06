@@ -3,19 +3,63 @@ const commandLineArgs = require('command-line-args')
 const { format } = require('logform');
 const winston = require('winston');
 const tsFormat = () => (new Date()).toLocaleTimeString();
+const fs = require('fs');
+
+const ACTIVITY_LOG_FILE = "logs/activity.log";
+
+// Rotate log
+if (fs.existsSync(ACTIVITY_LOG_FILE)) {
+    const { birthtime } = fs.statSync(ACTIVITY_LOG_FILE)
+    const timeString = birthtime.toISOString().split('T')[0];
+    const targetName = `${ACTIVITY_LOG_FILE}.${timeString}`;
+    if (fs.existsSync(targetName)) {
+        // Merge
+        fs.writeFileSync(
+            targetName,
+            `${fs.readFileSync(targetName, { encoding: 'utf-8' })}\n====\n${fs.readFileSync(ACTIVITY_LOG_FILE, { encoding: 'utf-8' })}`);
+        fs.unlinkSync(ACTIVITY_LOG_FILE);
+    }
+    else {
+        // Rotate
+        fs.renameSync(ACTIVITY_LOG_FILE, targetName);
+    }
+}
+// 
 
 global.log = winston.createLogger({
-    format: format.cli(),
-
     transports: [
         new (winston.transports.Console)({
-            timestamp: tsFormat,
+            level: "debug",
+            handleExceptions: true,
+            json: false,
             colorize: true,
-            level: 'debug'
+            timestamp: true,
+            format: format.combine(
+                winston.format.timestamp({
+                    format: 'YYYY-MM-DD hh:mm:ss'
+                }), winston.format.cli(),
+                winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}` + (info.splat !== undefined ? `${info.splat}` : " "))
+            )
         }),
         new (winston.transports.File)({
-            filename: 'logs/activity.log',
-            level: 'info'
+            filename: ACTIVITY_LOG_FILE,
+            level: 'debug',
+            format: winston.format.combine(
+                winston.format.timestamp({
+                    format: 'YYYY-MM-DD HH:mm:ss'
+                }),
+                winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}` + (info.splat !== undefined ? `${info.splat}` : " "))
+            )
+        }),
+        new (winston.transports.File)({
+            filename: 'logs/error.log',
+            level: 'warning',
+            format: winston.format.combine(
+                winston.format.timestamp({
+                    format: 'YYYY-MM-DD HH:mm:ss'
+                }),
+                winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}` + (info.splat !== undefined ? `${info.splat}` : " "))
+            )
         })
     ]
 });
@@ -30,21 +74,12 @@ const options = commandLineArgs([
 
 async function run() {
     if (options.programs && options.programs.length > 0) {
-       require('./server/standalone')(options);
+        require('./server/standalone')(options);
     }
     else {
         log.info("starting express");
         require('./server/server');
     }
 }
-
-function wait(ms) {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            resolve(ms)
-        }, ms)
-    })
-}
-
 
 run();
