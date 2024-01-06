@@ -270,11 +270,13 @@ module.exports.Core = class {
 
     killProgram(index) {
         const programPointer = this.getProgramPointers(index);
-        log.info(`Force killing program ${index} (pointer is valid? ${programPointer != undefined})`);
+        log.info(`Force killing program ${programPointer.programId} (pointer is valid? ${programPointer != undefined})`);
 
         while (!programPointer.isDead) {
             this.#killPointer(programPointer);
         }
+
+        log.info(`Done force killing program ${programPointer.programId}`);
 
         this.#pointerGroups.splice(index, 1);
         this.#programs.splice(index, 1);
@@ -353,15 +355,19 @@ module.exports.Core = class {
     }
 
     #killPointer(programPointer) {
+        log.debug(`Killing pointer ${programPointer.nextPointerToExecute} out of ${programPointer.pointers.length} for program ${programPointer.programId}`);
         programPointer.pointers.splice(programPointer.nextPointerToExecute, 1);
 
         if (programPointer.isDead && this.#rules.clearOwnershipOnDeath) {
+            log.debug(`Clearing ownership of ${programPointer.programId}...`);
             for (let i = 0; i < this.maxAddress; i++) {
                 if (this.#ownershipBuffer[i] == programPointer.programId) {
                     this.#ownershipBuffer[i] = 0;
                 }
             }
         }
+
+        log.debug(`Done killing pointer ${programPointer.nextPointerToExecute} of ${programPointer.programId}`);
     }
 
     #executePointerGroup(programPointer) {

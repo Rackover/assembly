@@ -1,0 +1,34 @@
+@author louve
+@description copies itself further in memory ✨
+
+write -4 at 8 # program size
+write 80 at 8 # travel dist
+skip if the value at 6iis greater than 6
+go to +81
+copy the value at 4tto the address given at 5
+add 1 to 3
+add 1 to 3
+jump -5
+data -4
+data 100
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -31,11 +31,11 @@ class CoreInfo {
     }
 
     get isFull() {
-        return this.clients.length >= MAX_CLIENTS_PER_CORE || this.core.programCount >= CONFIG.MAX_PROGRAMS;
+        return this.core.programCount >= CONFIG.MAX_PROGRAMS;
     }
-
+    created 
     get isDesirable() {
-        return this.clients.length < MAX_CLIENTS_PER_CORE * 0.5 && this.core.programCount < 8;
+        return this.core.programCount < 8;
     }
 
     get isEmpty() {
@@ -106,9 +106,9 @@ module.exports = {
                 }
             }
 
-            log.info(`Created new core ${coreID} for client ${clientIdString}`);
-
             coreID = cores.length;
+            log.info(`Created new core ${coreID} for client ${clientIdString}`);
+            
             cores.push(new CoreInfo(coreID));
         }
 

@@ -116,7 +116,7 @@ module.exports = class {
             const core = WORLD.getCore(coreID);
             if (core === false) {
                 // Do nothing
-                log.warn("Tried to switch to non existing core %d", coreID);
+                log.warn(`Tried to switch to non existing core ${coreID}`);
                 return;
             }
 
