@@ -239,6 +239,7 @@ interactive.updateTrainingCoreDisplay = function (nextAddress) {
 
 interactive.testProgram = function () {
     if (socket) {
+        trainedForCycles = 0;
         socket.emit("testProgram", interactive.programNameInput.value, interactive.getProgramString(), 1);
     }
 }
@@ -263,6 +264,8 @@ interactive.bindButtons = function () {
         if (socket) {
             socket.emit("stopTestingProgram");
             trainingCoreIsRunning = false;
+            lastTrainingBuffer = null;
+            lastTrainingFlagsBuffer = null;
             interactive.refreshButtons();
         }
     };
@@ -379,7 +382,7 @@ interactive.refreshTrainingCoreButtons = function () {
     editorButtons.killTestCoreButton.disabled = !trainingCoreIsRunning;
     editorButtons.speedUpButton.disabled = !trainingCoreIsRunning;
     editorButtons.speedDownButton.disabled = !trainingCoreIsRunning;
-    editorButtons.sendToGlobalCoreButton.disabled = !trainingCoreIsRunning || trainedForCycles < TRAINING_CORE_REQUIRED_LIFESPAN;
+    editorButtons.sendToGlobalCoreButton.disabled = trainedForCycles < TRAINING_CORE_REQUIRED_LIFESPAN;
     editorButtons.trainingButton.disabled = trainingCoreIsRunning || programIsEmpty;
     editorButtons.sendToGlobalCoreButton.textContent = "SEND TO ASSEMBLY >>";
 
@@ -1145,6 +1148,7 @@ interactive.initializeSocket = function () {
     socket.on("invalidProgram", function (programName, reason) {
         console.log("Core refused program");
         trainingCoreIsRunning = false;
+
         interactive.interactiveTextDiv.innerHTML = `<p class="warn">${document.getElementById("core-name").textContent} refused your delegate [${programName}]:</p><p class="error">${reason}</p>`;
         interactive.refreshButtons();
     });
@@ -1152,6 +1156,9 @@ interactive.initializeSocket = function () {
     socket.on("programUploaded", function () {
         console.log("Program uploaded, back to core");
         trainingCoreIsRunning = false;
+        lastTrainingBuffer = null;
+        lastTrainingFlagsBuffer = null;
+
         if (tutorial.shouldPlayTutorial)
         {
             tutorial.shouldPlayTutorial = false;
@@ -1168,7 +1175,8 @@ interactive.initializeSocket = function () {
             trainedForCycles++;
         }
         else {
-            trainedForCycles = 0;
+            lastTrainingBuffer = null;
+            lastTrainingFlagsBuffer = null;
             interactive.refreshButtons();
         }
 
