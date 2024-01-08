@@ -1,11 +1,7 @@
 const LINE_COUNT = 31;
 const TRAINING_CORE_REQUIRED_LIFESPAN = 30;
 
-let programNameInput;
-const inputs = [];
-const inputDisplays = [];
 let ready = false;
-let explanationsWindow;
 
 let requestedSpeed = 2;
 
@@ -47,17 +43,32 @@ let trainedForCycles = 0;
 
 let programIsEmpty = true;
 
+interactive.inputs = [];
+interactive.inputDisplays = [];
+interactive.programNameInput = null;
+
+interactive.enableInteractiveHelp = true;
+interactive.enableResponsiveButtons = true;
+interactive.interactiveTextDiv = null;
+interactive.editorContainer = null;
+interactive.coreContainer = null;
+interactive.explanationsWindow = null;
+
 interactive.onWindowLoad = function () {
     interactive.createEditor();
     interactive.bindButtons();
     interactive.createTrainingCoreDisplay(3, 32);
 
-    explanationsWindow = document.getElementById("explanations");
+    interactive.explanationsWindow = document.getElementById("explanations-window");
+    interactive.interactiveTextDiv = document.getElementById("explanations");
+    interactive.editorContainer = document.getElementById("editor-container");
+    interactive.coreContainer = document.getElementById("core-container");
+    interactive.container = document.getElementById("code-editor");
 
     ready = true;
 
     // Select first
-    programNameInput.value = "MY_DELEGATE";
+    interactive.programNameInput.value = "MY_DELEGATE";
 
     // fetch("server/test_program.kcp")
     //     .then((res) => res.text())
@@ -76,12 +87,25 @@ interactive.onWindowLoad = function () {
     }
 }
 
+interactive.show = function () {
+    if (ready) {
+        interactive.container.style = {};
+        document.getElementById("global-core").style.display = "none";
+        document.getElementById("credits").style.display = "none";
+
+        if (!tutorial.shouldPlayTutorial) {
+            interactive.inputs[0].focus();
+            interactive.refreshLine(0);
+        }
+    }
+}
+
 interactive.loadProgram = function (name, str) {
     if (!ready) {
         return;
     }
 
-    programNameInput.value = name;
+    interactive.programNameInput.value = name;
 
     const lines = str.split('\n');
     for (let i = 0; i < LINE_COUNT; i++) {
@@ -90,8 +114,10 @@ interactive.loadProgram = function (name, str) {
         interactive.refreshSyntaxDetectionOnLine(i);
     }
 
-    inputs[0].focus();
-    interactive.refreshButtons();
+    if (!tutorial.shouldPlayTutorial) {
+        interactive.inputs[0].focus();
+        interactive.refreshButtons();
+    }
 }
 
 interactive.createTrainingCoreDisplay = function (columns, size) {
@@ -184,13 +210,11 @@ interactive.updateTrainingCoreDisplay = function (nextAddress) {
                 txt = operation.toUpperCase().substring(0, lineLength).padEnd(lineLength);
             }
             else {
-                if (value > 0)
-                {
-                txt = `${value.toString().padStart(lineLength, '0')}`;
+                if (value > 0) {
+                    txt = `${value.toString().padStart(lineLength, '0')}`;
                 }
-                else
-                {
-                    txt = `-${Math.abs(value).toString().padStart(lineLength-1, '0')}`;
+                else {
+                    txt = `-${Math.abs(value).toString().padStart(lineLength - 1, '0')}`;
                 }
             }
         }
@@ -213,6 +237,12 @@ interactive.updateTrainingCoreDisplay = function (nextAddress) {
     }
 }
 
+interactive.testProgram = function () {
+    if (socket) {
+        socket.emit("testProgram", interactive.programNameInput.value, interactive.getProgramString(), 1);
+    }
+}
+
 interactive.bindButtons = function () {
 
     const dismissButton = document.getElementById("splash-dismiss");
@@ -225,9 +255,7 @@ interactive.bindButtons = function () {
 
     editorButtons.trainingButton = document.getElementById("run-training-program");
     editorButtons.trainingButton.onclick = function () {
-        if (socket) {
-            socket.emit("testProgram", programNameInput.value, interactive.getProgramString(), 1);
-        }
+        interactive.testProgram();
     };
 
     editorButtons.killTestCoreButton = document.getElementById("kill-test-core");
@@ -259,10 +287,9 @@ interactive.bindButtons = function () {
     editorButtons.loadSamplesButton.onclick = function () {
         if (ready && programIsEmpty) {
             // Load sample
-            let progName =  module.exports.samplePrograms[Math.floor(Math.random() * module.exports.samplePrograms.length)];
+            let progName = module.exports.samplePrograms[Math.floor(Math.random() * module.exports.samplePrograms.length)];
 
-            if (NEW_PLAYER)
-            {
+            if (NEW_PLAYER) {
                 NEW_PLAYER = false;
                 progName = module.exports.samplePrograms[0];
             }
@@ -282,7 +309,7 @@ interactive.bindButtons = function () {
         if (ready && !programIsEmpty) {
             interactive.download(
                 interactive.getProgramString(),
-                `${programNameInput.value.trim().toUpperCase()}.SRC`,
+                `${interactive.programNameInput.value.trim().toUpperCase()}.SRC`,
                 'text/killcore-program');
         }
     };
@@ -291,11 +318,11 @@ interactive.bindButtons = function () {
     editorButtons.clearButton.onclick = function () {
         if (ready && !programIsEmpty) {
             for (let i = 0; i < LINE_COUNT; i++) {
-                inputs[i].value = "";
+                interactive.inputs[i].value = "";
                 interactive.refreshLine(i);
             }
 
-            const input = inputs[0];
+            const input = interactive.inputs[0];
             input.setSelectionRange(0, 0);
             input.focus();
 
@@ -312,27 +339,33 @@ interactive.bindButtons = function () {
 
     editorButtons.sendToGlobalCoreButton = document.getElementById("send-to-core");
     editorButtons.sendToGlobalCoreButton.onclick = function () {
-        if (ready) {
-            socket.emit("uploadProgram", programNameInput.value, interactive.getProgramString());
-
-            trainedForCycles = 0;
-            interactive.refreshButtons();
-        }
+        interactive.sendToCore();
     };
 
     editorButtons.accessCoreButton = document.getElementById("access-core");
     editorButtons.accessCoreButton.onclick = function () {
         if (ready) {
-            document.getElementById("code-editor").style.display = "none";
-            document.getElementById("credits").style = {};
-            document.getElementById("global-core").style = {};
+            globalCore.show();
         }
     };
 
     interactive.refreshButtons();
 }
 
+interactive.sendToCore = function () {
+    if (ready) {
+        socket.emit("uploadProgram", interactive.programNameInput.value, interactive.getProgramString());
+
+        trainedForCycles = 0;
+        interactive.refreshButtons();
+    }
+}
+
 interactive.refreshEditorButtons = function () {
+    if (!interactive.enableResponsiveButtons) {
+        return;
+    }
+
     editorButtons.saveButton.disabled = programIsEmpty;
     editorButtons.trainingButton.disabled = trainingCoreIsRunning || programIsEmpty;
     editorButtons.clearButton.disabled = programIsEmpty;
@@ -371,7 +404,7 @@ interactive.refreshButtons = function () {
 interactive.refreshProgramIsEmpty = function () {
     programIsEmpty = true;
     for (let i = 0; i < LINE_COUNT; i++) {
-        if (inputs[i].value.trim().length > 0) {
+        if (interactive.inputs[i].value.trim().length > 0) {
             programIsEmpty = false;
             break;
         }
@@ -381,7 +414,7 @@ interactive.refreshProgramIsEmpty = function () {
 interactive.getProgramString = function () {
     let program = "";
     for (let i = 0; i < LINE_COUNT; i++) {
-        const input = inputs[i];
+        const input = interactive.inputs[i];
         program += input.value.substring(0, 128) + "\n"; // Limit to 128 characters
     }
 
@@ -390,7 +423,7 @@ interactive.getProgramString = function () {
 
 interactive.createEditor = function () {
 
-    programNameInput = document.getElementById("program-name");
+    interactive.programNameInput = document.getElementById("program-name");
 
     const parentColumn = document.getElementById("editor-column");
     parentColumn.innerHTML = "";
@@ -419,8 +452,8 @@ interactive.createEditor = function () {
         const inputDisplay = document.createElement("div");
         inputDisplay.className = "display";
 
-        inputs.push(inputSpan);
-        inputDisplays.push(inputDisplay);
+        interactive.inputs.push(inputSpan);
+        interactive.inputDisplays.push(inputDisplay);
 
         inputWrapper.appendChild(inputSpan);
         inputWrapper.appendChild(inputDisplay);
@@ -440,7 +473,16 @@ interactive.onKeyPress = function (e) {
     switch (e.key) {
         case "ArrowDown":
         case "Enter":
-            interactive.focusNext(1);
+            if (tutorial.shouldPlayTutorial) {
+                if (tutorial.currentTutorialButton)
+                {
+                    tutorial.currentTutorialButton.click();
+                }
+            }
+            else
+            {
+                interactive.focusNext(1);
+            }
             break;
 
         case "ArrowUp":
@@ -469,7 +511,7 @@ interactive.onKeyPress = function (e) {
 
 interactive.refreshSyntaxDetection = function () {
     const currInput = document.activeElement;
-    const currInputIndex = inputs.indexOf(currInput);
+    const currInputIndex = interactive.inputs.indexOf(currInput);
 
     if (currInputIndex >= 0) {
         interactive.refreshSyntaxDetectionOnLine(currInputIndex);
@@ -477,60 +519,64 @@ interactive.refreshSyntaxDetection = function () {
 }
 
 interactive.refreshSyntaxDetectionOnLine = function (index) {
-    const parseResult = module.exports.tokenize(inputs[index].value);
+    const parseResult = module.exports.tokenize(interactive.inputs[index].value);
     interactive.showParserResult(parseResult, index);
+
+    if (tutorial.shouldPlayTutorial && tutorial.checkTutorialComplete) {
+        tutorial.checkTutorialComplete();
+    }
 }
 
 interactive.insertNewLine = function () {
 
     const currInput = document.activeElement;
-    const currInputIndex = inputs.indexOf(currInput);
+    const currInputIndex = interactive.inputs.indexOf(currInput);
 
     if (currInputIndex >= 0) {
 
         let newData = {};
         for (let i = currInputIndex + 1; i < LINE_COUNT; i++) {
-            if (inputs[i]) {
-                newData[i] = inputs[i - 1].value;
+            if (interactive.inputs[i]) {
+                newData[i] = interactive.inputs[i - 1].value;
             }
         }
 
         for (let k in newData) {
-            inputs[k].value = newData[k];
+            interactive.inputs[k].value = newData[k];
             interactive.refreshLine(k);
         }
 
-        inputs[currInputIndex].value = "";
+        interactive.inputs[currInputIndex].value = "";
         interactive.refreshLine(currInputIndex);
     }
 }
 
 interactive.removeLine = function () {
     const currInput = document.activeElement;
-    const currInputIndex = inputs.indexOf(currInput);
+    const currInputIndex = interactive.inputs.indexOf(currInput);
 
     if (currInputIndex >= 0) {
         for (let i = currInputIndex; i < LINE_COUNT - 1; i++) {
-            inputs[i].value = inputs[i + 1].value;
+            interactive.inputs[i].value = interactive.inputs[i + 1].value;
             interactive.refreshLine(i);
         }
 
-        inputs[LINE_COUNT - 1].value = "";
+        interactive.inputs[LINE_COUNT - 1].value = "";
         interactive.refreshLine(LINE_COUNT - 1);
     }
 }
 
 interactive.focusNext = function (offset) {
     const currInput = document.activeElement;
-    const currInputIndex = inputs.indexOf(currInput);
+    const currInputIndex = interactive.inputs.indexOf(currInput);
     let nextinputIndex =
-        (currInputIndex + offset) % inputs.length;
+        (currInputIndex + offset) % interactive.inputs.length;
     while (nextinputIndex < 0) {
-        nextinputIndex = inputs.length + nextinputIndex;
+        nextinputIndex = interactive.inputs.length + nextinputIndex;
 
     }
 
-    const input = inputs[nextinputIndex];
+    const input = interactive.inputs[nextinputIndex];
     input.setSelectionRange(0, 0);
     input.focus();
 }
@@ -548,7 +594,7 @@ interactive.refreshLine = function (i) {
 
 interactive.refreshSelectedLine = function () {
     const currInput = document.activeElement;
-    const currInputIndex = inputs.indexOf(currInput);
+    const currInputIndex = interactive.inputs.indexOf(currInput);
 
     if (currInputIndex >= 0) {
         interactive.refreshLine(currInputIndex);
@@ -557,14 +603,14 @@ interactive.refreshSelectedLine = function () {
 
 interactive.refreshTargetedLines = function () {
     const currInput = document.activeElement;
-    const currInputIndex = inputs.indexOf(currInput);
+    const currInputIndex = interactive.inputs.indexOf(currInput);
 
     if (currInputIndex >= 0) {
 
         // Clear everybody else
-        for (let i in inputs) {
+        for (let i in interactive.inputs) {
 
-            const input = inputs[i];
+            const input = interactive.inputs[i];
 
             for (let argIndex = 0; argIndex < 2; argIndex++) {
                 input.className = input.className.replace(`target-${argIndex}`, '');
@@ -604,7 +650,7 @@ interactive.refreshCodeLines = function () {
     codeLineIndices.length = 0;
 
     let codeI = 0;
-    for (let i = 0; i < inputs.length; i++) {
+    for (let i = 0; i < interactive.inputs.length; i++) {
         const input = document.getElementById(`input-${i}`);
         const trimmedContents = input.value.trim();
         const lineIsEmpty = trimmedContents.length == 0;
@@ -625,7 +671,7 @@ interactive.refreshCodeLines = function () {
 
 interactive.refreshInputForSelection = function (index) {
     const codeLineIndex = codeLineIndices[index];
-    for (let i = 0; i < inputs.length; i++) {
+    for (let i = 0; i < interactive.inputs.length; i++) {
         const addr = document.getElementById(`address-${i}`);
 
         const trimmedContents = trimmedLines[i];
@@ -656,7 +702,7 @@ interactive.refreshInputForSelection = function (index) {
         }
 
         addr.className = "address-field " + classes.join(" ");
-        inputDisplays[i].className = "display " + classes.join(" ");
+        interactive.inputDisplays[i].className = "display " + classes.join(" ");
     }
 }
 
@@ -664,36 +710,37 @@ interactive.showParserResult = function (parseResult, index) {
 
     if (index == undefined) {
         const currInput = document.activeElement;
-        index = inputs.indexOf(currInput);
+        index = interactive.inputs.indexOf(currInput);
     }
 
     targetedLines.length = 0; // clear
 
     if (index >= 0) {
-        const display = inputDisplays[index];
-        const val = inputs[index];
+        let interactiveHelpText = interactive.interactiveTextDiv.innerHTML;
+        const display = interactive.inputDisplays[index];
+        const val = interactive.inputs[index];
 
         const tokens = parseResult.tokens;
         if (tokens.length > 0) {
             const token = tokens[0];
 
             if (token.isComment) {
-                explanationsWindow.innerHTML = "<p>This line is a comment and will not be executed.<br>It serves as documentation for you and whoever might read this program.</p>";
+                interactiveHelpText = "<p>This line is a comment and will not be executed.<br>It serves as documentation for you and whoever might read this program.</p>";
                 display.innerHTML = `<span class='comment'>${val.value}</span>`;
             }
             else if (token.isMeta) {
                 if (token.isError) {
-                    explanationsWindow.innerHTML = '';
+                    interactiveHelpText = '';
                 }
                 else {
-                    explanationsWindow.innerHTML = `<p>This line is an information about the program itself ("self-description").</p><p>It informs that '${token.metaKey}' is '${token.metaValue}'</p>`;
+                    interactiveHelpTextinteractiveHelpText = `<p>This line is an information about the program itself ("self-description").</p><p>It informs that '${token.metaKey}' is '${token.metaValue}'</p>`;
                 }
 
                 display.innerHTML = `<span class='meta'>${META_MAGIC}${token.metaKey}</span>${(token.metaValue != "present" ? ` <span class='meta-value'>${token.metaValue}</span>` : '')}`;
             }
             else {
                 // Means it's an instruction
-                explanationsWindow.innerHTML = interactive.getHTMLExplanationForStatement(token);
+                interactiveHelpText = interactive.getHTMLExplanationForStatement(token);
                 for (let argIndex in token.arguments) {
                     const a = token.arguments[argIndex];
 
@@ -720,7 +767,7 @@ interactive.showParserResult = function (parseResult, index) {
                 display.innerHTML = interactive.getHTMLForToken(token);
             }
         } else {
-            explanationsWindow.textContent = "You can write a statement here!";
+            interactiveHelpText = "You can write a statement here!";
             display.textContent = val.value;
         }
 
@@ -736,7 +783,7 @@ interactive.showParserResult = function (parseResult, index) {
 
             html += `<p class='error'><b>This line contains an error!</b><br>${errorMessage}</p>`;
 
-            explanationsWindow.innerHTML += html;
+            interactiveHelpText += html;
 
             if (parseResult.tokens[0].softError) {
                 display.innerHTML = `<span class='error'>${val.value}</span>`;
@@ -744,6 +791,10 @@ interactive.showParserResult = function (parseResult, index) {
             else {
                 display.innerHTML = `<span style='text-decoration:underline; text-decoration-color:red;'>${display.innerHTML}</span>`;
             }
+        }
+        
+        if (interactive.enableInteractiveHelp) {
+            interactive.interactiveTextDiv.innerHTML = interactiveHelpText;
         }
     }
 }
@@ -944,10 +995,8 @@ interactive.getHTMLExplanationForStatement = function (token) {
                 txt += `<div style="margin-top: auto; vertical-align:bottom;"><p style="border-bottom:1px dotted gray;"></p>`;
 
                 // Add dereferencement explanations
-                txt += `<p>You can write arguments either as a plain number or as <u>an address to look up</u> instead.</p><p>To do that, write "${
-                    interactive.wrapHTMLArg(`<u>${module.exports.REFERENCE_INDICATORS[0]}</u> X`, 0)
-                    }" or "${
-                        interactive.wrapHTMLArg(`<u>${module.exports.REFERENCE_INDICATORS[2]}</u> X`, 0)}".</p><p>This will fetch the data from the given address when executing that statement, allowing you to write more complex programs.</p>`;
+                txt += `<p>You can write arguments either as a plain number or as <u>an address to look up</u> instead.</p><p>To do that, write "${interactive.wrapHTMLArg(`<u>${module.exports.REFERENCE_INDICATORS[0]}</u> X`, 0)
+                    }" or "${interactive.wrapHTMLArg(`<u>${module.exports.REFERENCE_INDICATORS[2]}</u> X`, 0)}".</p><p>This will fetch the data from the given address when executing that statement, allowing you to write more complex programs.</p>`;
 
                 txt += `</div>`;
             }
@@ -984,7 +1033,7 @@ interactive.getDescriptionForCommand = function (i) {
         case module.exports.OPERATIONS.ADD:
             description.text = `Adds ${interactive.wrapHTMLArg('X', 0)} to the value present at ${interactive.wrapHTMLArg('Y', 1)}, and stores the result at address ${interactive.wrapHTMLArg('Y', 1)}`;
             description.arguments = 2;
-            description.link = module.exports.WITH_LINKS[0];
+            description.link = module.exports.TO_WITH_LINKS[0];
             break;
         case module.exports.OPERATIONS.MULTIPLY:
             description.text = `Multiplies ${interactive.wrapHTMLArg('X', 0)} with the value present at ${interactive.wrapHTMLArg('Y', 1)}, and stores the result at address ${interactive.wrapHTMLArg('Y', 1)}`;
@@ -1096,13 +1145,19 @@ interactive.initializeSocket = function () {
     socket.on("invalidProgram", function (programName, reason) {
         console.log("Core refused program");
         trainingCoreIsRunning = false;
-        explanationsWindow.innerHTML = `<p class="warn">${document.getElementById("core-name").textContent} refused your delegate [${programName}]:</p><p class="error">${reason}</p>`;
+        interactive.interactiveTextDiv.innerHTML = `<p class="warn">${document.getElementById("core-name").textContent} refused your delegate [${programName}]:</p><p class="error">${reason}</p>`;
         interactive.refreshButtons();
     });
 
     socket.on("programUploaded", function () {
         console.log("Program uploaded, back to core");
         trainingCoreIsRunning = false;
+        if (tutorial.shouldPlayTutorial)
+        {
+            tutorial.shouldPlayTutorial = false;
+            tutorial.reset();
+        }
+
         editorButtons.accessCoreButton.click();
     });
 
@@ -1122,7 +1177,7 @@ interactive.initializeSocket = function () {
         interactive.createTrainingCoreDisplay(obj.columnCount, obj.columnSize);
 
         if (obj.error) {
-            explanationsWindow.innerHTML = `<p class="warn">Delegate training interrupted:</p><p class="error">${obj.error}</p>`;
+            interactive.interactiveTextDiv.innerHTML = `<p class="warn">Delegate training interrupted:</p><p class="error">${obj.error}</p>`;
         }
         else if (obj.delta) {
             interactive.updateTrainingCoreDisplayFromDelta(

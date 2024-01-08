@@ -1,14 +1,12 @@
 const Client = require("./client");
 const blacklist = require("./blacklist");
 
-const knownUsers = [];
-
 module.exports =
 {
   startWithExpress: function (expressApp) {
     const http = require('http').createServer(expressApp);
-    const {Server} = require('socket.io');
-    
+    const { Server } = require('socket.io');
+
     const io = new Server(http, {
       // options
       cors: {
@@ -39,22 +37,37 @@ module.exports =
 
 
     io.on("connection", (socket) => {
+
+      let unknown = true;
+
       if (blacklist.isBannedAddress(socket.handshake.address)) {
         socket.disconnect(true);
       }
       else {
         WORLD.trimCores();
-        
+
         const coreID = WORLD.getCoreIdForClient(socket.handshake.auth.token);
         if (coreID === false) {
           // Game full, maybe dispatch message?
           socket.disconnect(true);
         }
         else {
-          new Client(socket, socket.handshake.auth.token, coreID, knownUsers.includes(socket.handshake.auth.token));
+          const knownUser = WORLD.getUserList()[socket.handshake.auth.token];
+          unknown = !knownUser;
+          new Client(
+            socket,
+            socket.handshake.auth.token,
+            coreID,
+            knownUser !== undefined,
+            unknown || !knownUser.completedTutorial
+          );
         }
-        
-        knownUsers.push(socket.handshake.auth.token);
+
+        // Add to known list
+        if (unknown) {
+          WORLD.getUserList()[socket.handshake.auth.token] = {};
+        }
+
         const clientCount = WORLD.getClientCount();
         log.info(`We currently have ${clientCount}(+) active clients`);
       }

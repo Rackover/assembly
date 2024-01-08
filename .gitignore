@@ -136,3 +136,4 @@ programs/*
 
 config.json
 saved-scores.json
+known-players.json

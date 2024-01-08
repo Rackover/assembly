@@ -13,6 +13,7 @@ let kills = [];
 
 const MOVE = 6 << 4;
 const COPY = 5 << 4;
+const WRITE_DEEP = 0x24;
 
 module.exports = {
     isBlacklisted: function (bytecode) {
@@ -99,8 +100,6 @@ function refreshWordsBlacklist() {
             ...englishRecommendedTransformers,
         });
 
-        // fs.writeFileSync("output.txt", JSON.stringify(matcher));
-        
         WORLD.nameCheckAllCores();
     });
 }
@@ -115,7 +114,10 @@ function isSimpleWorm(buff) {
             if (buff.readInt8(address * 4 + 1) == 0  // Self op
                 && buff.readInt8(address * 4 + 2) == 0
             ) {
-                if (buff.readInt8(address * 4 + 3) == MOVE || buff.readInt8(address * 4 + 3) == COPY) // copy or move
+                const tail = buff.readInt8(address * 4 + 3);
+                if (tail == MOVE 
+                    || tail == COPY
+                    || tail == WRITE_DEEP) // copy or move or write from ref
                 {
                     return true;
                 }
@@ -132,12 +134,15 @@ function isSimpleWorm(buff) {
 function isWormFragment(buff) {
     const maxAddress = buff.length / 4;
     for (let address = 0; address < maxAddress; address++) {
-        if (buff.readInt8(address * 4) == 1) // Destination => End of program
+        if (buff.readInt8(address * 4) == 1) // Destination => Next
         {
             if (buff.readInt8(address * 4 + 1) == 0  // Self op
                 && buff.readInt8(address * 4 + 2) == 0
             ) {
-                if (buff.readInt8(address * 4 + 3) == MOVE || buff.readInt8(address * 4 + 3) == COPY) // copy or move
+                const tail = buff.readInt8(address * 4 + 3);
+                if (tail == MOVE 
+                    || tail == COPY
+                    || tail == WRITE_DEEP)  // copy or move
                 {
                     return true;
                 }

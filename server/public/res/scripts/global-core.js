@@ -25,7 +25,6 @@ globalCore.colors = [
 
 let NEW_PLAYER = false;
 
-
 // global core
 globalCore.cells = [];
 globalCore.buffer = null;
@@ -40,6 +39,8 @@ globalCore.podiumColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
 globalCore.highestScoresParent = null;
 globalCore.highestScoresDisplays = {};
 
+globalCore.coreDom = null;
+
 globalCore.onWindowLoad = function () {
     globalCore.bindButtons();
 
@@ -50,6 +51,7 @@ globalCore.onWindowLoad = function () {
 
     globalCore.scoreboardParent = document.getElementById("scoreboard-entries");
     globalCore.highestScoresParent = document.getElementById("highest-scores");
+    globalCore.coreDom = document.getElementById("global-core");
 
     globalCore.coreNameDiv = document.getElementById("core-name-container");
     globalCore.initializeSocket();
@@ -94,18 +96,18 @@ globalCore.bindButtons = function () {
     globalCore.makeProgramButton = document.getElementById("create-program-button");
 
     globalCore.makeProgramButton.onclick = function () {
-        document.getElementById("code-editor").style = {};
-        document.getElementById("global-core").style.display = "none";
-        document.getElementById("credits").style.display = "none";
-
-        inputs[0].focus();
-        interactive.refreshLine(0);
+        if (tutorial.shouldPlayTutorial)
+        {
+            tutorial.show();
+        }
+        else
+        {
+            interactive.show();
+        }
     };
 }
 
 globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
-    let coreDom = document.getElementById("global-core");
-
     if (podium) {
         entriesParent = globalCore.highestScoresParent;
         displays = globalCore.highestScoresDisplays;
@@ -131,7 +133,7 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
 
     if (!podium) {
         if (globalCore.scoreboard &&
-            (!coreDom.style || Object.keys(coreDom.style).length == 0) &&
+            (!globalCore.coreDom.style || Object.keys(globalCore.coreDom.style).length == 0) &&
             Object.keys(globalCore.scoreboard).length > scoreboard.length) {
             // someone died
             sound.playBoom();
@@ -337,6 +339,26 @@ globalCore.onCoreSelected = function (dom) {
     }
 }
 
+globalCore.show = function(withIntro)
+{
+    if (withIntro) {
+        if (document.getElementById("code-editor").style?.display !== "none") {
+            // User already in editor, probably the serveur restarted
+        }
+        else {
+            NEW_PLAYER = true;
+            globalCore.coreDom.style.display = "none";
+            document.getElementById("code-editor").style.display = "none";
+            document.getElementById("intro").style = {};
+        }
+    }
+    else {
+        document.getElementById("intro").style.display = "none";
+        document.getElementById("code-editor").style.display = "none";
+        globalCore.coreDom.style = {};
+    }
+}
+
 globalCore.initializeSocket = function () {
     socket.on("updateScoreboard", function (scoreboard, activity) {
         globalCore.displayScoreboard(scoreboard, activity);
@@ -371,22 +393,9 @@ globalCore.initializeSocket = function () {
 
     // Initially displayed
     // Note: this message may be doubled
-    socket.on("hello", function (returning) {
-        console.log(`Received HELLO ${returning}`);
-        if (returning) {
-            document.getElementById("global-core").style = {};
-        }
-        else {
-            if (document.getElementById("code-editor").style?.display !== "none") {
-                // User already in editor, probably the serveur restarted
-            }
-            else {
-                NEW_PLAYER = true;
-                document.getElementById("global-core").style.display = "none";
-                document.getElementById("code-editor").style.display = "none";
-                document.getElementById("intro").style = {};
-            }
-        }
+    socket.on("hello", function (returning, shouldPlayTutorial) {
+        globalCore.show(!returning);
+        tutorial.shouldPlayTutorial = shouldPlayTutorial;
     });
 
     socket.on("disconnect", () => {

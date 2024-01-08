@@ -45,6 +45,13 @@ const STATEMENT_PARSERS = {
     "do nothing": parseNop,
 }
 
+const TO_WITH_LINKS = [
+    "to the value at ",
+    "to ",
+    "with the value at ", // Sucks but gotta be backward compatible
+    ","
+];
+
 const WITH_LINKS = [
     "with the value at ",
     "to the value at ",
@@ -117,6 +124,7 @@ module.exports.EQUAL_LINKS = EQUAL_LINKS;
 module.exports.GREATER_LINKS = GREATER_LINKS;
 module.exports.LOWER_LINKS = LOWER_LINKS;
 module.exports.FROM_LINKS = FROM_LINKS;
+module.exports.TO_WITH_LINKS = TO_WITH_LINKS;
 module.exports.WITH_LINKS = WITH_LINKS;
 module.exports.TO_AT_ADDRESS_LINKS = TO_AT_ADDRESS_LINKS;
 module.exports.REFERENCE_INDICATORS = REFERENCE_INDICATORS;
@@ -345,7 +353,7 @@ function parseWrite(token, data) {
 }
 
 function parseAdd(token, data) {
-    token.remainingData = parseTwoArgumentsStatement(token, data, "Add", WITH_LINKS).remainingData;
+    token.remainingData = parseTwoArgumentsStatement(token, data, "Add", TO_WITH_LINKS).remainingData;
     token.operation = OPERATIONS.ADD;
 
     if (token.arguments.length >= 2) {

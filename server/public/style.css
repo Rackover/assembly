@@ -8,12 +8,12 @@ html {
 	-moz-osx-font-smoothing: none !important;
 }
 
-body
-{
+body {
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
 }
+
 /*
 div { border: 1px solid red !important; }
 */
@@ -53,7 +53,8 @@ h2 {
 	min-width: 1345px;
 }
 
-.terminal h1, #core-name-container:has(select) {
+.terminal h1,
+#core-name-container:has(select) {
 	color: black;
 	background-color: grey;
 	padding-left: 10px;
@@ -62,24 +63,23 @@ h2 {
 	padding-bottom: 5px;
 }
 
-#core-name-container:has(select)
-{
+#core-name-container:has(select) {
 	margin-block-start: 0.67em;
-    margin-block-end: 0.67em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
+	margin-block-end: 0.67em;
+	margin-inline-start: 0px;
+	margin-inline-end: 0px;
 }
 
-select#core-name{
-	font:inherit;
-	font-weight:bold;
+select#core-name {
+	font: inherit;
+	font-weight: bold;
 	border: inherit;
-	padding-left:0;
-	padding-right:0;
-	display:inherit;
+	padding-left: 0;
+	padding-right: 0;
+	display: inherit;
 	text-rendering: inherit;
 	text-transform: inherit;
-	letter-spacing:inherit;
+	letter-spacing: inherit;
 	border-spacing: inherit;
 	color: inherit;
 	text-indent: inherit;
@@ -88,9 +88,9 @@ select#core-name{
 	appearance: inherit;
 	box-sizing: inherit;
 	background: inherit;
-	margin:0;
+	margin: 0;
 	white-space: inherit;
-	border-radius:inherit;
+	border-radius: inherit;
 }
 
 #main-container {
@@ -166,7 +166,8 @@ button#access-core {
 	flex: 1;
 }
 
-#explanations-window .button-container {
+#explanations-window .button-container,
+#tutorial-container .button-container {
 	width: 100%;
 }
 
@@ -407,25 +408,23 @@ input#program-name {
 	color: #9467c7;
 }
 
-.editor-line .display.comment-field .meta
-{
+.editor-line .display.comment-field .meta {
 	color: darkorchid;
 }
 
-.editor-line .display.comment-field .meta-value
-{
+.editor-line .display.comment-field .meta-value {
 	color: pink;
 }
 
-#credits
-{
-	text-align:center; margin-top: auto; min-width:100px;
+#credits {
+	text-align: center;
+	margin-top: auto;
+	min-width: 100px;
 }
 
-.credits a
-{
+.credits a {
 	text-decoration: none;
-	color:inherit;
+	color: inherit;
 }
 
 .address-field.empty-field,
@@ -497,10 +496,9 @@ input#program-name {
 	border-color: white;
 }
 
-#intro .text #splash-dismiss:hover
-{
-	color:black;
-	border-color:black;
+#intro .text #splash-dismiss:hover {
+	color: black;
+	border-color: black;
 }
 
 #intro .text b {
@@ -516,6 +514,10 @@ input#program-name {
 
 #explanations .tutorial-link {
 	color: white;
+}
+
+#manual-page b{
+	color:white;
 }
 
 #explanations ul {
@@ -544,7 +546,7 @@ input#program-name {
 }
 
 .unknown-statement {
-	color: darkred;
+	color: darkorchid;
 }
 
 input.target-0:before {
@@ -608,21 +610,21 @@ input.target-1 {
 #scoreboard #scoreboard-entries {
 	display: flex;
 	flex-direction: column;
-	flex-grow:1;
+	flex-grow: 1;
 }
 
-#scoreboard #scoreboard-entries div{
+#scoreboard #scoreboard-entries div {
 	display: flex;
 	flex-direction: row;
 }
 
 #scoreboard #highest-scores {
-	margin-bottom:50px;
-	margin-top:50px;
+	margin-bottom: 50px;
+	margin-top: 50px;
 }
 
 #scoreboard .score-header {
-	font-weight:bold;
+	font-weight: bold;
 	border-bottom: 1px dotted gray;
 }
 
@@ -646,6 +648,55 @@ input.target-1 {
 	background-color: red;
 }
 
+#tutorial-container {
+	flex-grow: 1;
+}
+
+#manual-page #pages-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+
+#manual-page .cell
+{
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+#manual-page .prefix
+{
+	padding-left: 4px;
+	padding-right: 4px;
+	margin-right:12px;
+	color: orangered;
+}
+
+#manual-page .core-text {
+	position: relative;
+	padding: 20px;
+	max-width: 600px;
+	min-height: 420px;
+	display:flex;
+	flex-direction:column;
+}
+
+#manual-page .core-text .button-container {
+	position:relative;
+	margin-top:auto;
+	justify-self: flex-end;
+}
+
+#manual-page .core-text .button-container button:not(:disabled) {
+	color:white;
+	border-color:white;
+}
+
+#manual-page .core-text .button-container button:not(:disabled):hover {
+	color:black;
+	border-color:black;
+}
+
 @keyframes create-program-button-animation {
 	0% {
 		border: 1px solid white;
@@ -663,10 +714,26 @@ input.target-1 {
 	}
 }
 
-#load-sample
+@keyframes blink {
+	0% {
+		color: yellow;
+	}
+
+	100% {
+		color: inherit;
+	}
+}
+
+.blink
 {
-	color:yellow;
-	border:1px solid yellow;
+	animation-name: blink;
+	animation-duration: 400ms;
+	animation-iteration-count: 1;
+}
+
+#load-sample, .shining {
+	color: yellow;
+	border: 1px solid yellow;
 	animation-name: create-program-button-animation;
 	animation-duration: 2s;
 	animation-iteration-count: infinite;
@@ -681,7 +748,8 @@ input.target-1 {
 	animation-iteration-count: infinite;
 }
 
-#create-program-button:hover, #load-sample:hover {
+#create-program-button:hover,
+#load-sample:hover, button.shining:hover {
 	animation-name: none;
 	color: black;
 	border-color: black;

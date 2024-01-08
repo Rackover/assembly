@@ -34,7 +34,7 @@ module.exports = class {
             this.#socket.handshake.address;
     }
 
-    constructor(socket, authID, coreID, returning = false) {
+    constructor(socket, authID, coreID, returning = false, shouldPlayTutorial = true) {
 
         this.#globalCoreID = coreID;
         WORLD.registerClient(this, coreID);
@@ -76,6 +76,9 @@ module.exports = class {
                 capture.captureNonFunctional(this.#id, programName, programString, core.haltReason);
             }
             else {
+                // complete tutorial
+                WORLD.getUserList()[this.#id].completedTutorial = true;
+
                 capture.captureFunctional(this.#id, programName, programString, core.compiledProgram);
                 this.#testCore = core;
                 this.#lastFrameTime = Date.now();
@@ -202,8 +205,8 @@ module.exports = class {
         log.info(`Born client ${this.#id} on address ${this.address} (returning? ${returning})`);
 
         // mh yes... good code...
-        socket.emit("hello", returning);
-        setTimeout(() => socket.emit("hello", returning), 100);
+        socket.emit("hello", returning, shouldPlayTutorial);
+        setTimeout(() => socket.emit("hello", returning, shouldPlayTutorial), 100);
     }
 
     get dead() { return this.#dead; }

@@ -10,8 +10,8 @@ const NAMES = [
     "GIST",
 ];
 
-const MAX_CLIENTS_PER_CORE = 10;
 const HIGH_SCOREBOARD_LENGTH = 10;
+
 
 class CoreInfo {
     core = null; // GlobalCore
@@ -33,7 +33,7 @@ class CoreInfo {
     get isFull() {
         return this.core.programCount >= CONFIG.MAX_PROGRAMS;
     }
-    created 
+    created
     get isDesirable() {
         return this.core.programCount < 8;
     }
@@ -49,10 +49,21 @@ class CoreInfo {
 
 const cores = [];
 let highestScoresEver = [];
+const knownUsers = {};
 
 module.exports = {
     loadHighscores: function (hs) { highestScoresEver = hs; },
     getHighscores: function () { return [...highestScoresEver]; },
+
+    loadUserList: function (ul) { 
+        for(const k in ul)
+        {
+            knownUsers[k] = ul[k];
+        }
+
+     },
+    getUserList: function () { return knownUsers; },
+
     pushScores: refreshHighestScores,
     trimCores: trimCores,
     getClientCount: getClientCount,
@@ -108,7 +119,7 @@ module.exports = {
 
             coreID = cores.length;
             log.info(`Created new core ${coreID} for client ${clientIdString}`);
-            
+
             cores.push(new CoreInfo(coreID));
         }
 
@@ -158,12 +169,18 @@ function trimCores() {
         return; // Never trim first core?
     }
 
-    for (let k = cores.length-1; k >= 0; k--)
-    {
-        cores[k].trim();
-        if (cores[k].isEmpty) {
-            log.info(`Core ${cores[k].id} was empty and got trimmed!`);
-            toKill.push(k);
+    for (let k = cores.length - 1; k >= 0; k--) {
+        console.log(k);
+        if (cores[k]) {
+            cores[k].trim();
+            if (cores[k].isEmpty) {
+                log.info(`Core ${cores[k].id} was empty and got trimmed!`);
+                toKill.push(k);
+            }
+        }
+        else
+        {
+            log.error(`Invalid tried to trim core index ${k} ?? out of ${cores.length} cores.`);
         }
     }
 

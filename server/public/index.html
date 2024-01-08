@@ -21,6 +21,7 @@
         window.onload = function () {
             interactive.onWindowLoad();
             globalCore.onWindowLoad();
+            tutorial.onWindowLoad();
         };
     </script>
     <script type="text/javascript" src="server/parser.js?v=2"></script>
@@ -31,6 +32,7 @@
     <script type="text/javascript" src="res/scripts/global-core.js"></script>
     <script type="text/javascript" src="res/scripts/language-tree.js"></script>
     <script type="text/javascript" src="res/scripts/interactive.js?v=2"></script>
+    <script type="text/javascript" src="res/scripts/tutorial.js"></script>
 
     <meta property="og:title" content="LOUVESYSTEMS' ASSEMBLY">
     <meta property="og:description" content="Write a delegate and send it to wander in the central assembly!">
@@ -53,7 +55,7 @@
             <h1>
                 <span style='color:grey;'><a style="color:inherit; text-decoration:inherit;"
                         href='https://louve.systems/'>LOUVESYSTEMS</a>'</span> <b>ASSEMBLY</b> <span
-                    style='color:grey;'>V1.0.1</span>
+                    style='color:grey;'>V1.0.2</span>
             </h1>
         </div>
         <div class="terminal" id="intro" style="display:none">
@@ -239,6 +241,297 @@ d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888
                 </div>
             </div>
         </div>
+        <div class="terminal" id="manual-page" style="display:none">
+            <h1>INTRODUCTION</h1>
+            <div id="pages-container">
+                <div id="page-1" class="core-text">
+                    <p style="font-weight:bold; color:orange">Welcome to Assembly!</p>
+                    <p>Here's a little bit of help to get you started - there's a lot you can do, so we don't want to
+                        get you overwhelmed.</p>
+                    <p>We promise to keep this tutorial short and simple!</p>
+                    <p>If you're already an expert, click <a style="color:gray;" href="#blank" onclick="tutorial.shouldPlayTutorial = false; tutorial.reset(); interactive.show();">here</a> to exit the tutorial.</p>
+                    <div class="button-container">
+                        <button class="enable-after-timer" onclick="tutorial.nextStep()">LET'S SEE ABOUT THAT
+                            &gt;&gt;</button>
+                    </div>
+                </div>
+                <div id="page-2" class="core-text">
+                    <div style="display:flex; flex-direction: row; justify-content: space-around; text-align:left;">
+                        <div>
+                            <p>Assembly is a game where you write small programs called <b>delegates</b>.</p>
+                            <p>Each delegate is made of a very few, simple instructions, executed from top to bottom,
+                                like you see on the right.</p>
+                            <p>And each of these instructions take exactly one slot in the <b>assembly</b>.</p>
+                        </div>
+                        <div style="min-width:auto;margin-left:80px;margin-bottom:auto;" class="terminal">
+                            <div class="core">
+                                <div id="tutorial-animation-instructions">
+                                    <div class="cell">--------</div>
+                                    <div class="cell oscillate">do something</div>
+                                    <div class="cell oscillate">do something</div>
+                                    <div class="cell oscillate">go back two places</div>
+                                    <div class="cell">--------</div>
+                                    <div class="cell">--------</div>
+                                    <div class="cell">--------</div>
+                                    <div class="cell">--------</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="button-container">
+                        <button id="splash-dismiss" class="enable-after-timer" onclick="tutorial.nextStep()">WHAT'S THE
+                            ASSEMBLY ?
+                            &gt;&gt;</button>
+                    </div>
+                </div>
+                <div id="page-3" class="core-text">
+                    <div>
+                        <p>Think of the <b>assembly</b> as a long list of mostly empty cells, and that's <b>where your
+                                delegate
+                                lives</b> and does its things.</p>
+                        <p>That's what your delegate interacts with, that's where it lives.</p>
+                    </div>
+                    <div style="min-width:auto;margin-right:auto;margin-left:auto;" class="terminal">
+                        <div class="global-core-grid" id="tutorial-animation-memory">
+                            <div class="cell"></div>
+                            <div class="cell oscillate-slow"></div>
+                            <div class="cell oscillate-slow"></div>
+                            <div class="cell oscillate-slow"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>But that's also where <b>other delegates</b> live!</p>
+                    </div>
+                    <div style="min-width:auto;margin-right:auto;margin-left:auto;" class="terminal">
+                        <div class="global-core-grid" id="tutorial-animation-memory-shared">
+                            <div class="cell"></div>
+                            <div class="cell oscillate-slow"></div>
+                            <div class="cell oscillate-slow"></div>
+                            <div class="cell oscillate-slow"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                            <div class="cell oscillate-fast"></div>
+                            <div class="cell oscillate-fast"></div>
+                            <div class="cell oscillate-fast"></div>
+                            <div class="cell oscillate-fast"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                            <div class="cell"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>And sharing space with them can yield unpredictable results...</p>
+                    </div>
+                    <div class="button-container">
+                        <button id="splash-dismiss" class="enable-after-timer" onclick="tutorial.nextStep()">OKAY...
+                            &gt;&gt;</button>
+                    </div>
+                </div>
+                <div id="page-4" class="core-text">
+                    <div style="display:flex; flex-direction: row; justify-content: space-around; text-align:left;">
+                        <div style="/*display:flex; flex-direction:column; justify-content:center;*/">
+                            <p>But let's focus on your own delegate for now. How does it work?</p>
+                            <p>Assembly uses something called <b>relative addressing</b>, which means that each
+                                instruction is referred to by how far it is from the current instruction being read.</p>
+                            <p>It's a core concept of Assembly - that delegates are not tied to a particular place
+                                within it.</p>
+                        </div>
+                        <div style="min-width:auto;margin-left:20px;margin-bottom:auto;" class="terminal">
+                            <div class="core">
+                                <div id="tutorial-animation-instructions-detailed">
+                                    <div class="cell">--------</div>
+                                    <div class="cell">--------</div>
+                                    <div class="cell oscillate">write the number 1234 to +7</div>
+                                    <div class="cell oscillate">write the number 0000 to +6</div>
+                                    <div class="cell oscillate">do nothing</div>
+                                    <div class="cell oscillate">write the number 5555 to -5</div>
+                                    <div class="cell oscillate">write the number 0000 to -6</div>
+                                    <div class="cell oscillate">go back five places</div>
+                                    <div class="cell">--------</div>
+                                    <div class="cell">--------</div>
+                                    <div class="cell">--------</div>
+                                    <div class="cell">--------</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="margin-top:35px; margin-bottom:35px;">What that means in practice, is that if your
+                        delegate understands "<span style="color:lightgreen;">write this value, five cells from
+                            here</span>", or "<span style="color:lightgreen;">read the value three cells
+                            above</span>".</p>
+                    <p>But it does not understand, "<span style="color:rgb(255, 118, 141);">read the value at location
+                            423315</span>".</p>
+                    <div class="button-container">
+                        <button id="splash-dismiss" class="enable-after-timer" onclick="tutorial.nextStep()">THAT'S A
+                            BIT CONFUSING
+                            &gt;&gt;</button>
+                    </div>
+                </div>
+                <div id="page-5" class="core-text">
+                    <div style="display:flex; flex-direction: column; ">
+                        <div>
+                            <p>It's a bit confusing, but it's also very important!</p>
+                            <p>Each instruction occupying 1 slot of the assembly, you can guess the address of any other
+                                location simply by <b>counting how many instructions are before or after it</b>.</p>
+                            <p>Here's what <b>address</b> of each cell looks like, as the delegate is being ran.</p>
+                        </div>
+                        <div style="min-width:auto;margin-bottom:auto;" class="terminal">
+                            <div class="core">
+                                <div id="tutorial-animation-instructions-margin">
+                                    <div><span class="prefix">Address</span>Instruction</div>
+                                    <div class="cell"><span class="prefix">0000</span>--------</div>
+                                    <div class="cell"><span class="prefix">0000</span>--------</div>
+                                    <div class="cell oscillate"><span class="prefix">0000</span>write the number 1234 to
+                                        +7</div>
+                                    <div class="cell oscillate"><span class="prefix">0000</span>write the number 0000 to
+                                        +6</div>
+                                    <div class="cell oscillate"><span class="prefix">0000</span>do nothing</div>
+                                    <div class="cell oscillate"><span class="prefix">0000</span>write the number 5555 to
+                                        -5</div>
+                                    <div class="cell oscillate"><span class="prefix">0000</span>write the number 0000 to
+                                        -6</div>
+                                    <div class="cell oscillate"><span class="prefix">0000</span>go to -5</div>
+                                    <div class="cell"><span class="prefix">0000</span>--------</div>
+                                    <div class="cell"><span class="prefix">0000</span>--------</div>
+                                    <div class="cell"><span class="prefix">0000</span>--------</div>
+                                    <div class="cell"><span class="prefix">0000</span>--------</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="margin-top:35px; margin-bottom:35px;">Don't think too hard about it, you'll see it comes
+                        pretty naturally when we're gonna write your first delegate.</p>
+                    <div class="button-container">
+                        <button id="splash-dismiss" class="enable-after-timer" onclick="tutorial.nextStep()">WHAT'S A
+                            DELEGATE DO ?
+                            &gt;&gt;</button>
+                    </div>
+                </div>
+                <div id="page-6" class="core-text">
+                    <p>Delegates can do a lot of different things, so let's not get into too much detail here.</p>
+                    <p>Let's just say most of what they do is <b>WRITING</b> stuff, <b>READING</b> stuff, and
+                        <b>JUMPING</b> to different
+                        locations in the assembly.
+                    </p>
+
+                    <div style="min-width:auto;margin-bottom:auto;" class="terminal">
+                        <div class="core">
+                            <div>
+                                <div class="cell" style="color:#00ff00">✅ Write data somewhere</div>
+                                <div class="cell" style="color:#00ff00">✅ Copy data from one place to another</div>
+                                <div class="cell" style="color:#00ff00">✅ Jump 300 steps ahead to some foreign location
+                                </div>
+                                <div class="cell" style="color:#00ff00">✅ Move data around the assembly</div>
+                            </div>
+                        </div>
+                    </div>
+                    <p>But it's also important to mention what they <b>cannot</b> do: only a few instructions are valid
+                        for a delegate.</p>
+                    <p>Whenever it meets an invalid instruction, a number, some piece of data, something that it cannot
+                        execute - ka-boom! <b>It crashes.</b></p>
+
+                    <div style="min-width:auto;margin-bottom:auto;" class="terminal">
+                        <div class="core">
+                            <div>
+                                <div class="cell error">❌ Execute a number (what does it mean??)</div>
+                                <div class="cell error">❌ Execute any data (what should I do with it?)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <p>So no matter what you do, for your delegate to live a long and fruitful life, you should try to
+                        <b>keep it on a track of valid instructions</b>.
+                    </p>
+                    <div class="button-container">
+                        <button id="splash-dismiss" class="enable-after-timer"
+                            onclick="tutorial.step=10; tutorial.setupForCurrentStep();">LET'S GET TO IT
+                            &gt;&gt;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:none" id="tutorial-page-10">
+            <p>So let's write your first delegate!</p>
+            <p>We'll keep it very simple, so here's the idea:</p>
+            <p>The delegate is going to
+            <ul>
+                <li><span style="color:orange">1)</span> Increment a value</li>
+                <li><span style="color:orange">2)</span> Write data somewhere in memory, at a place depending on that
+                    value</li>
+                <li><span style="color:orange">3)</span> Then start over again!</li>
+            </ul>
+            We'll call that delegate <b>pebbles</b>. It's gonna drop a pebble every here and there in memory until it's
+            filled.
+            </p>
+            <div class="button-container" id="tutorial-next-step" style="position: relative; bottom:auto;">
+                <button id="splash-dismiss" style="position: relative; bottom:auto;" class="enable-after-timer"
+                    class="shining" onclick="tutorial.nextStep()">
+                    WHERE DO I START ?
+                </button>
+            </div>
+        </div>
+
+        <div style="display:none" id="tutorial-page-11">
+            <p style="font-weight:bold; color:orange">On your right &gt;&gt;</p>
+            <p>Select a line <b>anywhere</b>, and write "<span style="color:lightgreen">data</span> <span
+                    style="color:cyan">10</span>"</p>
+            <p><span style="color:cyan">10</span> is the position where we'll place the first pebble, we need to
+                store it somewhere.</p>
+        </div>
+
+        <div style="display:none" id="tutorial-page-12">
+            <p style="font-weight:bold; color:orange">On your right &gt;&gt;</p>
+            <p>Awesome! Now we got storage, we're gonna write the logic</p>
+            <p>
+            <p>Three places above the data line you just wrote, add the following: </p>"<span style="color:lightgreen">write <span
+                    style="color:orange">1</span> to the address given at <span style="color:cyan">+3</span></span>"
+            </p>
+
+            <p>This will do exactly what it says: Write the number <b style="color:orange">one</b>, <b style="color:cyan">ten cells away</b> from there.</p>
+            <p>We're keeping two spaces between the <span style="color:lightgreen">write</span> and the <span
+                    style="color:lightgreen">data</span> to put the next instructions we'll need.</p>
+        </div>
+
+        <div style="display:none" id="tutorial-page-13">
+            <p style="font-weight:bold; color:orange">On your right &gt;&gt;</p>
+            <p>Almost there!</p>
+            <p>On the line just beneath the <span style="color:lightgreen">write</span>, add the following instruction:
+            </p>
+            <p>"<span style="color:lightgreen">add <span style="color:orange">2</span> to the value at <span
+                        style="color:cyan">+2</span>"</p>
+            <p>That will add <span style="color:orange">2</span> to your <span style="color:lightgreen">data</span>
+                statement we wrote earlier, increasing its value every time this instruction is executed.</p>
+        </div>
+
+        <div style="display:none" id="tutorial-page-14">
+            <p style="font-weight:bold; color:orange">On your right &gt;&gt;</p>
+            <p>And now for the final step!</p>
+            <p>On the line between the <span style="color:lightgreen">add</span> and the <span
+                    style="color:lightgreen">data</span> instructions, put the following line:</p>
+            <p>"<span style="color:lightgreen">go to <span style="color:orange">-2</span>"</p>
+            <p>This will keep your delegate from executing data, which would crash it!</p>
+            <p>Instead, it will go back up every time it executes this instruction, running the same instructions over
+                and over.</p>
+        </div>
+
+        <div style="display:none" id="tutorial-page-15">
+            <p><span style="font-weight:bold; color:orange">Congratulations!</span> This introduction is coming to an
+                end and your first delegate is running!</p>
+            <p>You'll have to wait for a few more cycles before you can send it to the global assembly. Press the <span
+                    style="background-color:gray; color:black;">SPEED+</span> button if you don't want to wait!</p>
+            <p>Once the <span class="shining" style="margin:2px;padding:2px">[SEND TO ASSEMBLY &gt; &gt;]</span> button
+                is shining, click on it to exit the tutorial.</p>
+            <p style="color:white">Have fun playing Assembly ☻</p>
+        </div>
+
+
         <div class="terminal" id="code-editor" style="display:none">
             <div id="explanations-window">
                 <h1>HELP</h1>
@@ -298,7 +591,7 @@ d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888
                         <div>2. Advanced Core Killer v4 (21 hits)</div> -->
                     </div>
                     <div id="highest-scores">
-                        
+
                     </div>
                     <button id="create-program-button">WRITE A DELEGATE &gt;&gt;</button>
                 </div>
@@ -311,16 +604,17 @@ d8888888b Y8b 8edP  8edP  888,d88 d888b Y8b Y8b 888 88P' 888,d88    888
             </div>
             <div id="credits" class="credits">
                 <p><b>Testing & feedbacks</b><br>
-                    <span style="color:#3953c6">norckan</span> | 
-                    <a href="https://github.com/Laupetin" target="_blank" style="color:orange">laupetin</a> | 
+                    <span style="color:#3953c6">norckan</span> |
+                    <a href="https://github.com/Laupetin" target="_blank" style="color:orange">laupetin</a> |
                     <a href="https://mastodon.gamedev.place/@newin" target="_blank" style="color:white">newin</a>
                 </p>
                 <b>Development</b><br>
-                <a href="https://bsky.app/profile/louve.systems" target="_blank" style="color:rgb(255, 118, 141)">louve hurlante</a>
+                <a href="https://bsky.app/profile/louve.systems" target="_blank" style="color:rgb(255, 118, 141)">louve
+                    hurlante</a>
             </div>
             <div style="text-align:right; margin-top: auto; min-width:100px;">
-                Inspired by Jones & Dewdney's <a href="https://corewar.co.uk/" target="_blank"
-                    style="color:white">Core War</a>
+                Inspired by Jones & Dewdney's <a href="https://corewar.co.uk/" target="_blank" style="color:white">Core
+                    War</a>
             </div>
         </div>
     </div>
