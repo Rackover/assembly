@@ -2,7 +2,7 @@ const {
     RegExpMatcher,
     englishDataset,
     englishRecommendedTransformers,
-    DataSet, 
+    DataSet,
     pattern,
 } = require('obscenity');
 
@@ -34,16 +34,14 @@ module.exports = {
     },
 
     isBlacklistedName: function (name) {
-        
-        for (const k in matcher.blacklistedTerms)
-        {
-            if (matcher.blacklistedTerms[k].regExp.test(name))
-            {
+
+        for (const k in matcher.blacklistedTerms) {
+            if (matcher.blacklistedTerms[k].regExp.test(name)) {
                 return true;
             }
         }
 
-    // Doesn't work !
+        // Doesn't work !
         // if (matcher) {
         //     if (matcher.hasMatch(name)) {
         //         return true;
@@ -58,8 +56,10 @@ module.exports = {
     },
 
     ban: function (address) {
-        kills.push(address);
-        fs.writeFile("kill.txt", kills.join(`\n`), function () { });
+        if (!kills.includes(address)) {
+            kills.push(address);
+            fs.writeFile("kill.txt", kills.join(`\n`), function () { });
+        }
     }
 }
 
@@ -88,9 +88,9 @@ function refreshWordsBlacklist() {
 
             for (const k in additionalBlacklistedWords) {
                 dataset.addPhrase((phrase) =>
-                     phrase
-                     .setMetadata({ originalWord: additionalBlacklistedWords[k] })
-                     .addPattern(pattern`${additionalBlacklistedWords[k]}`)
+                    phrase
+                        .setMetadata({ originalWord: additionalBlacklistedWords[k] })
+                        .addPattern(pattern`${additionalBlacklistedWords[k]}`)
                 );
             }
         }
@@ -115,7 +115,7 @@ function isSimpleWorm(buff) {
                 && buff.readInt8(address * 4 + 2) == 0
             ) {
                 const tail = buff.readInt8(address * 4 + 3);
-                if (tail == MOVE 
+                if (tail == MOVE
                     || tail == COPY
                     || tail == WRITE_DEEP) // copy or move or write from ref
                 {
@@ -140,7 +140,7 @@ function isWormFragment(buff) {
                 && buff.readInt8(address * 4 + 2) == 0
             ) {
                 const tail = buff.readInt8(address * 4 + 3);
-                if (tail == MOVE 
+                if (tail == MOVE
                     || tail == COPY
                     || tail == WRITE_DEEP)  // copy or move
                 {

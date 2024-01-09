@@ -138,6 +138,13 @@ module.exports = class {
             if (!programName || typeof programName !== 'string') return;
             if (!programString || typeof programString !== 'string') return;
 
+            if (blacklist.isBannedAddress(this.address)) {
+                log.info(`Kicking client ${this.#id} off connection (got banned)`);
+                this.#destroy();
+                socket.disconnect(true);
+                return;
+            }
+
             this.#testCore = false;
             clearInterval(this.#interval);
 
