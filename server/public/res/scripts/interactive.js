@@ -179,12 +179,16 @@ interactive.updateTrainingCoreDisplayFromFullBuffer = function (obj) {
 }
 
 interactive.updateTrainingCoreDisplayFromDelta = function (obj) {
-    for (let k in obj.delta) {
-        lastTrainingBuffer[k] = obj.delta[k];
+    if (lastTrainingBuffer) {
+        for (let k in obj.delta) {
+            lastTrainingBuffer[k] = obj.delta[k];
+        }
     }
 
-    for (let k in obj.deltaFlags) {
-        lastTrainingFlagsBuffer[k] = obj.deltaFlags[k];
+    if (lastTrainingFlagsBuffer) {
+        for (let k in obj.deltaFlags) {
+            lastTrainingFlagsBuffer[k] = obj.deltaFlags[k];
+        }
     }
 
     interactive.updateTrainingCoreDisplay(obj.nextAddress);
@@ -264,8 +268,8 @@ interactive.bindButtons = function () {
         if (socket) {
             socket.emit("stopTestingProgram");
             trainingCoreIsRunning = false;
-            lastTrainingBuffer = null;
-            lastTrainingFlagsBuffer = null;
+
+            interactive.clearTrainingBuffer();
             interactive.refreshButtons();
         }
     };
@@ -477,13 +481,11 @@ interactive.onKeyPress = function (e) {
         case "ArrowDown":
         case "Enter":
             if (tutorial.shouldPlayTutorial) {
-                if (tutorial.currentTutorialButton)
-                {
+                if (tutorial.currentTutorialButton) {
                     tutorial.currentTutorialButton.click();
                 }
             }
-            else
-            {
+            else {
                 interactive.focusNext(1);
             }
             break;
@@ -795,7 +797,7 @@ interactive.showParserResult = function (parseResult, index) {
                 display.innerHTML = `<span style='text-decoration:underline; text-decoration-color:red;'>${display.innerHTML}</span>`;
             }
         }
-        
+
         if (interactive.enableInteractiveHelp) {
             interactive.interactiveTextDiv.innerHTML = interactiveHelpText;
         }
@@ -1156,11 +1158,10 @@ interactive.initializeSocket = function () {
     socket.on("programUploaded", function () {
         console.log("Program uploaded, back to core");
         trainingCoreIsRunning = false;
-        lastTrainingBuffer = null;
-        lastTrainingFlagsBuffer = null;
 
-        if (tutorial.shouldPlayTutorial)
-        {
+        interactive.clearTrainingBuffer();
+
+        if (tutorial.shouldPlayTutorial) {
             tutorial.shouldPlayTutorial = false;
             tutorial.reset();
         }
@@ -1175,8 +1176,7 @@ interactive.initializeSocket = function () {
             trainedForCycles++;
         }
         else {
-            lastTrainingBuffer = null;
-            lastTrainingFlagsBuffer = null;
+            interactive.clearTrainingBuffer();
             interactive.refreshButtons();
         }
 
@@ -1256,4 +1256,19 @@ interactive.upload = function () {
     setTimeout(function () {
         document.body.removeChild(input);
     }, 0);
+}
+
+interactive.clearTrainingBuffer = function(){
+    if (lastTrainingBuffer) {
+        for (let k in lastTrainingBuffer) {
+            lastTrainingBuffer[k] = 0;
+        }
+    }
+
+    if (lastTrainingFlagsBuffer) {
+        for (let k in lastTrainingFlagsBuffer) {
+            lastTrainingFlagsBuffer[k] = 0;
+        }
+    }
+
 }

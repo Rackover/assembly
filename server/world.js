@@ -180,7 +180,7 @@ function trimCores() {
         }
         else
         {
-            log.error(`Invalid tried to trim core index ${k} ?? out of ${cores.length} cores.`);
+            log.error(`Invalid tried to trim core index ${k} ?? out of ${cores.length} cores. ${cores[k]}`);
         }
     }
 

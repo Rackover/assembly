@@ -46,17 +46,25 @@ module.exports =
       else {
         WORLD.trimCores();
 
-        const coreID = WORLD.getCoreIdForClient(socket.handshake.auth.token);
+        const id = socket.handshake.auth.token;
+
+        if (!id || typeof id !== 'string' || id.length < 16) {
+          log.warn(`Refusing client with invalid id ${id} (joker edited cookie probably)`);
+          socket.disconnect(true);
+          return;
+        }
+
+        const coreID = WORLD.getCoreIdForClient(id);
         if (coreID === false) {
           // Game full, maybe dispatch message?
           socket.disconnect(true);
         }
         else {
-          const knownUser = WORLD.getUserList()[socket.handshake.auth.token];
+          const knownUser = WORLD.getUserList()[id];
           unknown = !knownUser;
           new Client(
             socket,
-            socket.handshake.auth.token,
+            id,
             coreID,
             knownUser !== undefined,
             unknown || !knownUser.completedTutorial
@@ -65,7 +73,7 @@ module.exports =
 
         // Add to known list
         if (unknown) {
-          WORLD.getUserList()[socket.handshake.auth.token] = {};
+          WORLD.getUserList()[id] = {};
         }
 
         const clientCount = WORLD.getClientCount();

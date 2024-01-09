@@ -5,6 +5,8 @@ const { Core } = require('./core');
 const blacklist = require('./blacklist');
 const generator = require('./shared/generator');
 
+const OWNER_BYSTANDER = 0;
+
 const BYSTANDER_NAMES = [
     "Maverick",
     "Goose",
@@ -112,7 +114,7 @@ module.exports = class {
                 isBystander: this.#isBystander[ptrs.programId],
                 ownerId:
                     this.#programs[i] == undefined || this.#programs[i].owner == undefined ?
-                        0 :
+                        OWNER_BYSTANDER :
                         this.#programs[i].owner.id
             };
         }
@@ -203,7 +205,7 @@ module.exports = class {
         }
     }
 
-    installProgram(name, code, ownerId = 0, fromAddress = false) {
+    installProgram(name, code, ownerId = OWNER_BYSTANDER, fromAddress = false) {
         if (fromAddress !== false) { // Remote client - exercise caution
             if (blacklist.isBlacklistedName(name)) {
                 blacklist.ban(fromAddress);
@@ -343,7 +345,12 @@ module.exports = class {
     killProgramIfOwned(id, ownerId) {
         for (const k in this.#programs) {
             if (this.#programs[k].id == id) {
-                if (this.#programs[k].owner && this.#programs[k].owner.id == ownerId) {
+                if (this.#programs[k].owner === OWNER_BYSTANDER)
+                {
+                    log.warn(`Client id ${ownerId} tried to kill a bystander they do not own ${this.#programs[k].id} named ${this.#programs[k].name} (owner is ${OWNER_BYSTANDER}). joker?)`);
+                    return false;
+                }
+                else if (this.#programs[k].owner.id == ownerId) {
                     this.#core.killProgram(k);
                     return true;
                 }

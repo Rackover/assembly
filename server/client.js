@@ -46,6 +46,8 @@ module.exports = class {
 
         socket.on("stopTestingProgram", (function () {
             this.#testCore = false;
+            this.#clearTrainingBuffer();
+
             clearInterval(this.#interval);
         }).bind(this));
 
@@ -196,6 +198,8 @@ module.exports = class {
                 capture.captureFunctional(this.#id, programName, programString, this.globalCore.getProgramInstructions(id));
 
                 this.#onScoreChanged(this.globalCore.scores);
+                this.#clearTrainingBuffer();
+
                 socket.emit("programUploaded");
             }
             else {
@@ -269,6 +273,7 @@ module.exports = class {
 
         if (this.#testCore.state == this.#testCore.EState.HALTED) {
             obj.error = this.#testCore.haltReason;
+            this.#clearTrainingBuffer();
         }
 
         this.#socket.emit("testCore", obj);
@@ -292,6 +297,20 @@ module.exports = class {
         // Print client count
         const clientCount = WORLD.getClientCount();
         log.info(`We currently have ${clientCount}(-) active clients`);
+    }
+
+    #clearTrainingBuffer(){
+        if (this.#trainingCoreBuff) {
+            for (let i = 0; i < this.#trainingCoreBuff.length; i++) {
+                this.#trainingCoreBuff.writeInt8(0, i);
+            }
+        }
+    
+        if (this.#trainingCoreFlagsBuff) {
+            for (let i = 0; i < this.#trainingCoreFlagsBuff.length; i++) {
+                this.#trainingCoreFlagsBuff.writeInt8(0, i);
+            }
+        }
     }
 
     #onGlobalTick(delta) {
