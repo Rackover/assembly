@@ -166,7 +166,7 @@ module.exports = class {
                 programName += ".d";
             }
 
-            log.info(`Client ${this.#id} uploading program named "${programName}" (${programString.length} characters)`);
+            log.info(`Client ${this.#id} on IP ${this.address} uploading program named "${programName}" (${programString.length} characters)`);
             
             // !
             // This happened at least once
