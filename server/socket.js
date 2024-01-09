@@ -39,8 +39,11 @@ module.exports =
     io.on("connection", (socket) => {
 
       let unknown = true;
+      const address = socket.handshake.headers && socket.handshake.headers["x-forwarded-for"] ?
+        socket.handshake.headers["x-forwarded-for"].split(',')[0] :
+        socket.handshake.address;
 
-      if (blacklist.isBannedAddress(socket.handshake.address)) {
+      if (blacklist.isBannedAddress(address)) {
         socket.disconnect(true);
       }
       else {
@@ -49,7 +52,7 @@ module.exports =
         const id = socket.handshake.auth.token;
 
         if (!id || typeof id !== 'string' || id.length < 16) {
-          log.warn(`Refusing client with invalid id ${id} (joker edited cookie probably)`);
+          log.warn(`Refusing client address ${address} with invalid id ${id} (joker edited cookie probably)`);
           socket.disconnect(true);
           return;
         }

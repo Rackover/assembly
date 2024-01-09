@@ -169,10 +169,8 @@ function trimCores() {
         return; // Never trim first core?
     }
 
-    for (let k = cores.length - 1; k >= 0; k--) {
-        console.log(k);
+    for (let k = cores.length - 1; k > 0; k--) {  // Never trim first core
         if (cores[k]) {
-            cores[k].trim();
             if (cores[k].isEmpty) {
                 log.info(`Core ${cores[k].id} was empty and got trimmed!`);
                 toKill.push(k);
@@ -185,7 +183,7 @@ function trimCores() {
     }
 
     for (const i in toKill) {
-        delete cores[i];
+        cores.splice(i, 1);
     }
 }
 
