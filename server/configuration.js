@@ -6,6 +6,6 @@ module.exports = {
     MAX_PROGRAM_NAME_LENGTH: 32,
     MAX_CORES: 16,
     GCORE_BYSTANDERS: 3,
-    HTTP_HOST: "http://rx.louve.systems",
+    HTTP_HOST: "http://localhost",
     SECURE_CONTEXT: false
 }

@@ -327,6 +327,11 @@ module.exports = class {
                 this.#broadcastOnTicked(delta);
                 this.#fullTick ++;
             }
+            else
+            {
+                // Fixes an issue where people kill the next program that would play (not supposed to happen!!)
+                this.#core.capNextProgramToPlay();
+            }
         }
         else {
             this.#fullTick++;

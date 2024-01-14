@@ -191,14 +191,20 @@ module.exports.Core = class {
             programPointer.nextPointerToExecute = (programPointer.nextPointerToExecute + 1) % programPointer.pointers.length;
         }
 
+        this.#turnOfProgram ++;
+        this.capNextProgramToPlay();
+
+        return false;
+    }
+
+    capNextProgramToPlay()
+    {
         if (this.#programs.length <= 0) {
             this.#turnOfProgram = 0;
         }
         else {
-            this.#turnOfProgram = (this.#turnOfProgram + 1) % this.#programs.length;
+            this.#turnOfProgram = this.#turnOfProgram % this.#programs.length;
         }
-
-        return false;
     }
 
     installProgram(program, position) {
