@@ -80,7 +80,7 @@ module.exports = {
     registerClient: function (client, coreID) {
         const core = getCoreInfo(coreID);
         if (core === false) {
-            log.err(`Could not register client ${client} on core ID ${coreID} ???`);
+            log.error(`Could not register client ${client} on core ID ${coreID} ???`);
             return false;
         }
 

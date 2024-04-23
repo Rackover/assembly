@@ -14,6 +14,7 @@ module.exports.Rules = class
     repopulateBystanderEveryTick = 50;
 
     clearOwnershipOnDeath = true;
+    writeInstructionOwner = true;
 
     runForever = false;
 }

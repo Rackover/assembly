@@ -133,6 +133,7 @@ badnames.txt
 kill.txt
 
 programs/*
+statistics/*
 
 config.json
 saved-scores.json

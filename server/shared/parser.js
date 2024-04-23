@@ -191,7 +191,7 @@ function tokenize(strInput) {
     return {
         anyError: anyError,
         tokens: tokens,
-        metadata
+        meta: metadata
     };
 }
 

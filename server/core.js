@@ -49,7 +49,6 @@ module.exports.Core = class {
     #turnOfProgram = 0;
     #lastKillReason;
 
-
     get lastKillReason() { return this.#lastKillReason; }
 
     get rules() { return this.#rules; }
@@ -65,8 +64,7 @@ module.exports.Core = class {
         this.#ownershipBuffer = deps.Buffer.alloc(this.maxAddress);
     }
 
-    // EVENTS
-
+    //#region EVENTS
     #killEventListeners = [];
     onProgramKilled(lambda) {
         this.#killEventListeners.push(lambda);
@@ -77,8 +75,53 @@ module.exports.Core = class {
             this.#killEventListeners[k](programId, killer, killReason);
         }
     }
+    
+    #cycleExecutedEventListeners = [];
+    onProgramExecutedCycle(lambda) {
+        this.#cycleExecutedEventListeners.push(lambda);
+    }
 
-    // END OF
+    #broadcastOnProgramExecutedCycle(programId) {
+        for (const k in this.#cycleExecutedEventListeners) {
+            this.#cycleExecutedEventListeners[k](programId);
+        }
+    }
+    
+    #cellWrittenEventListeners = [];
+    onProgramWroteCell(lambda) {
+        this.#cellWrittenEventListeners.push(lambda);
+    }
+
+    #broadcastOnProgramWroteCell(programId, address) {
+        for (const k in this.#cellWrittenEventListeners) {
+            this.#cellWrittenEventListeners[k](programId, address);
+        }
+    }
+    
+    #cellReadEventListeners = [];
+    onProgramReadCell(lambda) {
+        this.#cellReadEventListeners.push(lambda);
+    }
+
+    #broadcastOnProgramReadCell(programId, address) {
+        for (const k in this.#cellReadEventListeners) {
+            this.#cellReadEventListeners[k](programId, address);
+        }
+    }
+    
+    #foreignInstructionExecutedEventListener = [];
+    onProgramExecutedForeignInstruction(lambda) {
+        this.#foreignInstructionExecutedEventListener.push(lambda);
+    }
+
+    #broadcastOnProgramExecutedForeignInstruction(executerId, originalAuthorId) {
+        for (const k in this.#foreignInstructionExecutedEventListener) {
+            this.#foreignInstructionExecutedEventListener[k](executerId, originalAuthorId);
+        }
+    }
+
+
+    // #endregion
 
     isEmpty() {
         return this.programCount == 0;
@@ -150,9 +193,11 @@ module.exports.Core = class {
 
         if (programPointer.isDead) {
 
+            const killer = this.getLastWriterOfAdddress(memoryPosition);
+
             this.#broadcastOnProgramKilled(
                 programPointer.programId,
-                this.getLastWriterOfAdddress(memoryPosition),
+                killer,
                 this.lastKillReason
             );
 
@@ -225,15 +270,14 @@ module.exports.Core = class {
             }
         }
 
-        // Do we even need this anymore?
         const placedProgram = {
             start: position,
-            end: position + program.instructions.length
+            end: position + program.instructions.length / 4 // <= divide by four, important!
         };
 
         for (let address = placedProgram.start; address < placedProgram.end; address++) {
             const safe = this.#getSafeAddress(address);
-            this.#ownershipBuffer[safe] = false; // Reset writes here
+            this.#ownershipBuffer[safe] = program.id; // Installed program owns this space
         }
 
         // Programs are placed, let's initialize pointers
@@ -331,7 +375,7 @@ module.exports.Core = class {
         return this.#memoryBuffer.readInt32LE(this.#getSafeAddress(address) * 4);
     }
 
-    #getArgumentInternal(data, memoryPosition, operandShift, operandFlagsShift) {
+    #getArgumentInternal(data, memoryPosition, operandShift, operandFlagsShift, programPointer=null) {
         const rawOperand = (data >> operandShift) & deps.compiler.OPERAND_MASK;
 
         let value = rawOperand;
@@ -345,19 +389,22 @@ module.exports.Core = class {
                 return false;
             }
             else {
-                this.#markSectorRead(memoryPosition + value);
+                if (programPointer)
+                {
+                    this.#markSectorRead(memoryPosition + value, programPointer);
+                }
             }
         }
 
         return value;
     }
 
-    #getArgumentB(data, memoryPosition) {
-        return this.#getArgumentInternal(data, memoryPosition, deps.compiler.OPERAND_B_SHIFT, deps.compiler.OPERAND_B_FLAGS_SHIFT);
+    #getArgumentB(data, memoryPosition, programPointer=null) {
+        return this.#getArgumentInternal(data, memoryPosition, deps.compiler.OPERAND_B_SHIFT, deps.compiler.OPERAND_B_FLAGS_SHIFT, programPointer);
     }
 
-    #getArgumentA(data, memoryPosition) {
-        return this.#getArgumentInternal(data, memoryPosition, deps.compiler.OPERAND_A_SHIFT, deps.compiler.OPERAND_A_FLAGS_SHIFT);
+    #getArgumentA(data, memoryPosition, programPointer=null) {
+        return this.#getArgumentInternal(data, memoryPosition, deps.compiler.OPERAND_A_SHIFT, deps.compiler.OPERAND_A_FLAGS_SHIFT, programPointer);
     }
 
     #killPointer(programPointer) {
@@ -367,7 +414,7 @@ module.exports.Core = class {
         if (programPointer.isDead && this.#rules.clearOwnershipOnDeath) {
             log.debug(`Clearing ownership of ${programPointer.programId}...`);
             for (let i = 0; i < this.maxAddress; i++) {
-                if (this.#ownershipBuffer[i] == programPointer.programId) {
+                if (this.#ownershipBuffer[i] === programPointer.programId) {
                     this.#ownershipBuffer[i] = 0;
                 }
             }
@@ -381,13 +428,25 @@ module.exports.Core = class {
         let moved = false;
 
         const data = this.#getValueAtAddress(memoryPosition);
-        this.#markSectorRead(memoryPosition);
+        this.#markSectorRead(memoryPosition, programPointer);
+
+        this.#broadcastOnProgramExecutedCycle(programPointer.programId);
 
         if (data === false) {
             this.#killPointer(programPointer);
             this.#lastKillReason = `interaction with bad sector`;
         }
         else {
+            
+            // Notify foreign author
+            {
+                const instructionAuthor = this.getLastWriterOfAdddress(this.#getSafeAddress(memoryPosition));
+                if (instructionAuthor && instructionAuthor != programPointer.programId)
+                {
+                    this.#broadcastOnProgramExecutedForeignInstruction(programPointer.programId, instructionAuthor);
+                }
+            }
+            
             const op = (data >> deps.compiler.OPERATION_SHIFT) & deps.compiler.OPERATION_MASK;
 
             switch (op) {
@@ -409,8 +468,8 @@ module.exports.Core = class {
                 case deps.parser.OPERATIONS.SUBTRACT:
                 case deps.parser.OPERATIONS.MULTIPLY:
                     {
-                        const operand = this.#getArgumentA(data, memoryPosition);
-                        const b = this.#getArgumentB(data, memoryPosition);
+                        const operand = this.#getArgumentA(data, memoryPosition, programPointer);
+                        const b = this.#getArgumentB(data, memoryPosition, programPointer);
 
                         if (b === false) {
                             this.#killPointer(programPointer);
@@ -433,8 +492,8 @@ module.exports.Core = class {
                             whereTo
                         );
 
-                        this.#markSectorRead(whereTo);
-                        this.#markSectorWritten(whereTo, programPointer.programId);
+                        this.#markSectorRead(whereTo, programPointer);
+                        this.#markSectorWritten(whereTo, programPointer);
 
                         break;
                     }
@@ -443,8 +502,8 @@ module.exports.Core = class {
                 case deps.parser.OPERATIONS.SKIP_IF_GREATER:
                 case deps.parser.OPERATIONS.SKIP_IF_LOWER:
                     {
-                        const valueA = this.#getArgumentA(data, memoryPosition);
-                        const valueB = this.#getArgumentB(data, memoryPosition);
+                        const valueA = this.#getArgumentA(data, memoryPosition, programPointer);
+                        const valueB = this.#getArgumentB(data, memoryPosition, programPointer);
 
                         if (valueA === false || valueB === false) {
                             this.#killPointer(programPointer);
@@ -462,8 +521,8 @@ module.exports.Core = class {
 
                 case deps.parser.OPERATIONS.WRITE:
                     {
-                        const toWrite = this.#getArgumentA(data, memoryPosition);
-                        const b = this.#getArgumentB(data, memoryPosition);
+                        const toWrite = this.#getArgumentA(data, memoryPosition, programPointer);
+                        const b = this.#getArgumentB(data, memoryPosition, programPointer);
 
                         if (b === false) {
                             this.#killPointer(programPointer);
@@ -478,7 +537,7 @@ module.exports.Core = class {
                             whereTo
                         );
 
-                        this.#markSectorWritten(whereTo, programPointer.programId);
+                        this.#markSectorWritten(whereTo, programPointer);
 
                         break;
                     }
@@ -486,8 +545,8 @@ module.exports.Core = class {
                 case deps.parser.OPERATIONS.COPY:
                 case deps.parser.OPERATIONS.MOVE:
                     {
-                        const a = this.#getArgumentA(data, memoryPosition);
-                        const b = this.#getArgumentB(data, memoryPosition);
+                        const a = this.#getArgumentA(data, memoryPosition, programPointer);
+                        const b = this.#getArgumentB(data, memoryPosition, programPointer);
 
 
                         if (a === false || b === false) {
@@ -506,12 +565,12 @@ module.exports.Core = class {
                             destination
                         );
 
-                        this.#markSectorRead(origin);
-                        this.#markSectorWritten(destination, programPointer.programId);
+                        this.#markSectorRead(origin, programPointer);
+                        this.#markSectorWritten(destination, programPointer);
 
                         if (op == deps.parser.OPERATIONS.MOVE) {
                             this.#setValueAtAddress(0, origin);
-                            this.#markSectorWritten(origin, programPointer.programId);
+                            this.#markSectorWritten(origin, programPointer);
                         }
 
                         break;
@@ -519,7 +578,7 @@ module.exports.Core = class {
 
                 case deps.parser.OPERATIONS.JUMP:
                     {
-                        const a = this.#getArgumentA(data, memoryPosition);
+                        const a = this.#getArgumentA(data, memoryPosition, programPointer);
 
                         if (a === false) {
                             this.#killPointer(programPointer);
@@ -542,16 +601,30 @@ module.exports.Core = class {
         }
     }
 
-    #markSectorWritten(address, byProgram) {
-        const addr = this.#getSafeAddress(address);
-        this.#writeBuffer[addr]++;
-        if (byProgram !== false) {
-            this.#ownershipBuffer[addr] = byProgram;
+    #markSectorWritten(address, programPointer) {
+        const safeAddr = this.#getSafeAddress(address);
+        if (programPointer !== false) {
+            if (this.#rules.writeInstructionOwner)
+            {
+                const memoryPosition = programPointer.pointers[programPointer.nextPointerToExecute];
+                const realAuthor = this.getLastWriterOfAdddress(this.#getSafeAddress(memoryPosition));
+        
+                this.#ownershipBuffer[safeAddr] = realAuthor;
+            }
+            else
+            {
+                this.#ownershipBuffer[safeAddr] = programPointer.programId;
+            }
         }
+
+        this.#writeBuffer[safeAddr]++;
+        this.#broadcastOnProgramWroteCell(programPointer.programId, safeAddr);
     }
 
-    #markSectorRead(address) {
-        this.#readBuffer[this.#getSafeAddress(address)]++;
+    #markSectorRead(address, programPointer) {
+        const safeAddr = this.#getSafeAddress(address);
+        this.#readBuffer[safeAddr]++;
+        this.#broadcastOnProgramReadCell(programPointer.programId, safeAddr);
     }
 
     get buffer() {

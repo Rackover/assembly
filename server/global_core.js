@@ -67,6 +67,14 @@ class LocalProgram {
     instructions;
     id;
     name;
+    statistics;
+    installAddress;
+
+    getDistanceWithStartAddress(safeAddress) {
+        const offset = (safeAddress - this.installAddress);
+
+        return offset;
+    }
 }
 
 module.exports = class {
@@ -82,6 +90,10 @@ module.exports = class {
 
     #lastPlayerProgramActivity = 0;
     #isBystander = {};
+
+    // Statistics handler for each installed
+    #statistics = {};
+
 
     get columnSize() {
         return this.#core.columnSize;
@@ -169,6 +181,32 @@ module.exports = class {
 
         const core = new Core(rules);
         core.onProgramKilled(this.#onProgramKilled.bind(this));
+
+        // Statistics
+        core.onProgramExecutedCycle(((id) => {
+            this.#statistics[id]?.notifyCycleLived();
+        }).bind(this));
+        core.onProgramExecutedForeignInstruction(((executerId, authorId) => {
+            this.#statistics[authorId]?.notifyInstructionExecutedByForeignProgram();
+        }).bind(this));
+        core.onProgramWroteCell(((id, address) => {
+            if (this.#statistics[id]) {
+                const p = this.#programs.find(o => o.id == id);
+                if (p) {
+                    const dist = p.getDistanceWithStartAddress(address);
+                    this.#statistics[id].notifyCellWritten(dist);
+                }
+            }
+        }).bind(this));
+        core.onProgramReadCell(((id, address) => {
+            if (this.#statistics[id]) {
+                const p = this.#programs.find(o => o.id == id);
+                if (p) {
+                    const dist = p.getDistanceWithStartAddress(address);
+                    this.#statistics[id].notifyCellRead(dist);
+                }
+            }
+        }).bind(this));
 
         this.#serializedBuffer = Buffer.alloc(core.maxAddress * 2);
 
@@ -258,6 +296,25 @@ module.exports = class {
                 id: ownerId
             };
 
+
+            // gives a statistics handle
+            if (ownerId != OWNER_BYSTANDER) {
+                const stats = STATS.register(name, compiled, ownerId, tokens.meta);
+                if (stats === false) {
+                    log.warn(`Could not obtain a statistics registration for program ${name} by ${ownerId}!`);
+                }
+                else{
+                    if (this.#statistics[id])
+                    {
+                        log.error(`This program ID already had statistics running for that core??? This is a big problem! ${name} by ${ownerId}, id ${id}`);
+                    }
+                    else
+                    {
+                        this.#statistics[id] = stats;
+                    }
+                }
+            }
+
             let position = Math.floor(this.#core.maxAddress / 2);
 
             // Find free position in core
@@ -297,6 +354,9 @@ module.exports = class {
             }
 
             log.info(`Global core: installing program ${program.name}:${program.id} at position ${position}`);
+
+            program.installAddress = position;
+
             this.#core.installProgram(program, position);
             this.#programs.push(program);
             this.#scores.push({
@@ -327,8 +387,7 @@ module.exports = class {
                 this.#broadcastOnTicked(delta);
                 this.#fullTick ++;
             }
-            else
-            {
+            else {
                 // Fixes an issue where people kill the next program that would play (not supposed to happen!!)
                 this.#core.capNextProgramToPlay();
             }
@@ -350,8 +409,7 @@ module.exports = class {
     killProgramIfOwned(id, ownerId) {
         for (const k in this.#programs) {
             if (this.#programs[k].id == id) {
-                if (this.#programs[k].owner === OWNER_BYSTANDER)
-                {
+                if (this.#programs[k].owner === OWNER_BYSTANDER) {
                     log.warn(`Client id ${ownerId} tried to kill a bystander they do not own ${this.#programs[k].id} named ${this.#programs[k].name} (owner is ${OWNER_BYSTANDER}). joker?)`);
                     return false;
                 }
@@ -461,6 +519,25 @@ module.exports = class {
                 log.info(`Scoring kill for ${killerId}`);
                 break;
             }
+        }
+
+        // Propagate kill
+        if (this.#statistics[killerId]) {
+            if (killerId === victimId) {
+                this.#statistics[killerId].notifyKilledSelf();
+            }
+            else if (this.#statistics[victimId]) {
+                this.#statistics[killerId].notifyKilledOtherPlayerProgram(this.#statistics[victimId].getKey());
+            }
+            else {
+                this.#statistics[killerId].notifyKilledBystander();
+            }
+        }
+
+        // Clear statistics
+        if (this.#statistics[victimId]) {
+            this.#statistics[victimId].notifyProgramDied();
+            delete this.#statistics[victimId];
         }
 
         // Remove victim from scores

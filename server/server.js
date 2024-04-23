@@ -14,6 +14,8 @@ initializeWorld();
 initializeConfig();
 // END
 
+initializeStatistics();
+
 app.use(session({
   secret: getmac.default(),
   resave: false,
@@ -38,6 +40,7 @@ app.use('/server', express.static(path.join(__dirname, "shared")))
 {
   function exitHandler(shouldExit) {
     saveWorld();
+    STATS.terminate();
 
     if (shouldExit) {
       process.exit();
@@ -58,6 +61,11 @@ app.use('/server', express.static(path.join(__dirname, "shared")))
 }
 
 socket.startWithExpress(app);
+
+function initializeStatistics()
+{
+  global.STATS = require('./statistics');
+}
 
 function initializeWorld() {
   global.WORLD = require('./world');
