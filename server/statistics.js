@@ -26,7 +26,6 @@ class ProgramKill {
 }
 
 class ProgramStatistics {
-    #programName;
     #checksum;
     #presence = 0; // Live counter, do not serialize
 
@@ -38,6 +37,7 @@ class ProgramStatistics {
 
     knownUsers = {}; // Hashset of strings
     knownAuthors = {};
+    knownNames = {};
     descriptions = {};
 
     kills = []; // Array of programKills
@@ -49,11 +49,7 @@ class ProgramStatistics {
     cellsRead = {};
 
     get uniqueKey() {
-        return this.#programName + "@" + this.#checksum;
-    }
-
-    get name() {
-        return this.#programName;
+        return this.#checksum;
     }
 
     get checksum() {
@@ -62,14 +58,10 @@ class ProgramStatistics {
 
     // Program code is a buffer here
     constructor(programName, programCode, authorId, metadata) {
-        if (programName === undefined && programCode === undefined) {
-            // We're about to be deserialized
-            return;
-        }
-
         this.firstSeen = Date.now();
 
         this.knownUsers[authorId] = true;
+        this.knownNames[programName] = true;
         
         if (metadata)
         {
@@ -106,7 +98,6 @@ class ProgramStatistics {
 
     stringify() {
         let { ...result } = this;
-        result.name = this.name;
         result.checksum = this.checksum;
 
         return JSON.stringify(result, null, "\t");
@@ -144,7 +135,6 @@ class ProgramStatistics {
             }
         }
 
-        this.#programName = obj.name;
         this.#checksum = obj.checksum;
 
         // sanitize
