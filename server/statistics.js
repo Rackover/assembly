@@ -80,8 +80,6 @@ class ProgramStatistics {
             .createHash('md5')
             .update(programCode, 'utf8')
             .digest('hex');
-
-        this.#programName = programName;
     }
 
     incrementPresence() {
