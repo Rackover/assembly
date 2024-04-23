@@ -277,7 +277,11 @@ module.exports.Core = class {
 
         for (let address = placedProgram.start; address < placedProgram.end; address++) {
             const safe = this.#getSafeAddress(address);
-            this.#ownershipBuffer[safe] = program.id; // Installed program owns this space
+            const data = this.#getValueAtAddress(safe) 
+            const op = (data >> deps.compiler.OPERATION_SHIFT) & deps.compiler.OPERATION_MASK;
+            this.#ownershipBuffer[safe] = op === deps.parser.OPERATIONS.NOOP ? 
+                0 : // If it's a noop, leave it empty (aesthetics)
+                program.id; // Installed program owns this space
         }
 
         // Programs are placed, let's initialize pointers
