@@ -483,6 +483,30 @@ module.exports.Core = class {
 
                         const whereTo = b + memoryPosition;
                         let result = this.#getValueAtAddress(whereTo);
+                        let leftover = 0;
+
+                        //
+                        // Do the operation differently if the operand is 12-bit or not
+                        // The reason we do that is to allow two behaviours at once:
+                        //  - Natural continuous increment from -2, -1, etc to 1, 2, 3 without messing up a sign flag
+                        //  - Adding and/or substracting operators to construct new instructions
+                        {
+                            const unsignedOperand = operand >>> 0;
+                            const shiftedCheck = unsignedOperand & ~deps.compiler.OPERAND_MASK;
+                            if (shiftedCheck === 0)
+                            {
+                                // Operand is a twelve bit number, sign the result manually.
+                                const xBitsNumber = result & (deps.compiler.OPERAND_MASK >> deps.compiler.OPERAND_B_SHIFT);
+                                leftover = result & ~deps.compiler.OPERAND_MASK;
+                                result = deps.compiler.getSignedXBitsValue(xBitsNumber);
+                            }
+                            else
+                            {
+                                // Operand is big, do nothing
+                            }
+                        }
+                        //
+
                         if (op == deps.parser.OPERATIONS.MULTIPLY) {
                             result *= operand;
                         }
@@ -490,6 +514,8 @@ module.exports.Core = class {
                             result += operand * (op == deps.parser.OPERATIONS.SUBTRACT ? -1 : 1);
                         }
 
+                        // restore leftover
+                        result |= leftover;
 
                         this.#setValueAtAddress(
                             result,
