@@ -20,11 +20,13 @@ class ProgramKill {
     targetKey;
     time;
     isBystanderKill;
+    targetAndKillerHaveSameOwner;
 
-    constructor(targetKey, time) {
+    constructor(targetKey, time, targetAndKillerHaveSameOwner=false) {
         this.time = time;
         this.isBystanderKill = targetKey === BYSTANDER_KEY;
         this.targetKey = targetKey;
+        this.targetAndKillerHaveSameOwner = targetAndKillerHaveSameOwner;
     }
 }
 
@@ -179,12 +181,13 @@ function flush(key = false) {
     }
 }
 
-function notifyKilledProgram(key, killedKey) {
+function notifyKilledProgram(key, killedKey, targetAndKillerHaveSameOwner=false) {
     if (activePrograms[key]) {
         activePrograms[key].kills.push(
             new ProgramKill(
                 killedKey,
-                Date.now()
+                Date.now(),
+                targetAndKillerHaveSameOwner
             )
         );
     }
@@ -314,14 +317,14 @@ function notifyProgramBorn(programName, programCode, authorId, meta) {
         getKey: function(){
             return key;
         },
-        notifyKilledOtherPlayerProgram: function (otherKey) {
-            notifyKilledProgram(key, otherKey);
+        notifyKilledOtherPlayerProgram: function (otherKey, targetAndKillerHaveSameOwner) {
+            notifyKilledProgram(key, otherKey, targetAndKillerHaveSameOwner);
         },
         notifyKilledBystander: function () {
             notifyKilledProgram(key, BYSTANDER_KEY);
         },
         notifyKilledSelf: function () {
-            notifyKilledProgram(key, key);
+            notifyKilledProgram(key, key, true);
         },
         // Destructor
         notifyProgramDied: function () {

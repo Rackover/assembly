@@ -526,7 +526,28 @@ module.exports = class {
                 this.#statistics[killerId].notifyKilledSelf();
             }
             else if (this.#statistics[victimId]) {
-                this.#statistics[killerId].notifyKilledOtherPlayerProgram(this.#statistics[victimId].getKey());
+
+                let killerAndVictimHaveSameOwner = false;
+                let victimOwner = false;
+                let killerOwner = false;
+                for (const k in this.#programs) {
+                    if (this.#programs[k].id === victimId) {
+                        victimOwner = this.#programs[k].owner;
+                        continue;
+                    }
+
+                    if (this.#programs[k].id === killerId) {
+                        killerOwner = this.#programs[k].owner;
+                        continue;
+                    }
+                }
+
+                killerAndVictimHaveSameOwner = victimOwner && killerOwner && killerOwner === victimOwner;
+
+                this.#statistics[killerId].notifyKilledOtherPlayerProgram(
+                    this.#statistics[victimId].getKey(),
+                    killerAndVictimHaveSameOwner
+                );
             }
             else {
                 this.#statistics[killerId].notifyKilledBystander();

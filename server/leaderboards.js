@@ -62,6 +62,10 @@ function analyzeStatisticsEntry(obj) {
                 if (kill.isBystanderKill) {
                     bystanderKills++;
                 }
+                else if (kill.targetAndKillerHaveSameOwner)
+                {
+                    // lol you thought
+                }
                 else {
                     pvpKills++;
                 }
@@ -101,6 +105,23 @@ function analyzeStatisticsEntry(obj) {
                 }
             }
         }
+
+        // reorder leaderboard because... i don't know?
+        // sometimes it's messed up if I don't do it
+        // and i'm not sure why
+        leaderboard.sort((a, b) => {
+            if (a === false)
+            {
+                return 1;    
+            }
+            
+            if (b === false)
+            {
+                return -1;
+            }
+
+            return b.value - a.value;
+        });
     }
 
 }
