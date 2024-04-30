@@ -22,10 +22,18 @@ const leaderboards = {
 
 module.exports = leaderboards;
 
+const userMap = {};
+const doLater = [];
+
 let lock = false;
 
-function analyzeStatisticsEntry(obj) {
-    const prog = getProgramLeaderboardObject(obj);
+function analyzeStatisticsEntry(obj, forceDoNow=false) {
+    const prog = getProgramLeaderboardObject(obj, !forceDoNow);
+    if (prog === false)
+    {
+        doLater.push(obj);
+        return false;
+    }
 
     pushOnLeaderboardIfRelevant(leaderboards.cyclesLived, obj.cyclesLived);
 
@@ -62,8 +70,7 @@ function analyzeStatisticsEntry(obj) {
                 if (kill.isBystanderKill) {
                     bystanderKills++;
                 }
-                else if (kill.targetAndKillerHaveSameOwner)
-                {
+                else if (kill.targetAndKillerHaveSameOwner) {
                     // lol you thought
                 }
                 else {
@@ -76,6 +83,8 @@ function analyzeStatisticsEntry(obj) {
         pushOnLeaderboardIfRelevant(killLeaderboard.totalKills, totalKills);
         pushOnLeaderboardIfRelevant(killLeaderboard.bystanderKills, bystanderKills);
         pushOnLeaderboardIfRelevant(killLeaderboard.pvpKills, pvpKills);
+    
+        return true;
     }
 
     function pushOnLeaderboardIfRelevant(leaderboard, valueToCompare) {
@@ -110,13 +119,11 @@ function analyzeStatisticsEntry(obj) {
         // sometimes it's messed up if I don't do it
         // and i'm not sure why
         leaderboard.sort((a, b) => {
-            if (a === false)
-            {
-                return 1;    
+            if (a === false) {
+                return 1;
             }
-            
-            if (b === false)
-            {
+
+            if (b === false) {
                 return -1;
             }
 
@@ -126,7 +133,7 @@ function analyzeStatisticsEntry(obj) {
 
 }
 
-function getProgramLeaderboardObject(obj) {
+function getProgramLeaderboardObject(obj, allowAuthorless=false) {
     const result = {};
 
     const authors = Object.keys(obj.knownAuthors);
@@ -134,6 +141,31 @@ function getProgramLeaderboardObject(obj) {
     result.name = Object.keys(obj.knownNames)[0];
     if (obj.knownNames.length > 1) {
         result.aka = Object.keys(obj.knownNames).splice(0, 1);
+    }
+
+    // Try to find author for later
+    const firstUser = Object.keys(obj.knownUsers)[0];
+    if (result.author === null)
+    {
+        if (userMap[firstUser])
+        {
+            result.author = userMap[firstUser];
+        }
+        else
+        {
+            if (!allowAuthorless)
+            {
+                // We can try again later
+                return false;
+            }
+        }
+    }
+    else
+    {
+        if (!userMap[firstUser])
+        {
+            userMap[firstUser] = result.author;
+        }
     }
 
     result.checksum = obj.checksum;
@@ -153,6 +185,11 @@ function refreshLeaderboards() {
     }
 
     lock = true;
+    Object.keys(userMap).forEach(key => {
+        delete userMap[key];
+    })
+
+    doLater.length = 0;
 
     fs.readdir(statsPath, (errDir, files) => {
         if (errDir) {
@@ -169,6 +206,8 @@ function refreshLeaderboards() {
                     return;
                 }
 
+                let willDoLater = false;
+
                 if (readError) {
                     log.warn(`While reading ${file}: ${readError}\nScoreboard update aborted.`);
                     lock = false;
@@ -177,7 +216,15 @@ function refreshLeaderboards() {
                 else {
                     try {
                         const obj = JSON.parse(data);
-                        analyzeStatisticsEntry(obj);
+                        if (analyzeStatisticsEntry(obj))
+                        {
+                            // OK
+                        }
+                        else
+                        {
+                            doLater.push(obj);
+                            willDoLater = true;
+                        }
                     }
                     catch (e) {
                         log.warn(`Corrupt stats file? on file ${file}  :  ${e}`);
@@ -187,6 +234,13 @@ function refreshLeaderboards() {
                 filesRemaining--;
 
                 if (filesRemaining <= 0) {
+                    // Check if I'm not forgetting anything...
+                    for(const statIndex in doLater)
+                    {
+                        const obj = doLater[statIndex];
+                        analyzeStatisticsEntry(obj, true);
+                    }
+
                     // Done updating leaderboards
                     lock = false;
                     leaderboards.lastUpdate = Date.now();

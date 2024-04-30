@@ -110,8 +110,6 @@ globalCore.displayLeaderboards = function (leaderboards) {
 
     const MAX_EXPECTED_NAME_LENGTH = 48;
 
-    console.log(leaderboards);
-
     const entriesParent = globalCore.leaderboardsParents;
 
     const panels = {};
