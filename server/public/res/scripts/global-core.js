@@ -36,8 +36,9 @@ globalCore.scoreboardDisplays = {};
 globalCore.scoreboardParent = null;
 
 globalCore.podiumColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
-globalCore.highestScoresParent = null;
-globalCore.highestScoresDisplays = {};
+globalCore.leaderboardsParents = null;
+globalCore.leaderboardsDisplays = [];
+globalCore.selectedLeaderboard = 0;
 
 globalCore.coreDom = null;
 
@@ -50,7 +51,7 @@ globalCore.onWindowLoad = function () {
     globalCore.displayScoreboard([], {});
 
     globalCore.scoreboardParent = document.getElementById("scoreboard-entries");
-    globalCore.highestScoresParent = document.getElementById("highest-scores");
+    globalCore.leaderboardsParents = document.getElementById("highest-scores");
     globalCore.coreDom = document.getElementById("global-core");
 
     globalCore.coreNameDiv = document.getElementById("core-name-container");
@@ -96,53 +97,188 @@ globalCore.bindButtons = function () {
     globalCore.makeProgramButton = document.getElementById("create-program-button");
 
     globalCore.makeProgramButton.onclick = function () {
-        if (tutorial.shouldPlayTutorial)
-        {
+        if (tutorial.shouldPlayTutorial) {
             tutorial.show();
         }
-        else
-        {
+        else {
             interactive.show();
         }
     };
 }
 
-globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
-    if (podium) {
-        entriesParent = globalCore.highestScoresParent;
-        displays = globalCore.highestScoresDisplays;
+globalCore.displayLeaderboards = function (leaderboards) {
 
-        if (Object.keys(displays).length == 0 && scoreboard.length != 0) {
-            const title = document.createElement("div");
-            title.className = "score-header";
-            title.textContent = "MOST HITS";
-            entriesParent.appendChild(title);
-        }
-    }
-    else {
-        entriesParent = globalCore.scoreboardParent;
-        displays = globalCore.scoreboardDisplays;
+    const MAX_EXPECTED_NAME_LENGTH = 48;
 
-        if (Object.keys(displays).length == 0 && scoreboard.length != 0) {
-            const title = document.createElement("div");
-            title.className = "score-header";
-            title.textContent = "ACTIVE DELEGATES";
-            entriesParent.appendChild(title);
-        }
+    const entriesParent = globalCore.leaderboardsParents;
+
+    const panels = {};
+
+    function makeKillLeaderboard(name, killLeaderboard) {
+        panels[`Delegates hit (${name})`] = killLeaderboard.totalKills;
+        panels[`Player delegates hit (${name})`] = killLeaderboard.pvpKills;
+        panels[`Service delegates hit (${name})`] = killLeaderboard.bystanderKills;
     }
 
-    if (!podium) {
-        if (globalCore.scoreboard &&
-            (!globalCore.coreDom.style || Object.keys(globalCore.coreDom.style).length == 0) &&
-            Object.keys(globalCore.scoreboard).length > scoreboard.length) {
-            // someone died
-            sound.playBoom();
+    makeKillLeaderboard("this month", leaderboards.monthlyKills);
+    makeKillLeaderboard("this week", leaderboards.weeklyKills);
+    makeKillLeaderboard("today", leaderboards.dailyKills);
+    makeKillLeaderboard("all-time", leaderboards.allTimeKills);
+
+    panels["Instructions executed"] = leaderboards.cyclesLived;
+    panels["Data written"] = leaderboards.cellsWritten;
+    panels["Data read"] = leaderboards.cellsRead;
+
+    // clear child nodes
+    entriesParent.textContent = '';
+    globalCore.leaderboardsDisplays = [];
+
+    for (const titleName in panels) {
+        const data = panels[titleName];
+
+        const title = document.createElement("div");
+        title.className = "score-header";
+        title.textContent = titleName;
+        title.id = `scoreboard-podium-${titleName.toLowerCase().replace(/ /g, '-')}`;
+
+        const panel = document.createElement("div");
+        panel.className = "leaderboard";
+        panel.appendChild(title);
+
+        // buttons
+        {
+            const next = document.createElement("button");
+            next.className = "next-button";
+            next.textContent = "▶";
+            next.onclick = function () {
+                globalCore.selectedLeaderboard = (globalCore.selectedLeaderboard + 1) % globalCore.leaderboardsDisplays.length;
+                globalCore.refreshDisplayedLeaderboard()
+            };
+
+            panel.appendChild(next);
+
+            const previous = document.createElement("button");
+            previous.className = "previous-button";
+            previous.textContent = "◀";
+            previous.onclick = function () {
+                globalCore.selectedLeaderboard = (globalCore.selectedLeaderboard - 1);
+                if (globalCore.selectedLeaderboard < 0) {
+                    globalCore.selectedLeaderboard = globalCore.leaderboardsDisplays.length - 1;
+                }
+
+                globalCore.refreshDisplayedLeaderboard()
+            };
+
+            panel.appendChild(previous);
         }
+
+        for (const i in data) {
+            let entry = data[i];
+
+            if (entry === false) {
+                entry = {
+                    value: "  ",
+                    name: "&nbsp;".repeat(MAX_EXPECTED_NAME_LENGTH - 7),
+                    author: null
+                }
+            }
+
+            const scoreDisplay = {
+                entryDiv: document.createElement("div"),
+                textDiv: document.createElement("div")
+            };
+
+            let length = MAX_EXPECTED_NAME_LENGTH;
+            length -= entry.value.toString().length;
+            length -= 5;
+
+            let authorName = "";
+
+            if (entry.author !== null) {
+                authorName = `${entry.author}'s `;
+
+                if (entry.author.charAt(entry.author.length - 1) == "s") {
+                    authorName = `${entry.author}' `;
+                }
+
+                if (length - authorName.length > entry.name.length) {
+                    length -= authorName.length;
+                }
+                else {
+                    authorName = ""; // no room, dont display
+                }
+            }
+
+            length -= entry.name.length;
+
+            scoreDisplay.entryDiv.appendChild(scoreDisplay.textDiv);
+
+            scoreDisplay.textDiv.className = "score-name";
+
+            const entryTxt = `<span style='color:${globalCore.colors[0]}' class='author-name'>${authorName}</span>${entry.name}`;
+            scoreDisplay.textDiv.innerHTML = `[${entry.value}]${'.'.padStart(length, '.')}${entryTxt}`;
+
+            // Pick color
+            let color = i >= globalCore.podiumColors.length ? globalCore.colors[0] : globalCore.podiumColors[i];
+
+            // Display color
+            if (globalCore.wc_hex_is_light(color)) {
+                scoreDisplay.textDiv.style.color = color;
+                scoreDisplay.textDiv.style.background = "";
+            }
+            else {
+                scoreDisplay.textDiv.style.color = "black";
+                scoreDisplay.textDiv.style.background = color;
+            }
+
+            panel.appendChild(scoreDisplay.entryDiv);
+        }
+
+        globalCore.leaderboardsDisplays.push(panel);
+        entriesParent.appendChild(panel);
+    }
+
+    globalCore.refreshDisplayedLeaderboard();
+};
+
+globalCore.refreshDisplayedLeaderboard = function () {
+    globalCore.selectedLeaderboard = Math.min(globalCore.leaderboardsDisplays.length - 1, Math.max(0, globalCore.selectedLeaderboard));
+
+    for (const i in globalCore.leaderboardsDisplays) {
+        if (i == globalCore.selectedLeaderboard) {
+            globalCore.leaderboardsDisplays[i].style.display = "block";
+        }
+        else {
+            globalCore.leaderboardsDisplays[i].style.display = "none";
+        }
+    }
+}
+
+globalCore.displayScoreboard = function (scoreboard, activity) {
+    entriesParent = globalCore.scoreboardParent;
+    displays = globalCore.scoreboardDisplays;
+
+    if (Object.keys(displays).length == 0 &&
+        scoreboard.length != 0 &&
+        null === document.getElementById('scoreboard-title')
+    ) {
+        const title = document.createElement("div");
+        title.className = "score-header";
+        title.textContent = "ACTIVE DELEGATES";
+        title.id = `scoreboard-title`;
+        entriesParent.appendChild(title);
+    }
+
+    if (globalCore.scoreboard &&
+        (!globalCore.coreDom.style || Object.keys(globalCore.coreDom.style).length == 0) &&
+        Object.keys(globalCore.scoreboard).length > scoreboard.length) {
+        // someone died
+        sound.playBoom();
     }
 
     const seenIds = [];
     for (const k in scoreboard) {
-        const id = podium ? `${scoreboard[k].name}@${scoreboard[k].ownerId}` : scoreboard[k].id;
+        const id = scoreboard[k].id;
 
         const scoreDisplay = displays[id] ?? {
             entryDiv: document.createElement("div"),
@@ -156,21 +292,15 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
             scoreDisplay.entryDiv.appendChild(scoreDisplay.textDiv);
         }
 
-        const isBystander = !podium && activity[id].isBystander;
+        const isBystander = activity[id].isBystander;
 
         scoreDisplay.textDiv.className = "score-name";
         scoreDisplay.textDiv.textContent = scoreboard[k].name + (isBystander ? "" : ` (${scoreboard[k].kills} hits)`);
 
         // Pick color
-        let color;
-        if (podium) {
-            color = k >= globalCore.podiumColors.length ? globalCore.colors[0] : globalCore.podiumColors[k];
-        }
-        else {
-            color = isBystander ?
-                globalCore.colors[0] :
-                globalCore.colors[((id - 1) % (globalCore.colors.length - 1) + 1)];
-        }
+        let color = isBystander ?
+            globalCore.colors[0] :
+            globalCore.colors[((id - 1) % (globalCore.colors.length - 1) + 1)];
 
         // Display color
         if (globalCore.wc_hex_is_light(color)) {
@@ -182,7 +312,7 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
             scoreDisplay.textDiv.style.background = color;
         }
 
-        if (!displays[id] || podium) {
+        if (!displays[id]) {
             entriesParent.appendChild(scoreDisplay.entryDiv);
             displays[id] = scoreDisplay;
         }
@@ -191,7 +321,7 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
     // Deletes the ones I have not seen
     for (const id in displays) {
         const scoreDisplay = displays[id];
-        if (!seenIds.includes(podium ? id : parseInt(id))) {
+        if (!seenIds.includes(parseInt(id))) {
             if (scoreDisplay.button) {
                 if (scoreDisplay.button.parentNode) {
                     scoreDisplay.button.parentNode.removeChild(scoreDisplay.button);
@@ -208,34 +338,32 @@ globalCore.displayScoreboard = function (scoreboard, activity, podium = false) {
 
 
     // Buttons
-    if (!podium) {
-        for (const k in seenIds) {
-            const id = seenIds[k];
-            const scoreDisplay = displays[id];
+    for (const k in seenIds) {
+        const id = seenIds[k];
+        const scoreDisplay = displays[id];
 
-            if (activity[id].isYours) {
-                const killButton = scoreDisplay.button ?? document.createElement("button");
+        if (activity[id].isYours) {
+            const killButton = scoreDisplay.button ?? document.createElement("button");
 
-                killButton.className = "kill-button";
-                killButton.textContent = "❌";
-                killButton.onclick = function () {
-                    if (socket && ready) {
-                        socket.emit("requestKill", id);
-                    }
-                }
-
-                if (!scoreDisplay.button) {
-                    scoreDisplay.button = killButton;
-                    scoreDisplay.entryDiv.appendChild(killButton);
+            killButton.className = "kill-button";
+            killButton.textContent = "❌";
+            killButton.onclick = function () {
+                if (socket && ready) {
+                    socket.emit("requestKill", id);
                 }
             }
-            else if (scoreDisplay.button) {
-                if (scoreDisplay.button.parentNode) {
-                    scoreDisplay.button.parentNode.removeChild(scoreDisplay.button);
-                }
 
-                scoreDisplay.button = null;
+            if (!scoreDisplay.button) {
+                scoreDisplay.button = killButton;
+                scoreDisplay.entryDiv.appendChild(killButton);
             }
+        }
+        else if (scoreDisplay.button) {
+            if (scoreDisplay.button.parentNode) {
+                scoreDisplay.button.parentNode.removeChild(scoreDisplay.button);
+            }
+
+            scoreDisplay.button = null;
         }
     }
 }
@@ -339,8 +467,7 @@ globalCore.onCoreSelected = function (dom) {
     }
 }
 
-globalCore.show = function(withIntro)
-{
+globalCore.show = function (withIntro) {
     if (withIntro) {
         if (document.getElementById("code-editor").style?.display !== "none") {
             // User already in editor, probably the serveur restarted
@@ -370,14 +497,14 @@ globalCore.initializeSocket = function () {
         globalCore.buffer = new Int16Array(obj.data, 0, obj.columnCount * obj.columnSize);
         globalCore.refreshGlobalCore(obj.activity);
         globalCore.displayScoreboard(obj.scores, obj.activity);
-        globalCore.displayScoreboard(obj.highestScores, null, true);
+        globalCore.displayLeaderboards(obj.leaderboards);
         globalCore.refreshActivity(obj.activity);
 
         globalCore.updateCoreName(obj.coreInfo);
     });
 
-    socket.on("highestScores", function (highestScores) {
-        globalCore.displayScoreboard(highestScores, null, true);
+    socket.on("leaderboards", function (leaderboards) {
+        globalCore.displayLeaderboards(leaderboards);
     });
 
     socket.on("deltaCore", function (delta, scoreboard, activity) {

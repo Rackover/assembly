@@ -11,6 +11,9 @@ const activePrograms = {};
 module.exports = {
     terminate: terminate,
     register: notifyProgramBorn,
+    leaderboards: require('./leaderboards'),
+
+    DATABASE_DIRECTORY: DATABASE_DIRECTORY
 };
 
 class ProgramKill {

@@ -375,11 +375,9 @@ module.exports = class {
     advance() {
         if (this.#core.programCount > 0) {
             const pCount = Math.floor((CONFIG.MAX_PROGRAMS) / this.#core.programCount);
-            // console.log("NEXT is %d, Waiting for %d to equal %d (pcount %d, program count %d)", this.#core.nextProgramToPlay, this.#core.nextProgramToPlay * pCount, this.#tick % MAX_PROGRAMS, pCount, this.#core.programCount);
             if (this.#core.nextProgramToPlay * pCount == (this.#internalTick % CONFIG.MAX_PROGRAMS)) {
                 const finished = this.#core.advance();
                 const delta = this.#computeDelta();
-
                 if (finished) {
                     log.error("Halted global core ???? There is trickery afoot");
                 }
@@ -475,6 +473,7 @@ module.exports = class {
 
             // 1 bit for pointer
             const hasPointer = pointers[i] == true;
+
 
             let summarized = 0;
             summarized |= op;

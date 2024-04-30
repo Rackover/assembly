@@ -100,6 +100,7 @@ select#core-name {
 	width: 100%;
 	max-width: 1600px;
 	padding: 20px;
+	position: relative;
 }
 
 #explanations-window {
@@ -605,6 +606,32 @@ input.target-1 {
 #scoreboard {
 	position: relative;
 	min-width: 20%;
+}
+.leaderboard
+{
+	position: relative;
+}
+
+.leaderboard button
+{
+	padding:1px;
+	position:absolute;
+	width:16px;
+	height:16px;
+	font-size:8px;
+	text-align:center;
+}
+
+.leaderboard button.next-button
+{
+	top:0;
+	right:0;
+}
+
+.leaderboard button.previous-button
+{
+	top:0;
+	right:16px;
 }
 
 #scoreboard #scoreboard-entries {

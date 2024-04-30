@@ -5,7 +5,7 @@ module.exports = {
     CORE_SPEED: 300,
     MAX_PROGRAM_NAME_LENGTH: 32,
     MAX_CORES: 16,
-    GCORE_BYSTANDERS: 3,
+    GCORE_BYSTANDERS: 10,
     HTTP_HOST: "http://localhost",
     SECURE_CONTEXT: false
 }

@@ -6,7 +6,6 @@ const getmac = require('getmac');
 const path = require('path');
 const fs = require('fs');
 
-const SCORES_FILENAME = "saved-scores.json";
 const PLAYERS_FILENAME = "known-players.json";
 
 // FILE OPS
@@ -69,15 +68,6 @@ function initializeStatistics()
 
 function initializeWorld() {
   global.WORLD = require('./world');
-
-  if (fs.existsSync(SCORES_FILENAME)) {
-    try {
-      WORLD.loadHighscores(JSON.parse(fs.readFileSync(SCORES_FILENAME, { encoding: 'utf-8' })));
-    }
-    catch (e) {
-      log.error(`while loading high scores: ${e}`);
-    }
-  }
   
   if (fs.existsSync(PLAYERS_FILENAME)) {
     try {
@@ -103,8 +93,6 @@ function initializeConfig() {
 function saveWorld()
 {
   if (WORLD) {
-    const scores = WORLD.getHighscores();
-    fs.writeFileSync(SCORES_FILENAME, JSON.stringify(scores, null, 4));
     fs.writeFileSync(PLAYERS_FILENAME, JSON.stringify(WORLD.getUserList(), null, 4));
   }
 }

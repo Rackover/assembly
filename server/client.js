@@ -20,6 +20,7 @@ module.exports = class {
     #testCore;
     #testCoreSpeed;
 
+    #lastLeaderboardsTime = false;
     #lastFrameTime = false;
     #trainingCoreBuff = false;
     #trainingCoreFlagsBuff = false;
@@ -327,9 +328,15 @@ module.exports = class {
 
         if (this.#receivedInitialGlobalTick) {
             this.#socket.emit("deltaCore", delta, gc.scores, activity);
+
+            if (this.#lastLeaderboardsTime != STATS.leaderboards.lastUpdate)
+            {
+                this.#socket.emit("leaderboards", STATS.leaderboards);
+                this.#lastLeaderboardsTime = STATS.leaderboards.lastUpdate;
+            }
         }
         else {
-
+            this.#lastLeaderboardsTime = Date.now();
             this.#receivedInitialGlobalTick = true;
             this.#socket.emit("initialCore", {
                 scores: gc.scores,
@@ -337,7 +344,7 @@ module.exports = class {
                 columnCount: gc.columnCount,
                 columnSize: gc.columnSize,
                 activity: activity,
-                highestScores: WORLD.getHighscores(),
+                leaderboards: STATS.leaderboards,
                 coreInfo: {
                     id: gc.id,
                     friendlyName: gc.friendlyName,
@@ -348,16 +355,6 @@ module.exports = class {
     }
 
     #onScoreChanged(scores) {
-        this.#updateHighestScore(scores);
         this.#socket.emit("updateScoreboard", scores, this.globalCore.activePointers);
-    }
-
-    #updateHighestScore(scores) {
-        const changed = WORLD.pushScores(scores);
-
-        if (changed)
-        {
-            this.#socket.emit("highestScores", WORLD.getHighscores());
-        }
     }
 }
