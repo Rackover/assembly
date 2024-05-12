@@ -39,9 +39,9 @@ class CoreInfo {
     get isFull() {
         return this.core.programCount >= CONFIG.MAX_PROGRAMS;
     }
-    created
+    
     get isDesirable() {
-        return this.core.programCount < 8;
+        return this.core.programCount < 5;
     }
 
     get isEmpty() {

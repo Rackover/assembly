@@ -442,7 +442,7 @@ globalCore.updateCoreName = function (coreInfo) {
         for (const k in cores) {
             const info = coreInfo.availableCores[k];
             const option = document.createElement("option");
-            option.textContent = `ASSEMBLY #${info.id + 1} [${info.friendlyName}]`;
+            option.textContent = `🔽 ASSEMBLY #${info.id + 1} [${info.friendlyName}]`;
             option.value = info.id;
 
             if (info.id == coreInfo.id) {
