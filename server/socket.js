@@ -61,6 +61,14 @@ module.exports =
         if (coreID === false) {
           // Game full, maybe dispatch message?
           socket.disconnect(true);
+          return;
+        }
+        else if (WORLD.getCore(coreID) === false)
+        {
+          // This is not supposed to happen but as it turns out, this happens!
+          log.warn(`Weird error where a client got given an ID for an invalid core ${coreID} ! Refused at the door, sorry :(`);
+          socket.disconnect(true);
+          return;
         }
         else {
           const knownUser = WORLD.getUserList()[id];

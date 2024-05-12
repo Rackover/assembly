@@ -98,7 +98,7 @@ module.exports = {
             if (cores[k].isDesirable) {
                 coreID = cores[k].id;
                 nonFullCore = cores[k].id;
-                log.info(`Core ${coreID} is desirable for client ${clientIdString}, putting them here`);
+                log.info(`Core ${coreID} is desirable for client ${clientIdString} (program count is ${cores[k].core.programCount}), putting them here`);
                 break;
             }
             else if (!cores[k].isFull) {
@@ -118,7 +118,7 @@ module.exports = {
                 }
             }
 
-            let biggestCoreID = 0;
+            let biggestCoreID = -1;
             for (let k in cores) {
                 biggestCoreID = Math.max(biggestCoreID, cores[k].id);
             }
