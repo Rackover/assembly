@@ -41,7 +41,7 @@ class CoreInfo {
     }
     
     get isDesirable() {
-        return this.core.programCount < 5;
+        return this.core.programCount < 5 && this.clients.length < CONFIG.MAX_CLIENTS_PER_CORE;
     }
 
     get isEmpty() {
@@ -98,7 +98,7 @@ module.exports = {
             if (cores[k].isDesirable) {
                 coreID = cores[k].id;
                 nonFullCore = cores[k].id;
-                log.info(`Core ${coreID} is desirable for client ${clientIdString} (program count is ${cores[k].core.programCount}), putting them here`);
+                log.info(`Core ${coreID} is desirable for client ${clientIdString} (program count is ${cores[k].core.programCount} / client count is ${cores[k].clients.length}), putting them here`);
                 break;
             }
             else if (!cores[k].isFull) {
