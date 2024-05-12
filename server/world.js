@@ -8,6 +8,12 @@ const NAMES = [
     "ELEMENT",
     "FJORD",
     "GIST",
+    "HILDA",
+    "INCUBUS",
+    "JANUARY",
+    "KINO",
+    "LIMESTONE",
+    "MYRIAD"
 ];
 
 const HIGH_SCOREBOARD_LENGTH = 10;
@@ -90,13 +96,13 @@ module.exports = {
         let nonFullCore = -1;
         for (let k in cores) {
             if (cores[k].isDesirable) {
-                coreID = k;
-                nonFullCore = k;
+                coreID = cores[k].id;
+                nonFullCore = cores[k].id;
                 log.info(`Core ${coreID} is desirable for client ${clientIdString}, putting them here`);
                 break;
             }
             else if (!cores[k].isFull) {
-                nonFullCore = k;
+                nonFullCore = cores[k].id;
             }
         }
 
@@ -112,7 +118,12 @@ module.exports = {
                 }
             }
 
-            coreID = cores.length;
+            let biggestCoreID = 0;
+            for (let k in cores) {
+                biggestCoreID = Math.max(biggestCoreID, cores[k].id);
+            }
+
+            coreID = biggestCoreID+1;
             log.info(`Created new core ${coreID} for client ${clientIdString}`);
 
             cores.push(new CoreInfo(coreID));
