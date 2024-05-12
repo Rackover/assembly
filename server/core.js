@@ -75,7 +75,7 @@ module.exports.Core = class {
             this.#killEventListeners[k](programId, killer, killReason);
         }
     }
-    
+
     #cycleExecutedEventListeners = [];
     onProgramExecutedCycle(lambda) {
         this.#cycleExecutedEventListeners.push(lambda);
@@ -86,7 +86,7 @@ module.exports.Core = class {
             this.#cycleExecutedEventListeners[k](programId);
         }
     }
-    
+
     #cellWrittenEventListeners = [];
     onProgramWroteCell(lambda) {
         this.#cellWrittenEventListeners.push(lambda);
@@ -97,7 +97,7 @@ module.exports.Core = class {
             this.#cellWrittenEventListeners[k](programId, address);
         }
     }
-    
+
     #cellReadEventListeners = [];
     onProgramReadCell(lambda) {
         this.#cellReadEventListeners.push(lambda);
@@ -108,7 +108,7 @@ module.exports.Core = class {
             this.#cellReadEventListeners[k](programId, address);
         }
     }
-    
+
     #foreignInstructionExecutedEventListener = [];
     onProgramExecutedForeignInstruction(lambda) {
         this.#foreignInstructionExecutedEventListener.push(lambda);
@@ -242,8 +242,7 @@ module.exports.Core = class {
         return false;
     }
 
-    capNextProgramToPlay()
-    {
+    capNextProgramToPlay() {
         if (this.#programs.length <= 0) {
             this.#turnOfProgram = 0;
         }
@@ -277,9 +276,9 @@ module.exports.Core = class {
 
         for (let address = placedProgram.start; address < placedProgram.end; address++) {
             const safe = this.#getSafeAddress(address);
-            const data = this.#getValueAtAddress(safe) 
+            const data = this.#getValueAtAddress(safe)
             const op = (data >> deps.compiler.OPERATION_SHIFT) & deps.compiler.OPERATION_MASK;
-            this.#ownershipBuffer[safe] = op === deps.parser.OPERATIONS.NOOP ? 
+            this.#ownershipBuffer[safe] = op === deps.parser.OPERATIONS.NOOP ?
                 0 : // If it's a noop, leave it empty (aesthetics)
                 program.id; // Installed program owns this space
         }
@@ -379,7 +378,7 @@ module.exports.Core = class {
         return this.#memoryBuffer.readInt32LE(this.#getSafeAddress(address) * 4);
     }
 
-    #getArgumentInternal(data, memoryPosition, operandShift, operandFlagsShift, programPointer=null) {
+    #getArgumentInternal(data, memoryPosition, operandShift, operandFlagsShift, programPointer = null) {
         const rawOperand = (data >> operandShift) & deps.compiler.OPERAND_MASK;
 
         let value = rawOperand;
@@ -393,8 +392,7 @@ module.exports.Core = class {
                 return false;
             }
             else {
-                if (programPointer)
-                {
+                if (programPointer) {
                     this.#markSectorRead(memoryPosition + value, programPointer);
                 }
             }
@@ -403,11 +401,11 @@ module.exports.Core = class {
         return value;
     }
 
-    #getArgumentB(data, memoryPosition, programPointer=null) {
+    #getArgumentB(data, memoryPosition, programPointer = null) {
         return this.#getArgumentInternal(data, memoryPosition, deps.compiler.OPERAND_B_SHIFT, deps.compiler.OPERAND_B_FLAGS_SHIFT, programPointer);
     }
 
-    #getArgumentA(data, memoryPosition, programPointer=null) {
+    #getArgumentA(data, memoryPosition, programPointer = null) {
         return this.#getArgumentInternal(data, memoryPosition, deps.compiler.OPERAND_A_SHIFT, deps.compiler.OPERAND_A_FLAGS_SHIFT, programPointer);
     }
 
@@ -441,16 +439,15 @@ module.exports.Core = class {
             this.#lastKillReason = `interaction with bad sector`;
         }
         else {
-            
+
             // Notify foreign author
             {
                 const instructionAuthor = this.getLastWriterOfAdddress(this.#getSafeAddress(memoryPosition));
-                if (instructionAuthor && instructionAuthor != programPointer.programId)
-                {
+                if (instructionAuthor && instructionAuthor != programPointer.programId) {
                     this.#broadcastOnProgramExecutedForeignInstruction(programPointer.programId, instructionAuthor);
                 }
             }
-            
+
             const op = (data >> deps.compiler.OPERATION_SHIFT) & deps.compiler.OPERATION_MASK;
 
             switch (op) {
@@ -485,24 +482,25 @@ module.exports.Core = class {
                         let result = this.#getValueAtAddress(whereTo);
                         let leftover = 0;
 
-                        //
-                        // Do the operation differently if the operand is 12-bit or not
-                        // The reason we do that is to allow two behaviours at once:
-                        //  - Natural continuous increment from -2, -1, etc to 1, 2, 3 without messing up a sign flag
-                        //  - Adding and/or substracting operators to construct new instructions
-                        {
-                            const unsignedOperand = operand >>> 0;
-                            const shiftedCheck = unsignedOperand & ~deps.compiler.OPERAND_MASK;
-                            if (shiftedCheck === 0)
+                        // EDIT: All of this is kinda borked actually
+                        if (false) {
+                            //
+                            // Do the operation differently if the operand is 12-bit or not
+                            // The reason we do that is to allow two behaviours at once:
+                            //  - Natural continuous increment from -2, -1, etc to 1, 2, 3 without messing up a sign flag
+                            //  - Adding and/or substracting operators to construct new instructions
                             {
-                                // Operand is a twelve bit number, sign the result manually.
-                                const xBitsNumber = result & (deps.compiler.OPERAND_MASK >> deps.compiler.OPERAND_B_SHIFT);
-                                leftover = result & ~deps.compiler.OPERAND_MASK;
-                                result = deps.compiler.getSignedXBitsValue(xBitsNumber);
-                            }
-                            else
-                            {
-                                // Operand is big, do nothing
+                                const unsignedOperand = operand >>> 0;
+                                const shiftedCheck = unsignedOperand & ~deps.compiler.OPERAND_MASK;
+                                if (shiftedCheck === 0) {
+                                    // Operand is a twelve bit number, sign the result manually.
+                                    const xBitsNumber = result & (deps.compiler.OPERAND_MASK >> deps.compiler.OPERAND_B_SHIFT);
+                                    leftover = result & ~deps.compiler.OPERAND_MASK;
+                                    result = deps.compiler.getSignedXBitsValue(xBitsNumber);
+                                }
+                                else {
+                                    // Operand is big, do nothing
+                                }
                             }
                         }
                         //
@@ -598,7 +596,7 @@ module.exports.Core = class {
                         this.#markSectorRead(origin, programPointer);
                         this.#markSectorWritten(destination, programPointer);
 
-                        if (op == deps.parser.OPERATIONS.MOVE) {
+                        if (op == deps.parser.OPERATIONS.MOVE && origin != destination) {
                             this.#setValueAtAddress(0, origin);
                             this.#markSectorWritten(origin, programPointer);
                         }
@@ -634,15 +632,13 @@ module.exports.Core = class {
     #markSectorWritten(address, programPointer) {
         const safeAddr = this.#getSafeAddress(address);
         if (programPointer !== false) {
-            if (this.#rules.writeInstructionOwner)
-            {
+            if (this.#rules.writeInstructionOwner) {
                 const memoryPosition = programPointer.pointers[programPointer.nextPointerToExecute];
                 const realAuthor = this.getLastWriterOfAdddress(this.#getSafeAddress(memoryPosition));
-        
+
                 this.#ownershipBuffer[safeAddr] = realAuthor;
             }
-            else
-            {
+            else {
                 this.#ownershipBuffer[safeAddr] = programPointer.programId;
             }
         }
