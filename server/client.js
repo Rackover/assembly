@@ -221,7 +221,7 @@ module.exports = class {
         setTimeout(() => socket.emit("hello", returning, shouldPlayTutorial), 100);
     }
 
-    get dead() { return this.#dead; }
+    get isDead() { return this.#dead; }
 
     get globalCore() { return WORLD.getCore(this.#globalCoreID); }
 

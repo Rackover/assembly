@@ -16,9 +16,6 @@ const NAMES = [
     "MYRIAD"
 ];
 
-const HIGH_SCOREBOARD_LENGTH = 10;
-
-
 class CoreInfo {
     core = null; // GlobalCore
     clients = [];
@@ -170,6 +167,15 @@ function getCoreInfo(id) {
 }
 
 function trimCores() {
+
+    //
+    const fs = require('fs');
+    if (fs.existsSync("notrim"))
+    {
+        return;
+    }
+    //
+
     const toKill = [];
     if (cores.length <= 1) {
         return; // Never trim first core?
